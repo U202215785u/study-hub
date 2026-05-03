@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Study Hub Backend (Python)",
+      "runtimeExecutable": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": [
+        "F:\\360MoveData\\Users\\Administrator\\Desktop\\study web\\study-hub\\backend\\main.py"
+      ],
+      "port": 8741
+    },
+    {
+      "name": "Study Hub (Docker)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": [
+        "compose",
+        "-f",
+        "F:/360MoveData/Users/Administrator/Desktop/study web/study-hub/docker-compose.yml",
+        "up"
+      ],
+      "port": 8741
+    }
+  ]
+}

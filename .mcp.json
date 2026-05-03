@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "study-hub": {
+      "command": "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe",
+      "args": ["mcp_server.py"],
+      "cwd": "F:/360MoveData/Users/Administrator/Desktop/study web/study-hub",
+      "env": {
+        "DASHSCOPE_API_KEY": "sk-a7d9c80565f44004aa456990d45aa0d1",
+        "STUDY_HUB_API_BASE": "http://localhost:8741"
+      }
+    },
+    "douyin-mcp": {
+      "command": "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/Scripts/douyin-mcp-server.exe",
+      "args": [],
+      "env": {
+        "DASHSCOPE_API_KEY": "sk-a7d9c80565f44004aa456990d45aa0d1"
+      }
+    }
+  }
+}

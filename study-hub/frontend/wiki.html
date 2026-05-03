@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiki 知识库 - 学习中枢</title>
+<style>
+:root {
+  --bg: #0f0f14;
+  --surface: #1a1a24;
+  --surface-hover: #22222f;
+  --border: #2a2a3a;
+  --text: #e0e0e8;
+  --text-secondary: #8888a0;
+  --accent: #7c8aff;
+  --accent-glow: rgba(124, 138, 255, 0.15);
+  --danger: #ff5c7a;
+  --success: #4ade80;
+  --warn: #f59e0b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden;
+}
+
+/* 侧边栏 */
+.sidebar {
+  width: 280px; min-width: 280px; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 16px;
+}
+.sidebar-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.sidebar-header h2 { font-size: 16px; font-weight: 700; }
+.sidebar-header a { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+.sidebar-header a:hover { color: var(--accent); }
+
+.sidebar-actions { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.sidebar-actions .btn { flex: 1; min-width: 70px; text-align: center; }
+
+.wiki-stats { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; padding: 8px 12px;
+  background: var(--bg); border-radius: var(--radius-sm); display: flex; gap: 12px; }
+.wiki-stats b { color: var(--accent); }
+
+.search-box {
+  padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 13px; outline: none; margin-bottom: 12px;
+}
+.search-box:focus { border-color: var(--accent); }
+
+.cat-filter {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;
+}
+.cat-chip {
+  padding: 3px 10px; border-radius: 12px; font-size: 11px; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.cat-chip:hover { border-color: var(--accent); color: var(--text); }
+.cat-chip.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+
+.page-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.page-item {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: background 0.15s; font-size: 13px;
+}
+.page-item:hover { background: var(--surface-hover); }
+.page-item.active { background: var(--accent-glow); border: 1px solid var(--accent); }
+.page-item .page-icon { font-size: 16px; flex-shrink: 0; }
+.page-item .page-info { flex: 1; min-width: 0; }
+.page-item .page-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-item .page-meta { font-size: 11px; color: var(--text-secondary); display: flex; gap: 8px; }
+.page-item .page-snippet { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.page-item .page-score { font-size: 10px; color: var(--accent); flex-shrink: 0; }
+.search-info { font-size: 12px; color: var(--text-secondary); padding: 0 12px 8px; }
+
+.btn {
+  padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.btn:hover { background: var(--surface-hover); border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { opacity: 0.9; }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.btn.danger:hover { background: var(--danger); color: #fff; }
+.btn.warn { border-color: var(--warn); color: var(--warn); }
+.btn.warn:hover { background: var(--warn); color: #000; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 主内容区 */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.toolbar {
+  display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+  background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.toolbar h3 { font-size: 15px; font-weight: 600; margin-right: auto; }
+.tab-btn {
+  padding: 6px 14px; background: none; border: none; color: var(--text-secondary);
+  font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Wiki 页面查看器 */
+.page-viewer { flex: 1; overflow-y: auto; padding: 24px 32px; display: none; }
+.page-viewer.visible { display: block; }
+.wiki-content { line-height: 1.8; font-size: 15px; max-width: 860px; }
+.wiki-content h1 { font-size: 26px; margin-bottom: 8px; }
+.wiki-content h2 { font-size: 20px; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.wiki-content h3 { font-size: 16px; margin: 20px 0 8px; color: var(--accent); }
+.wiki-content p { margin: 10px 0; }
+.wiki-content ul, .wiki-content ol { padding-left: 24px; margin: 8px 0; }
+.wiki-content li { margin: 4px 0; }
+.wiki-content code {
+  padding: 2px 6px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; font-size: 13px; font-family: "Cascadia Code", "Fira Code", monospace;
+}
+.wiki-content pre {
+  padding: 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0;
+}
+.wiki-content pre code { padding: 0; background: none; border: none; }
+.wiki-content blockquote {
+  border-left: 3px solid var(--accent); padding: 8px 16px; margin: 12px 0;
+  color: var(--text-secondary); background: var(--accent-glow); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.wiki-content a { color: var(--accent); text-decoration: none; }
+.wiki-content a:hover { text-decoration: underline; }
+.wiki-content .wikilink { color: var(--accent); cursor: pointer; border-bottom: 1px dashed var(--accent); }
+.wiki-content .wikilink:hover { color: #a5b0ff; }
+.wiki-content table { border-collapse: collapse; margin: 12px 0; width: 100%; }
+.wiki-content th, .wiki-content td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+.wiki-content th { background: var(--surface); }
+.wiki-content hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+.page-meta-bar {
+  display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.page-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.page-tag {
+  padding: 2px 10px; border-radius: 12px; font-size: 11px;
+  background: var(--accent-glow); color: var(--accent);
+}
+.contradiction-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px;
+  border-radius: 12px; font-size: 12px; background: rgba(245,158,11,0.1); color: var(--warn);
+  border: 1px solid rgba(245,158,11,0.3);
+}
+.page-links-section { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+.page-links-section h4 { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+
+/* 图谱视图 */
+.graph-view { flex: 1; overflow: hidden; display: none; position: relative; }
+.graph-view.visible { display: block; }
+#graphCanvas { width: 100%; height: 100%; }
+.graph-legend {
+  position: absolute; bottom: 16px; left: 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;
+  font-size: 12px; color: var(--text-secondary);
+}
+
+/* 空白状态 */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--text-secondary);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { margin: 8px 0; }
+
+/* 编译进度 */
+.compile-log {
+  padding: 16px 24px; max-height: 300px; overflow-y: auto; font-size: 13px;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+}
+.compile-log .log-ok { color: var(--success); }
+.compile-log .log-err { color: var(--danger); }
+.compile-log .log-info { color: var(--text-secondary); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+
+/* 编辑弹窗 */
+.edit-modal-textarea {
+  width: 100%; min-height: 400px; padding: 14px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-size: 14px; font-family: "Cascadia Code", "Fira Code", monospace;
+  line-height: 1.6; resize: vertical; outline: none;
+}
+.edit-modal-textarea:focus { border-color: var(--accent); }
+.edit-meta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.edit-meta-row input {
+  flex: 1; min-width: 120px; padding: 10px 14px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-size: 14px; outline: none;
+}
+.edit-meta-row input:focus { border-color: var(--accent); }
+
+/* 弹窗 */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.visible { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; width: 90%; max-width: 440px; display: flex; flex-direction: column; gap: 16px;
+}
+.modal h3 { font-size: 16px; }
+.modal input {
+  padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 14px; outline: none;
+}
+.modal input:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>🧠 Wiki 知识库</h2>
+    <a href="/kb.html" title="返回文档管理">← 文档</a>
+  </div>
+  <div class="sidebar-actions">
+    <button class="btn primary btn-sm" id="compileBtn" onclick="startCompile()">⚡ 编译 Wiki</button>
+    <button class="btn warn btn-sm" id="regenBtn" onclick="regenerateWiki()" title="清空并重新编译所有文档">🔄 重建</button>
+  </div>
+  <div class="wiki-stats" id="wikiStats">
+    <span>页面 <b id="statPages">0</b></span>
+    <span>链接 <b id="statLinks">0</b></span>
+    <span>分类 <b id="statCats">0</b></span>
+  </div>
+  <input type="text" class="search-box" id="searchBox" placeholder="AI 语义搜索 Wiki 页面…">
+  <div class="cat-filter" id="catFilter"></div>
+  <div class="page-list" id="pageList"></div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main">
+  <div class="toolbar">
+    <h3 id="viewTitle">选择一个 Wiki 页面</h3>
+    <button class="tab-btn active" data-tab="page" onclick="switchTab('page')">📄 页面</button>
+    <button class="tab-btn" data-tab="graph" onclick="switchTab('graph')">🕸️ 知识图谱</button>
+    <button class="tab-btn" data-tab="compile" onclick="switchTab('compile')">📋 编译日志</button>
+    <span style="margin-left:auto;"></span>
+    <button class="btn btn-sm" id="editPageBtn" style="display:none" onclick="openEditModal()">✏️ 编辑</button>
+    <button class="btn btn-sm danger" id="delPageBtn" style="display:none" onclick="deletePage()">删除此页</button>
+  </div>
+
+  <!-- 页面视图 -->
+  <div class="page-viewer visible" id="pageView">
+    <div class="empty-state" id="pageEmpty">
+      <div class="empty-icon">🧠</div>
+      <p>LLM Wiki — AI 自动维护的结构化知识库</p>
+      <p style="font-size:13px;">点击「编译 Wiki」将文档转化为互联的知识页面</p>
+    </div>
+    <div id="pageContent" style="display:none;">
+      <div class="page-meta-bar" id="pageMeta"></div>
+      <div class="wiki-content" id="wikiContent"></div>
+      <div class="page-links-section" id="pageLinks"></div>
+    </div>
+  </div>
+
+  <!-- 图谱视图 -->
+  <div class="graph-view" id="graphView">
+    <canvas id="graphCanvas"></canvas>
+    <div class="graph-legend">
+      <span style="color:var(--accent);">●</span> 节点 = Wiki 页面 &nbsp;
+      <span style="color:var(--text-secondary);">—</span> 连线 = 交叉引用 &nbsp;
+      拖拽移动 · 点击节点打开页面
+    </div>
+  </div>
+
+  <!-- 编译日志 -->
+  <div class="page-viewer" id="compileView">
+    <div class="compile-log" id="compileLog">
+      <p class="log-info">准备就绪，点击左侧「编译 Wiki」开始。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑 Wiki 页面弹窗 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width:800px;">
+    <h3 id="editModalTitle">编辑 Wiki 页面</h3>
+    <div class="edit-meta-row">
+      <input type="text" id="editTitle" placeholder="页面标题">
+      <input type="text" id="editCategory" placeholder="分类（可选）">
+      <input type="text" id="editTags" placeholder="标签（逗号分隔，可选）">
+    </div>
+    <textarea class="edit-modal-textarea" id="editContent" placeholder="Markdown 内容…"></textarea>
+    <div class="modal-actions">
+      <button class="btn" id="editCancel">取消</button>
+      <button class="btn primary" id="editSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = (() => {
+  const base = localStorage.getItem('api_base') || `${location.protocol}//${location.hostname}:8741`;
+  async function get(path) {
+    const r = await fetch(`${base}${path}`);
+    return r.json();
+  }
+  async function post(path, body) {
+    const r = await fetch(`${base}${path}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    return r.json();
+  }
+  async function put(path, body) {
+    const r = await fetch(`${base}${path}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    return r.json();
+  }
+  async function del(path) {
+    const r = await fetch(`${base}${path}`, { method: 'DELETE' });
+    return r.json();
+  }
+  return { get, post, put, del };
+})();
+
+let allPages = [], allCategories = [], currentPage = null, currentTab = 'page';
+let graphNodes = [], graphEdges = [];
+
+// ====== 初始化 ======
+async function init() {
+  await loadPages();
+  await loadCategories();
+  await loadGraph();
+  setupSearch();
+  renderPageList();
+  renderCatFilter();
+  updateStats();
+
+  // 弹窗关闭：点击遮罩层
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('visible');
+    });
+  });
+  // 键盘快捷关闭
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
+    }
+  });
+}
+
+async function loadPages() {
+  const data = await API.get('/wiki/pages');
+  allPages = Array.isArray(data) ? data : [];
+}
+
+async function loadCategories() {
+  const data = await API.get('/wiki/categories');
+  allCategories = Array.isArray(data) ? data : [];
+}
+
+async function loadGraph() {
+  const data = await API.get('/wiki/graph');
+  graphNodes = data.nodes || [];
+  graphEdges = data.edges || [];
+}
+
+// ====== 侧边栏渲染 ======
+function renderCatFilter() {
+  const el = document.getElementById('catFilter');
+  let html = '<span class="cat-chip active" data-cat="" onclick="filterByCat(\'\')">全部</span>';
+  for (const c of allCategories) {
+    html += `<span class="cat-chip" data-cat="${escHtml(c.category)}" onclick="filterByCat('${escHtml(c.category)}')">${escHtml(c.category)} (${c.count})</span>`;
+  }
+  el.innerHTML = html;
+}
+
+let currentCat = '';
+let searchTimer = null;
+let searchResults = null;
+let isSearching = false;
+
+function setupSearch() {
+  const box = document.getElementById('searchBox');
+  box.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const val = box.value.trim();
+    if (!val) {
+      searchResults = null;
+      isSearching = false;
+      renderPageList();
+      return;
+    }
+    isSearching = true;
+    renderPageList(); // show loading
+    searchTimer = setTimeout(() => doSearch(val), 300);
+  });
+}
+
+async function doSearch(query) {
+  try {
+    const res = await API.post('/wiki/search', { query });
+    searchResults = res.results || [];
+  } catch (e) {
+    searchResults = [];
+  }
+  isSearching = false;
+  renderPageList();
+}
+
+function filterByCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.querySelector(`.cat-chip[data-cat="${escHtml(cat)}"]`);
+  if (chip) chip.classList.add('active');
+  renderPageList();
+}
+
+function renderPageList() {
+  const el = document.getElementById('pageList');
+  const query = (document.getElementById('searchBox').value || '').trim();
+
+  // Loading state
+  if (isSearching) {
+    el.innerHTML = '<div class="empty-state" style="padding:24px;"><p style="font-size:13px;color:var(--text-secondary);">🔍 AI 搜索中…</p></div>';
+    return;
+  }
+
+  // AI search results mode
+  if (query && searchResults) {
+    let results = searchResults;
+    if (currentCat) results = results.filter(r => r.category === currentCat);
+
+    if (!results.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:24px;"><p style="font-size:13px;color:var(--text-secondary);">未找到相关 Wiki 页面</p><p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">试试换个关键词</p></div>';
+      return;
+    }
+
+    el.innerHTML = `<div class="search-info">AI 搜索 "<b>${escHtml(query)}</b>" — ${results.length} 个相关页面</div>` + results.map(r => {
+      const active = currentPage && currentPage.id === r.page_id ? ' active' : '';
+      const tags = safeJsonParse(r.tags, []);
+      return `<div class="page-item${active}" onclick="openPage(${r.page_id})">
+        <span class="page-icon">📚</span>
+        <div class="page-info">
+          <div class="page-title">${escHtml(r.title)}</div>
+          ${r.snippet ? `<div class="page-snippet">${escHtml(r.snippet.substring(0, 120))}…</div>` : ''}
+          <div class="page-meta">
+            ${r.category ? `<span>📂 ${escHtml(r.category)}</span>` : ''}
+            ${r.version ? `<span>v${r.version}</span>` : ''}
+            ${r.score != null ? `<span class="page-score">匹配度 ${(100 - r.score * 100).toFixed(0)}%</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // Normal mode: keyword filter on local data
+  let pages = allPages;
+  if (currentCat) pages = pages.filter(p => p.category === currentCat);
+  if (query) pages = pages.filter(p =>
+    p.title.toLowerCase().includes(query.toLowerCase()) ||
+    (p.summary || '').toLowerCase().includes(query.toLowerCase()) ||
+    (p.tags || '').toLowerCase().includes(query.toLowerCase())
+  );
+
+  if (!pages.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:24px;"><p style="font-size:13px;color:var(--text-secondary);">暂无 Wiki 页面</p></div>';
+    return;
+  }
+
+  el.innerHTML = pages.map(p => {
+    const tags = safeJsonParse(p.tags, []);
+    const icon = p.category ? '📚' : '📄';
+    const active = currentPage && currentPage.id === p.id ? ' active' : '';
+    return `<div class="page-item${active}" onclick="openPage(${p.id})">
+      <span class="page-icon">${icon}</span>
+      <div class="page-info">
+        <div class="page-title">${escHtml(p.title)}</div>
+        <div class="page-meta">
+          <span>v${p.version}</span>
+          <span>${p.char_count}字</span>
+          ${p.category ? `<span>${escHtml(p.category)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats() {
+  document.getElementById('statPages').textContent = allPages.length;
+  document.getElementById('statLinks').textContent = graphEdges.length;
+  document.getElementById('statCats').textContent = allCategories.length;
+}
+
+// ====== 页面查看 ======
+async function openPage(id) {
+  const data = await API.get(`/wiki/pages/${id}`);
+  if (data.error) { toast(data.error, 'error'); return; }
+  currentPage = data;
+
+  document.getElementById('viewTitle').textContent = data.title;
+  document.getElementById('pageEmpty').style.display = 'none';
+  document.getElementById('pageContent').style.display = 'block';
+  document.getElementById('delPageBtn').style.display = '';
+  document.getElementById('editPageBtn').style.display = '';
+
+  // Meta bar
+  const tags = safeJsonParse(data.tags, []);
+  const sources = safeJsonParse(data.source_doc_ids, []);
+  const contradictions = safeJsonParse(data.contradictions, []);
+  let metaHtml = '';
+  if (data.category) metaHtml += `<span>📂 ${escHtml(data.category)}</span>`;
+  metaHtml += `<span>📝 v${data.version}</span>`;
+  metaHtml += `<span>📊 ${data.char_count} 字</span>`;
+  metaHtml += `<span>📅 ${data.updated_at ? data.updated_at.slice(0,10) : data.created_at.slice(0,10)}</span>`;
+  if (tags.length) {
+    metaHtml += '<div class="page-tags">' + tags.map(t => `<span class="page-tag">${escHtml(t)}</span>`).join('') + '</div>';
+  }
+  if (contradictions.length) {
+    metaHtml += `<span class="contradiction-badge">⚠️ ${contradictions.length} 处矛盾</span>`;
+  }
+  document.getElementById('pageMeta').innerHTML = metaHtml;
+
+  // Content
+  let contentHtml = renderMarkdown(data.content);
+  document.getElementById('wikiContent').innerHTML = contentHtml;
+
+  // Links section
+  let linksHtml = '';
+  if (data.out_links && data.out_links.length) {
+    linksHtml += '<h4>🔗 此页面引用了</h4><p>' +
+      data.out_links.map(l => `<span class="wikilink" onclick="openPageBySlug('${escHtml(l.target_page_slug)}')">[[${escHtml(l.target_page_slug)}]]</span>`).join(' &nbsp; ') +
+      '</p>';
+  }
+  if (data.in_links && data.in_links.length) {
+    linksHtml += '<h4>📎 被以下页面引用</h4><p>' +
+      data.in_links.map(l => `<span class="wikilink" onclick="openPageBySlug('${escHtml(l.slug)}')">${escHtml(l.title)}</span>`).join(' &nbsp; ') +
+      '</p>';
+  }
+  if (sources.length) {
+    linksHtml += `<h4>📖 源文档 ID</h4><p style="font-size:12px;color:var(--text-secondary);">${sources.join(', ')}</p>`;
+  }
+  document.getElementById('pageLinks').innerHTML = linksHtml;
+
+  // Bind wikilinks in content
+  document.querySelectorAll('#wikiContent .wikilink').forEach(el => {
+    el.addEventListener('click', () => openPageBySlug(el.dataset.slug));
+  });
+
+  renderPageList();
+}
+
+async function openPageBySlug(slug) {
+  const data = await API.get(`/wiki/pages/${slug}`);
+  if (data.error) { toast('页面不存在: ' + slug, 'error'); return; }
+  openPage(data.id);
+}
+
+async function deletePage() {
+  if (!currentPage) return;
+  if (!confirm(`确定删除 Wiki 页面「${currentPage.title}」吗？此操作不可撤销。`)) return;
+  const r = await API.del(`/wiki/pages/${currentPage.id}`);
+  if (r.error) { toast(r.error, 'error'); return; }
+  toast('已删除');
+  currentPage = null;
+  document.getElementById('pageContent').style.display = 'none';
+  document.getElementById('pageEmpty').style.display = '';
+  document.getElementById('delPageBtn').style.display = 'none';
+  document.getElementById('editPageBtn').style.display = 'none';
+  document.getElementById('viewTitle').textContent = '选择一个 Wiki 页面';
+  await loadPages();
+  await loadGraph();
+  renderPageList();
+  updateStats();
+}
+
+// ====== 编辑 Wiki 页面 ======
+function openEditModal() {
+  if (!currentPage) return;
+  document.getElementById('editModalTitle').textContent = '编辑: ' + currentPage.title;
+  document.getElementById('editTitle').value = currentPage.title || '';
+  document.getElementById('editCategory').value = currentPage.category || '';
+  const tags = safeJsonParse(currentPage.tags, []);
+  document.getElementById('editTags').value = tags.join(', ');
+  document.getElementById('editContent').value = currentPage.content || '';
+  document.getElementById('editModal').classList.add('visible');
+  document.getElementById('editContent').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('visible');
+}
+
+document.getElementById('editCancel').onclick = closeEditModal;
+document.getElementById('editSave').onclick = async () => {
+  if (!currentPage) return;
+  const title = document.getElementById('editTitle').value.trim();
+  const content = document.getElementById('editContent').value.trim();
+  if (!title || !content) { toast('标题和内容不能为空', 'error'); return; }
+
+  const category = document.getElementById('editCategory').value.trim();
+  const tagsStr = document.getElementById('editTags').value.trim();
+  const tags = tagsStr ? tagsStr.split(/[,，]\s*/).map(t => t.trim()).filter(Boolean) : [];
+
+  try {
+    const r = await API.put(`/wiki/pages/${currentPage.id}`, { title, content, category, tags });
+    if (r.error) { toast(r.error, 'error'); return; }
+    toast('保存成功');
+    closeEditModal();
+    await loadPages();
+    await loadGraph();
+    await loadCategories();
+    renderPageList();
+    renderCatFilter();
+    updateStats();
+    // Refresh current page view
+    openPage(currentPage.id);
+  } catch (e) {
+    toast('保存失败: ' + e.message, 'error');
+  }
+};
+
+// ====== 编译 Wiki ======
+async function startCompile() {
+  document.getElementById('compileBtn').disabled = true;
+  document.getElementById('compileBtn').textContent = '编译中…';
+  switchTab('compile');
+  const log = document.getElementById('compileLog');
+  log.innerHTML = '<p class="log-info">⚙️ 正在编译文档为 Wiki 页面，请稍候…</p>';
+
+  try {
+    const r = await API.post('/wiki/compile', {});
+    if (r.status === 'no_docs') {
+      log.innerHTML += `<p class="log-info">${r.message}</p>`;
+    } else if (r.results) {
+      for (const item of r.results) {
+        if (item.error) {
+          log.innerHTML += `<p class="log-err">❌ [${item.doc_title}] 编译失败: ${escHtml(item.error)}</p>`;
+        } else {
+          log.innerHTML += `<p class="log-ok">✅ ${escHtml(item.doc_title)} → 新建 ${item.new_pages} 页, 更新 ${item.updated_pages} 页${item.contradictions > 0 ? `, ⚠️ ${item.contradictions} 处矛盾` : ''}</p>`;
+        }
+      }
+    }
+    log.innerHTML += '<p class="log-info">━━━ 编译完成 ━━━</p>';
+  } catch (e) {
+    log.innerHTML += `<p class="log-err">编译失败: ${escHtml(e.message)}</p>`;
+  }
+
+  document.getElementById('compileBtn').disabled = false;
+  document.getElementById('compileBtn').textContent = '⚡ 编译 Wiki';
+  await loadPages();
+  await loadGraph();
+  await loadCategories();
+  renderPageList();
+  renderCatFilter();
+  updateStats();
+}
+
+async function regenerateWiki() {
+  if (!confirm('确定清空所有 Wiki 页面并从零重建吗？此操作不可撤销。')) return;
+  document.getElementById('regenBtn').disabled = true;
+  document.getElementById('regenBtn').textContent = '重建中…';
+  switchTab('compile');
+  const log = document.getElementById('compileLog');
+  log.innerHTML = '<p class="log-info">🗑️ 已清空 Wiki，重新编译所有文档…</p>';
+
+  try {
+    const r = await API.post('/wiki/regenerate', {});
+    if (r.results) {
+      for (const item of r.results) {
+        if (item.error) {
+          log.innerHTML += `<p class="log-err">❌ [${item.doc_title}] ${escHtml(item.error)}</p>`;
+        } else {
+          log.innerHTML += `<p class="log-ok">✅ ${escHtml(item.doc_title)} → +${item.new_pages} 页</p>`;
+        }
+      }
+    }
+    log.innerHTML += '<p class="log-info">━━━ 重建完成 ━━━</p>';
+  } catch (e) {
+    log.innerHTML += `<p class="log-err">重建失败: ${escHtml(e.message)}</p>`;
+  }
+
+  document.getElementById('regenBtn').disabled = false;
+  document.getElementById('regenBtn').textContent = '🔄 重建';
+  await loadPages();
+  await loadGraph();
+  await loadCategories();
+  renderPageList();
+  renderCatFilter();
+  updateStats();
+}
+
+// ====== 知识图谱 ======
+let graphSim = null;
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+
+  document.getElementById('pageView').classList.remove('visible');
+  document.getElementById('graphView').classList.remove('visible');
+  document.getElementById('compileView').classList.remove('visible');
+
+  if (tab === 'page') {
+    document.getElementById('pageView').classList.add('visible');
+    document.getElementById('delPageBtn').style.display = currentPage ? '' : 'none';
+    document.getElementById('editPageBtn').style.display = currentPage ? '' : 'none';
+  } else if (tab === 'graph') {
+    document.getElementById('graphView').classList.add('visible');
+    document.getElementById('delPageBtn').style.display = 'none';
+    document.getElementById('editPageBtn').style.display = 'none';
+    setTimeout(renderGraph, 100);
+  } else if (tab === 'compile') {
+    document.getElementById('compileView').classList.add('visible');
+    document.getElementById('delPageBtn').style.display = 'none';
+    document.getElementById('editPageBtn').style.display = 'none';
+  }
+}
+
+function renderGraph() {
+  const canvas = document.getElementById('graphCanvas');
+  const container = document.getElementById('graphView');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  const ctx = canvas.getContext('2d');
+
+  if (!graphNodes.length) {
+    ctx.fillStyle = '#8888a0';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('暂无 Wiki 页面，请先编译', canvas.width/2, canvas.height/2);
+    return;
+  }
+
+  // Compute node degrees for sizing
+  const degreeMap = {};
+  graphEdges.forEach(e => {
+    degreeMap[e.source] = (degreeMap[e.source] || 0) + 1;
+    degreeMap[e.target] = (degreeMap[e.target] || 0) + 1;
+  });
+  const maxDeg = Math.max(1, ...Object.values(degreeMap));
+
+  const nodes = graphNodes.map((n, i) => {
+    const deg = degreeMap[n.id] || 0;
+    return {
+      ...n, deg,
+      x: canvas.width/2 + (Math.random()-0.5)*200, y: canvas.height/2 + (Math.random()-0.5)*200,
+      vx: 0, vy: 0,
+    };
+  });
+  const nodeMap = {};
+  nodes.forEach(n => nodeMap[n.id] = n);
+
+  const edges = graphEdges.filter(e => nodeMap[e.source] && nodeMap[e.target]).map(e => ({
+    source: nodeMap[e.source], target: nodeMap[e.target], type: e.type || 'reference',
+  }));
+
+  // Run simulation
+  let dragging = null;
+  let hovered = null;
+
+  function simulate() {
+    for (const n of nodes) {
+      if (n === dragging) continue;
+      // center gravity
+      n.vx += (canvas.width/2 - n.x) * 0.001;
+      n.vy += (canvas.height/2 - n.y) * 0.001;
+      // repulsion
+      for (const m of nodes) {
+        if (n === m) continue;
+        const dx = n.x - m.x, dy = n.y - m.y;
+        const dist = Math.max(Math.sqrt(dx*dx+dy*dy), 1);
+        const force = 500 / (dist * dist);
+        n.vx += (dx/dist) * force * 0.05;
+        n.vy += (dy/dist) * force * 0.05;
+      }
+    }
+    // edge attraction
+    for (const e of edges) {
+      const dx = e.target.x - e.source.x, dy = e.target.y - e.source.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const force = (dist - 120) * 0.005;
+      e.source.vx += dx/dist * force;
+      e.source.vy += dy/dist * force;
+      e.target.vx -= dx/dist * force;
+      e.target.vy -= dy/dist * force;
+    }
+    // apply
+    for (const n of nodes) {
+      if (n === dragging) continue;
+      n.vx *= 0.9; n.vy *= 0.9;
+      n.x += n.vx; n.y += n.vy;
+      n.x = Math.max(30, Math.min(canvas.width-30, n.x));
+      n.y = Math.max(30, Math.min(canvas.height-30, n.y));
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Helper: get node radius based on degree
+    function nodeRadius(n) {
+      const base = 5, max = 16;
+      if (maxDeg <= 1) return 7;
+      return base + (n.deg || 0) / maxDeg * (max - base);
+    }
+
+    // Draw edges with direction arrows
+    for (const e of edges) {
+      const sx = e.source.x, sy = e.source.y;
+      const tx = e.target.x, ty = e.target.y;
+      const dx = tx - sx, dy = ty - sy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 1) continue;
+      const nx = dx / dist, ny = dy / dist;
+      const tr = nodeRadius(e.target);
+      // End at target node surface
+      const ex = tx - nx * (tr + 3), ey = ty - ny * (tr + 3);
+
+      const isHovered = hovered && (hovered === e.source || hovered === e.target);
+      const isContradiction = e.type === 'contradiction';
+
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(ex, ey);
+      if (isContradiction) {
+        ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+      } else if (isHovered) {
+        ctx.strokeStyle = '#7c8aff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+      } else {
+        ctx.strokeStyle = '#2a2a3a';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Direction arrowhead
+      const arrowSize = 5;
+      const ax = ex - nx * arrowSize;
+      const ay = ey - ny * arrowSize;
+      const px = -ny * arrowSize * 0.5;
+      const py = nx * arrowSize * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ax + px, ay + py);
+      ctx.lineTo(ax - px, ay - py);
+      ctx.closePath();
+      ctx.fillStyle = isHovered ? '#7c8aff' : '#4a4a5a';
+      ctx.fill();
+    }
+
+    // Draw nodes sized by degree
+    for (const n of nodes) {
+      const r = nodeRadius(n);
+      const hr = n === hovered ? r + 3 : r;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, hr, 0, Math.PI*2);
+      // Color by category, with special color for high-connection hub nodes
+      const isHub = n.deg >= maxDeg * 0.6;
+      if (n === hovered) {
+        ctx.fillStyle = '#a5b0ff';
+      } else if (isHub) {
+        ctx.fillStyle = '#9c7cf5';
+      } else if (n.category) {
+        ctx.fillStyle = '#7c8aff';
+      } else {
+        ctx.fillStyle = '#5a6ad0';
+      }
+      ctx.fill();
+      ctx.strokeStyle = isHub ? '#b5a0ff' : '#1a1a24';
+      ctx.lineWidth = isHub ? 2.5 : 2;
+      ctx.stroke();
+
+      // Label
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `${n === hovered ? '12' : '10'}px sans-serif`;
+      ctx.textAlign = 'center';
+      const label = n.label.length > 10 ? n.label.slice(0,10)+'…' : n.label;
+      ctx.fillText(label, n.x, n.y + hr + 13);
+    }
+
+    // Legend update
+    document.querySelector('.graph-legend').innerHTML =
+      '<span style="color:#7c8aff;">●</span> 节点 = Wiki 页面 &nbsp;' +
+      '<span style="color:#9c7cf5;">●</span> 枢纽节点 &nbsp;' +
+      '<span style="color:#4a4a5a;">→</span> 引用方向 &nbsp;' +
+      '<span style="color:rgba(245,158,11,0.5);">--</span> 矛盾';
+  }
+
+  function loop() {
+    if (currentTab !== 'graph') return;
+    for (let i = 0; i < 5; i++) simulate();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  canvas.onmousedown = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (const n of nodes) {
+      const r = (n.deg || 0) / Math.max(1, maxDeg) * 11 + 5;
+      const dx = mx - n.x, dy = my - n.y;
+      if (dx*dx + dy*dy < (r+4)*(r+4)) { dragging = n; return; }
+    }
+  };
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (dragging) { dragging.x = mx; dragging.y = my; return; }
+    hovered = null;
+    for (const n of nodes) {
+      const r = (n.deg || 0) / Math.max(1, maxDeg) * 11 + 5;
+      const dx = mx - n.x, dy = my - n.y;
+      if (dx*dx + dy*dy < (r+3)*(r+3)) { hovered = n; canvas.style.cursor = 'pointer'; return; }
+    }
+    canvas.style.cursor = 'default';
+  };
+  canvas.onmouseup = () => {
+    if (dragging && hovered === dragging) {
+      openPageBySlug(dragging.id);
+    }
+    dragging = null;
+  };
+
+  loop();
+}
+
+// ====== Markdown 渲染（基于 marked.js）======
+const WIKILINK_PLACEHOLDER = '\x00WL\x00';
+const wikilinkRegistry = [];
+
+function renderMarkdown(md) {
+  if (!md) return '';
+  wikilinkRegistry.length = 0;
+  // Pre-process: replace [[slug|text]] and [[slug]] with placeholders
+  let processed = md.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, slug, text) => {
+    const idx = wikilinkRegistry.length;
+    wikilinkRegistry.push({ slug: slug.trim(), text: (text || slug).trim() });
+    return WIKILINK_PLACEHOLDER + idx + WIKILINK_PLACEHOLDER;
+  });
+
+  try {
+    if (typeof marked !== 'undefined') {
+      marked.setOptions({ breaks: false, gfm: true });
+      processed = marked.parse(processed);
+    }
+  } catch (e) {
+    processed = escHtml(md).replace(/\n/g, '<br>');
+  }
+
+  // Post-process: restore wikilinks from placeholders
+  processed = processed.replace(new RegExp(WIKILINK_PLACEHOLDER + '(\\d+)' + WIKILINK_PLACEHOLDER, 'g'), (m, idx) => {
+    const wl = wikilinkRegistry[parseInt(idx)];
+    if (wl) {
+      return `<span class="wikilink" data-slug="${escHtml(wl.slug)}">${escHtml(wl.text)}</span>`;
+    }
+    return m;
+  });
+
+  return processed;
+}
+
+// ====== 工具函数 ======
+function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function safeJsonParse(s, def) { try { return JSON.parse(s); } catch { return def; } }
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast ' + (type || '');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ====== 启动 ======
+init();
+</script>
+</body>
+</html>

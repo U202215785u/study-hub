@@ -1,0 +1,20 @@
+services:
+  study-hub:
+    build:
+      context: .
+      args:
+        # 轻量中文模型 (~95MB)；换成 BAAI/bge-large-zh-v1.5 效果更好但首次拉取 ~1.3GB
+        EMBED_MODEL: BAAI/bge-small-zh-v1.5
+    container_name: study-hub
+    ports:
+      - "${PORT:-8741}:8741"
+    volumes:
+      - study-hub-data:/app/data
+      - model-cache:/root/.cache/huggingface
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  study-hub-data:
+  model-cache:
