@@ -6,8 +6,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from database import init_db
@@ -36,7 +37,11 @@ app = FastAPI(title="学习中枢 API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "chrome-extension://*",
+        "http://localhost:8741",
+        "http://127.0.0.1:8741",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +50,13 @@ app.add_middleware(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": "服务器内部错误", "detail": str(exc)},
+    )
 
 app.include_router(upload_router)
 app.include_router(rag_router)

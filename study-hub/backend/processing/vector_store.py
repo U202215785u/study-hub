@@ -27,7 +27,7 @@ class VectorStore:
         if self._embed_fn is None:
             # 优先使用中文优化模型 BGE-large-zh-v1.5（1024维，中文效果远超英文模型）
             # 如需轻量模型可设置环境变量 EMBEDDING_MODEL=all-MiniLM-L6-v2
-            model_name = os.getenv("EMBEDDING_MODEL", "BAAI/bge-large-zh-v1.5")
+            model_name = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
             try:
                 from sentence_transformers import SentenceTransformer
                 self._embed_fn = SentenceTransformer(model_name)
@@ -59,7 +59,13 @@ class VectorStore:
 
     def _api_embed(self, texts: list[str]) -> list[list[float]]:
         from ai_client import ai_client
-        return ai_client.embed(texts)
+        import asyncio, concurrent.futures
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(ai_client.embed(texts))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, ai_client.embed(texts)).result()
 
     def add_document(self, doc_id: int, title: str, chunks: list[str], category: str = "", tags: str = ""):
         if not chunks:

@@ -1,7 +1,7 @@
 import os, json
 import httpx
 
-DEFAULT_PROVIDER = os.getenv("AI_DEFAULT_PROVIDER", "kimi")
+DEFAULT_PROVIDER = os.getenv("AI_DEFAULT_PROVIDER", "deepseek")
 
 PROVIDER_CONFIGS = {
     "kimi": {
@@ -110,7 +110,7 @@ class AIClient:
             data = resp.json()
             return data["content"][0]["text"]
 
-    def embed(self, texts: list[str], provider=None) -> list[list[float]]:
+    async def embed(self, texts: list[str], provider=None) -> list[list[float]]:
         """
         文本向量化。使用 OpenAI 兼容的 /embeddings 接口。
         Claude 不支持 embeddings，会自动选择其他可用 provider。
@@ -137,8 +137,8 @@ class AIClient:
             "input": texts,
         }
 
-        with httpx.Client(timeout=120) as client:
-            resp = client.post(url, headers=headers, json=body)
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(url, headers=headers, json=body)
             if resp.status_code != 200:
                 raise RuntimeError(f"Embedding API 错误 ({resp.status_code}): {resp.text[:500]}")
             data = resp.json()

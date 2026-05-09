@@ -1,5 +1,6 @@
 # 环境变量（含 API Key）
 .env
+**/.env
 
 # Python
 __pycache__/
@@ -28,6 +29,9 @@ bilibili-summaries/
 .claude/settings.local.json
 .claude/daily-snapshots/
 .claude/skill-patches/
+
+# Claude worktrees
+.claude/worktrees/
 
 # OS
 .DS_Store

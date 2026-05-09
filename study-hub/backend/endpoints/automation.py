@@ -2,6 +2,8 @@ import os, sys, json, subprocess, re, tempfile, time, requests
 from datetime import datetime
 from fastapi import APIRouter
 from database import get_db
+from processing.chunker import chunk_text
+from processing.vector_store import get_vector_store
 
 _STUDY_HUB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _STUDY_HUB_DIR not in sys.path:
@@ -313,6 +315,8 @@ def run_automation(payload: dict):
         return {"error": f"未知模块: {module_id}"}
     if not user_input:
         return {"error": "请输入内容"}
+    if len(user_input) > 10000:
+        return {"error": "输入内容过长，请限制在 10000 字以内"}
 
     module = MODULES[module_id]
     engine = module.get("engine", "claude")
@@ -365,8 +369,6 @@ def run_automation(payload: dict):
     conn.commit()
 
     try:
-        from processing.chunker import chunk_text
-        from processing.vector_store import get_vector_store
         chunks = chunk_text(content)
         vs = get_vector_store()
         vs.add_document(doc_id, title, chunks)

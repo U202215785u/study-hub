@@ -28,6 +28,11 @@ COPY backend/ .
 COPY frontend/ /frontend
 COPY mcp_server.py .
 
+# Cleanup to reduce image size
+RUN find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    pip cache purge 2>/dev/null || true && \
+    rm -rf /root/.cache/pip
+
 EXPOSE 8741
 
 CMD ["python", "main.py"]

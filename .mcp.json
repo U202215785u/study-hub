@@ -5,7 +5,7 @@
       "args": ["mcp_server.py"],
       "cwd": "F:/360MoveData/Users/Administrator/Desktop/study web/study-hub",
       "env": {
-        "DASHSCOPE_API_KEY": "sk-a7d9c80565f44004aa456990d45aa0d1",
+        "DASHSCOPE_API_KEY": "your_dashscope_api_key_here",
         "STUDY_HUB_API_BASE": "http://localhost:8741"
       }
     },
@@ -13,7 +13,7 @@
       "command": "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/Scripts/douyin-mcp-server.exe",
       "args": [],
       "env": {
-        "DASHSCOPE_API_KEY": "sk-a7d9c80565f44004aa456990d45aa0d1"
+        "DASHSCOPE_API_KEY": "your_dashscope_api_key_here"
       }
     }
   }

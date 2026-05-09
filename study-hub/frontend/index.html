@@ -1368,31 +1368,33 @@ function renderGuideStep() {
   }
 }
 
-$('guideNext').onclick = () => {
-  if (guideStep < GUIDE_STEPS.length - 1) {
-    guideStep++;
-    renderGuideStep();
-  } else {
-    hideGuide();
+document.addEventListener('DOMContentLoaded', () => {
+  $('guideNext').onclick = () => {
+    if (guideStep < GUIDE_STEPS.length - 1) {
+      guideStep++;
+      renderGuideStep();
+    } else {
+      hideGuide();
+    }
+  };
+
+  $('guidePrev').onclick = () => {
+    if (guideStep > 0) {
+      guideStep--;
+      renderGuideStep();
+    }
+  };
+
+  $('guideSkip').onclick = hideGuide;
+  $('guideHelpBtn').onclick = () => { guideStep = 0; showGuide(); };
+
+  // 首次访问自动弹出
+  if (!localStorage.getItem('guide_done')) {
+    showGuide();
   }
-};
 
-$('guidePrev').onclick = () => {
-  if (guideStep > 0) {
-    guideStep--;
-    renderGuideStep();
-  }
-};
-
-$('guideSkip').onclick = hideGuide;
-$('guideHelpBtn').onclick = () => { guideStep = 0; showGuide(); };
-
-// 首次访问自动弹出
-if (!localStorage.getItem('guide_done')) {
-  showGuide();
-}
-
-init();
+  init();
+});
 </script>
 <!-- 新手引导 -->
 <div class="guide-overlay" id="guideOverlay">
