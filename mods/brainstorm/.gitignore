@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Runtime
+error.log
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# IDE / Editor
+.claude/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

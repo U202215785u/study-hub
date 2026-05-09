@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📋 全栈 Vibe Coding 学习清单</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #1a1a2e; line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+.header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 28px 24px; border-radius: 16px; margin-bottom: 20px; }
+.header h1 { font-size: 1.5rem; margin-bottom: 6px; }
+.header p { opacity: 0.9; font-size: 0.9rem; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+.toolbar button { padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; border: none; font-weight: 600; transition: all 0.15s; }
+.btn-primary { background: #667eea; color: white; }
+.btn-primary:hover { background: #5a6fd6; }
+.btn-outline { background: white; color: #667eea; border: 1.5px solid #667eea; }
+.btn-outline:hover { background: #f0f0ff; }
+.btn-danger { background: #fff; color: #e74c3c; border: 1.5px solid #e74c3c; }
+.btn-danger:hover { background: #fff5f5; }
+
+.stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.stat-card { background: white; padding: 12px 18px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); flex: 1; min-width: 100px; text-align: center; }
+.stat-card .num { font-size: 1.8rem; font-weight: 700; color: #667eea; }
+.stat-card .label { font-size: 0.75rem; color: #999; margin-top: 2px; }
+
+.topic-section { background: white; border-radius: 12px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+.topic-header { padding: 14px 18px; background: #f8f9ff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+.topic-header:hover { background: #f0f2ff; }
+.topic-header h2 { font-size: 0.95rem; color: #4a4a8a; display: flex; align-items: center; gap: 8px; }
+.topic-header .badge { background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
+.topic-header .arrow { font-size: 0.7rem; color: #999; transition: transform 0.2s; }
+.topic-header .arrow.open { transform: rotate(90deg); }
+.topic-body { padding: 6px 18px 14px; display: none; }
+.topic-body.open { display: block; }
+
+.sub-header { padding: 12px 6px 4px; font-weight: 700; color: #666; font-size: 0.85rem; margin-top: 4px; border-bottom: 1px solid #f0f0f0; }
+
+.item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 6px; border-bottom: 1px solid #f5f5f5; transition: background 0.12s; border-radius: 4px; }
+.item:hover { background: #fafaff; }
+.item:last-child { border-bottom: none; }
+.item.done .item-text { text-decoration: line-through; color: #bbb; }
+.item-num { color: #667eea; font-weight: 700; font-size: 0.8rem; min-width: 28px; text-align: right; padding-top: 2px; flex-shrink: 0; }
+.item-check { width: 18px; height: 18px; border: 2px solid #d0d0d0; border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-top: 1px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.item-check:hover { border-color: #667eea; background: #f0f0ff; }
+.item-check.done { background: #667eea; border-color: #667eea; }
+.item-check.done::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; }
+.item-text { flex: 1; font-size: 0.88rem; }
+.item-text a { color: #667eea; text-decoration: none; }
+.item-text a:hover { text-decoration: underline; }
+.item-text .tag { display: inline-block; padding: 0px 6px; border-radius: 8px; font-size: 0.68rem; font-weight: 600; margin-left: 5px; vertical-align: 1px; }
+.tag-教程 { background: #fff3e0; color: #e67e22; }
+.tag-概念 { background: #fce4ec; color: #c62828; }
+.tag-自查 { background: #e8f5e9; color: #2e7d32; }
+.tag-项目 { background: #e3f2fd; color: #1565c0; }
+.tag-练习 { background: #f3e5f5; color: #7b1fa2; }
+.tag-AI { background: #fff8e1; color: #f57f17; }
+
+.search-box { padding: 8px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 0.85rem; width: 220px; outline: none; transition: border-color 0.2s; }
+.search-box:focus { border-color: #667eea; }
+
+.empty { text-align: center; padding: 50px 20px; color: #999; display: none; }
+.empty .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+@media (max-width: 600px) {
+  .header h1 { font-size: 1.2rem; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .search-box { width: 100%; }
+  .stat-card { min-width: 70px; padding: 10px 12px; }
+  .stat-card .num { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>📋 全栈 Vibe Coding Engineer 学习清单</h1>
+  <p>按知识点顺序排列 · 勾选追踪进度 · 自动保存 · 搜索过滤</p>
+</div>
+
+<div class="toolbar">
+  <button class="btn-primary" onclick="expandAll()">📂 全部展开</button>
+  <button class="btn-outline" onclick="collapseAll()">📁 全部折叠</button>
+  <button class="btn-outline" onclick="exportData()">💾 导出进度</button>
+  <button class="btn-outline" onclick="importData()">📥 恢复进度</button>
+  <button class="btn-danger" onclick="resetData()">🔄 全部重置</button>
+  <input class="search-box" id="search" placeholder="🔍 搜索知识点..." oninput="doSearch()">
+</div>
+
+<div class="stats" id="stats"></div>
+<div id="list"></div>
+<div class="empty" id="empty"><div class="icon">📄</div>没有数据</div>
+
+</div>
+
+<script>
+// ==================== 完整学习计划数据 ====================
+const PLAN = [
+{ topic:"Phase 0 · 心智热身 — 计算机世界观", items:[
+  {t:"安装 VS Code / Cursor 编辑器"},{t:"安装 Node.js（nodejs.org 下载 LTS 版）"},{t:"安装 Git（git-scm.com 下载）"},{t:"注册 GitHub 账号"},{t:"注册 Vercel 账号（用 GitHub 登录 vercel.com）"},{t:"在终端运行 node -v、npm -v、git --version，确认所有版本号正常显示","tg":"练习"},
+  {t:"📺 看 CS50 第一讲（B站搜索「CS50 计算机科学导论 第一讲」）","tg":"教程"},{t:"📺 计算机网络入门：BV1kid5BnEPH（看前 1 小时了解网络分层）","tg":"教程"},
+  {t:"在笔记本上画出「浏览器 → DNS → 服务器 → 数据库」的流程图","tg":"练习"},{t:"🔍 自查：浏览器输入网址按下回车后，发生了什么？","tg":"自查"},{t:"🔍 自查：什么是 DNS？为什么需要它？","tg":"自查"},{t:"🔍 自查：前端和后端大概是什么？","tg":"自查"},
+  {t:"学习终端基础命令：cd、ls、mkdir、touch、rm","tg":"练习"},{t:"在终端里练习创建项目文件夹结构","tg":"练习"},{t:"安装 Notion 或 Obsidian，建立学习笔记库"},{t:"写下第一篇笔记：「我今天知道的最重要的 3 件事」","tg":"练习"},{t:"练习 npm init 创建一个空项目，npm install 装一个包","tg":"练习"},{t:"🔍 自查：cd .. 和 cd / 有什么区别？","tg":"自查"},{t:"🔍 自查：npm install 做了什么？","tg":"自查"},
+  {t:"找一段之前项目里 AI 生成的代码，让 Claude 逐行解释（用简单比喻）","tg":"练习"},{t:"用提示词让 AI 以「10岁小孩能听懂的话」解释你不懂的概念","tg":"练习"},{t:"练习对比模式：让 AI 给出实现同一功能的至少 3 种方案并对比","tg":"练习"},{t:"练习师徒模式：让 AI 用苏格拉底式提问引导你思考而非直接给代码","tg":"练习"},{t:"在笔记里总结「向 AI 提问的 5 个有效技巧」","tg":"练习"},
+  {t:"📺 看 Pink老师前端入门 BV1MvaVzUEuz（前 2 小时）","tg":"教程"},{t:"用 AI 辅助写一个纯 HTML 个人介绍页面，逐行理解每一行","tg":"练习"},{t:"🔍 自查：HTML 是干什么的？CSS 是干什么的？JS 是干什么的？","tg":"自查"},{t:"🔍 自查：为什么不能只用 HTML 做一个好看的网页？","tg":"自查"},
+  {t:"🛠 做个人 Landing Page（头像、名字、简介、技能标签、联系方式）","tg":"项目"},{t:"检查：页面在浏览器里能正常打开","tg":"项目"},{t:"检查：理解 HTML 结构（head 和 body 的区别）","tg":"项目"},{t:"检查：理解 CSS 是怎么让页面变好看的","tg":"项目"},{t:"检查：能说出至少 5 个用了的 HTML 标签","tg":"项目"},
+  {t:"闭卷完成本周全部自查表问题，答不出的回头查笔记/问 AI","tg":"复习"},{t:"写周总结：这周最大的 3 个收获 + 最大的 1 个困惑","tg":"复习"},
+]},
+
+{ topic:"Phase 1 · HTML + CSS 核心概念", items:[
+  {t:"📺 看 Pink老师 HTML+CSS 2025 版 BV1MvaVzUEuz","tg":"教程"},{t:"📺 备选：尚硅谷禹神版 HTML+CSS 入门（B站搜索）","tg":"教程"},{t:"理解 DOM 树概念：为什么网页是「一棵树」？","tg":"概念"},{t:"理解 div、span、section、header、footer 标签各自的作用","tg":"概念"},
+  {t:"理解 CSS 盒模型：margin、border、padding、content 分别是什么？","tg":"概念"},{t:"理解 Flexbox 布局：为什么它是现代布局的基础？","tg":"概念"},{t:"用 AI 生成一个 Flexbox 的可视化演示来加深理解","tg":"练习"},{t:"理解 CSS 选择器优先级：为什么有些样式会被覆盖？","tg":"概念"},{t:"理解响应式设计：@media 查询的核心原理","tg":"概念"},
+  {t:"🛠 做完整多段式 Landing Page（Hero区域、Features区域、CTA区域）","tg":"项目"},{t:"要求：响应式（手机和电脑都好看）","tg":"项目"},{t:"要求：使用 Flexbox 布局","tg":"项目"},
+  {t:"🔍 自查：什么是 DOM 树？","tg":"自查"},{t:"🔍 自查：margin 和 padding 的区别？（画图说明）","tg":"自查"},{t:"🔍 自查：Flexbox 解决了什么问题？以前用什么布局？","tg":"自查"},{t:"🔍 自查：同一个元素上的多个 CSS 规则，谁说了算？","tg":"自查"},{t:"🔍 自查：响应式设计的核心原理是什么？","tg":"自查"},
+  {t:"📺 备选：140集全套前端 BV1wQ5PzNE4W","tg":"教程"},{t:"📺 备选：前端零基础实战 BV1rXuDzHE82","tg":"教程"},
+]},
+
+{ topic:"Phase 1 · JavaScript 核心概念", items:[
+  {t:"📺 JS 2小时速通：BV12rYYzuE79 ⭐","tg":"教程"},{t:"理解数据类型：string、number、boolean、array、object 是什么？","tg":"概念"},{t:"理解函数：参数是输入，返回值是输出","tg":"概念"},{t:"练习：手写 10 个小函数（加减乘除、字符串反转、数组去重等）","tg":"练习"},
+  {t:"📺 JS 完整体系：BV11NAUeyEAQ 276集（看异步部分）","tg":"教程"},{t:"理解「同步」和「异步」的区别——用餐厅点餐的比喻","tg":"概念"},{t:"理解 Promise：它解决了什么问题？——用「餐厅取餐牌」比喻","tg":"概念"},{t:"理解 async/await 和 .then() 的关系","tg":"概念"},{t:"理解数组三剑客：map、filter、reduce 分别做什么？各举实际例子","tg":"概念"},{t:"理解展开运算符 ... 到底在干什么？举 3 种用法","tg":"概念"},{t:"理解解构赋值：从对象/数组里快速取值的语法","tg":"概念"},
+  {t:"练习：用 fetch 请求一个免费 API（如 JSONPlaceholder）并在页面上显示数据","tg":"练习"},
+  {t:"🛠 做纯 JS Todo 应用（增加、删除、标记完成、筛选）","tg":"项目"},{t:"要求：数据存在 localStorage 里，刷新页面不丢失","tg":"项目"},{t:"要求：不依赖任何框架，纯 HTML + CSS + JS","tg":"项目"},
+  {t:"🔍 自查：const、let、var 有什么区别？什么时候用哪个？","tg":"自查"},{t:"🔍 自查：array 和 object 最大的区别？各自适合存什么数据？","tg":"自查"},{t:"🔍 自查：什么是异步？用生活中的例子解释","tg":"自查"},{t:"🔍 自查：Promise 解决了什么问题？","tg":"自查"},{t:"🔍 自查：map、filter、reduce 各举一个实际例子","tg":"自查"},
+]},
+
+{ topic:"Phase 1 · React 核心概念", items:[
+  {t:"用 AI 帮你初始化一个 React 项目（推荐 Vite + React 模板）","tg":"练习"},{t:"理解组件：React 里一切皆组件。为什么要把页面拆成组件？","tg":"概念"},{t:"理解 JSX：为什么 HTML 可以写在 JavaScript 里？","tg":"概念"},{t:"理解 Props：组件之间怎么传递数据（父传子）","tg":"概念"},
+  {t:"理解 State（状态）：这是 React 最重要的概念！为什么说 UI = f(state)？","tg":"概念"},{t:"理解 useState：怎么声明状态、怎么更新状态","tg":"概念"},{t:"理解 useEffect：什么时候执行？用来做什么？","tg":"概念"},{t:"理解虚拟 DOM：React 为什么快？（理解概念即可，不深究实现）","tg":"概念"},
+  {t:"练习：做一个计数器、一个输入框实时预览","tg":"练习"},
+  {t:"🛠 用 React 重写 Todo 应用","tg":"项目"},{t:"新增功能：分类标签 + 搜索过滤 + 统计完成率","tg":"项目"},
+  {t:"📺 React 官方教程：B站搜索「React 官方教程 2025 中文」","tg":"教程"},{t:"📺 React 项目实战：B站搜索「React 入门项目实战 2025」","tg":"教程"},
+  {t:"🔍 自查：State 和 Props 的最本质区别？","tg":"自查"},{t:"🔍 自查：为什么说「UI 是状态的函数」？（用 Todo 举例）","tg":"自查"},{t:"🔍 自查：useState 和 useEffect 分别解决什么问题？","tg":"自查"},{t:"🔍 自查：JSX 和普通 HTML 有什么区别？","tg":"自查"},
+]},
+
+{ topic:"Phase 1 · Next.js + Tailwind CSS", items:[
+  {t:"📺 Next.js 15 快速入门：BV1SKJazTEKN（1.5小时）⭐","tg":"教程"},{t:"理解文件路由：/app/about/page.tsx 对应什么 URL？","tg":"概念"},{t:"理解服务端组件 vs 客户端组件（Next.js 最核心的概念）","tg":"概念"},{t:"理解 Server Actions：不用单独写 API 就能处理表单提交","tg":"概念"},{t:"📺 SaaS 全栈实战：BV14NaJzYEmi（按需观看，内容很全）","tg":"教程"},
+  {t:"📺 Tailwind CSS 90分钟入门：BV1MJMwzoE8X ⭐","tg":"教程"},{t:"理解 utility-first 思想：为什么 HTML 里写一大堆类名反而是好主意？","tg":"概念"},{t:"了解 shadcn/ui 组件库：独立开发者的最佳选择——直接复制粘贴组件","tg":"概念"},
+  {t:"🛠 用 Next.js + Tailwind + shadcn/ui 做一个 Markdown 博客系统","tg":"项目"},{t:"要求：博客内容用 Markdown 文件存储","tg":"项目"},{t:"要求：有首页（文章列表）+ 文章详情页","tg":"项目"},
+  {t:"📺 进阶可选：Next.js 旅游 App 实战 BV1jtnmzwEdw","tg":"教程"},
+  {t:"🔍 自查：Next.js 文件路由是什么意思？","tg":"自查"},{t:"🔍 自查：服务端组件和客户端组件什么时候用哪个？","tg":"自查"},{t:"🔍 自查：Tailwind 原子化 CSS 为什么适合独立开发者？","tg":"自查"},{t:"🔍 自查：shadcn/ui 是什么？怎么用？","tg":"自查"},
+]},
+
+{ topic:"Phase 2 · 数据库基础", items:[
+  {t:"📺 57集MySQL零基础入门：BV1Lbt4zxECX（先看前 15 集）","tg":"教程"},{t:"理解关系型数据库 vs 非关系型数据库：什么时候用哪个？","tg":"概念"},{t:"理解表、字段、主键、外键——表之间怎么关联？","tg":"概念"},{t:"📺 全网最全SQL教程：BV1eE61YfE7t","tg":"教程"},{t:"学习 SQL 四件套：SELECT（查）、INSERT（增）、UPDATE（改）、DELETE（删）","tg":"练习"},{t:"理解 ORM：为什么用 Prisma/Drizzle 而不是直接写 SQL？","tg":"概念"},{t:"📺 学习 Prisma ORM：B站搜索「Prisma 入门 2025」","tg":"教程"},
+  {t:"🛠 先用 Excel 画一个 SaaS 产品的数据库结构（定义表和字段）","tg":"项目"},{t:"然后用 Prisma + SQLite 实现数据库","tg":"项目"},{t:"练习用 Prisma Studio 可视化查看和编辑数据","tg":"项目"},
+  {t:"🔍 自查：关系型数据库和 Excel 有什么相同和不同？","tg":"自查"},{t:"🔍 自查：什么是主键？什么是外键？它们怎么关联表？","tg":"自查"},{t:"🔍 自查：什么是 ORM？为什么不直接写 SQL？","tg":"自查"},{t:"🔍 自查：一个博客系统至少需要几张表？每张表存什么？","tg":"自查"},
+]},
+
+{ topic:"Phase 2 · API 设计", items:[
+  {t:"理解 RESTful API 概念——用「餐厅服务员」比喻：你是顾客、服务员是 API、厨房是后端","tg":"概念"},{t:"理解 HTTP 方法：GET（读）、POST（创建）、PUT（全量更新）、DELETE（删除）","tg":"概念"},{t:"理解 JSON：前后端通信的标准数据格式","tg":"概念"},{t:"理解认证和授权：JWT 是什么？Session 是什么？","tg":"概念"},{t:"📺 回顾 Next.js API Routes：重看 BV1SKJazTEKN 相关部分","tg":"教程"},
+  {t:"🛠 给 Week 6 的数据库加一套完整的 CRUD API（增删改查接口）","tg":"项目"},
+  {t:"🔍 自查：API 是什么？用你自己的比喻解释","tg":"自查"},{t:"🔍 自查：GET 和 POST 最本质的区别？","tg":"自查"},{t:"🔍 自查：PUT 和 PATCH 有什么区别？","tg":"自查"},{t:"🔍 自查：为什么前后端之间需要 API 规范？","tg":"自查"},{t:"🔍 自查：前端请求一个 API 时，数据是怎么流动的？","tg":"自查"},
+]},
+
+{ topic:"Phase 2 · 认证和用户系统", items:[
+  {t:"📺 2025终极Next.js认证指南：BV1burTYLEia ⭐（Auth.js + Prisma + OAuth）","tg":"教程"},{t:"理解密码哈希：为什么密码不能明文存在数据库里？bcrypt 做了什么？","tg":"概念"},{t:"理解 JWT 认证完整流程：用户登录 → 服务器发 Token → 前端存 Token → 每次请求带 Token → 服务器验证 Token","tg":"概念"},{t:"理解 OAuth：「用 Google 登录」的本质是什么？完整流程是怎样的？","tg":"概念"},{t:"理解中间件（Middleware）：为什么认证要在中间件里做？","tg":"概念"},{t:"了解认证库：为什么用 NextAuth.js / Clerk 而不是自己手写？","tg":"概念"},
+  {t:"🛠 做一个需要登录才能访问的私人笔记应用","tg":"项目"},
+  {t:"🔍 自查：为什么密码不能明文存？bcrypt 做了什么？","tg":"自查"},{t:"🔍 自查：JWT 认证流程是怎样的？从登录到每次请求","tg":"自查"},{t:"🔍 自查：OAuth 登录的本质是什么？","tg":"自查"},{t:"🔍 自查：什么是中间件？为什么认证要在中间件里做？","tg":"自查"},
+]},
+
+{ topic:"Phase 2 · Python 后端（强烈推荐）", items:[
+  {t:"📺 FastAPI 1小时快速入门：BV1JTCQBQERg ⭐","tg":"教程"},{t:"📺 FastAPI 38节完整版（选看）：BV1j8a9z5EEu","tg":"教程"},{t:"📺 FastAPI 3天项目实战：BV1AB78zDEdJ","tg":"教程"},{t:"理解前后端分离架构：前端用 Next.js，后端用 Python FastAPI","tg":"概念"},
+  {t:"🛠 用 FastAPI 给笔记应用写一套后端 API，前端继续用 Next.js 调用","tg":"项目"},{t:"核心理念：通过这个练习理解「框架和语言不是重点，理解了概念就行」","tg":"概念"},
+  {t:"🔍 自查：FastAPI 和 Next.js API Routes 做的事相同吗？有什么区别？","tg":"自查"},{t:"🔍 自查：前后端分离架构的优点？独立开发者适合吗？","tg":"自查"},
+]},
+
+{ topic:"Phase 3 · Git 和 GitHub", items:[
+  {t:"📺 Git 30分钟快速入门：BV1KarSY8E8v","tg":"教程"},{t:"📺 Git 系统学习：B站搜索「鱼皮 Git 教程 2025」","tg":"教程"},{t:"🎮 玩游戏学 Git 分支：learngitbranching.js.org（强烈推荐！边玩边学）","tg":"练习"},
+  {t:"理解三个核心概念：仓库（Repository）、提交（Commit）、分支（Branch）","tg":"概念"},{t:"学会标准工作流：git add → git commit → git push","tg":"练习"},{t:"理解 .gitignore：什么文件不该提交到仓库？（node_modules、.env 等）","tg":"概念"},{t:"理解 Pull Request：代码审查的基本流程","tg":"概念"},
+  {t:"🛠 把你之前所有项目都用 Git 管理起来，全部推到 GitHub","tg":"项目"},
+  {t:"🔍 自查：git add、git commit、git push 各自做了什么？","tg":"自查"},{t:"🔍 自查：什么是分支？为什么需要分支？","tg":"自查"},{t:"🔍 自查：git pull 和 git fetch 的区别？","tg":"自查"},{t:"🔍 自查：.gitignore 是干什么的？","tg":"自查"},
+]},
+
+{ topic:"Phase 3 · 部署和 DevOps 基础", items:[
+  {t:"📺 Vercel 免费部署实战：BV1EJ2pYHEH8 ⭐","tg":"教程"},{t:"📺 Next.js 发布到 Vercel 详细教程：BV1ak4y1h78y","tg":"教程"},
+  {t:"理解：什么是服务器？Vercel、Railway、AWS 分别是什么？","tg":"概念"},{t:"理解域名和 DNS：为什么输入 google.com 能找到 Google 的服务器？","tg":"概念"},{t:"理解 HTTPS 和 SSL 证书：浏览器地址栏那把「小锁」代表什么？","tg":"概念"},{t:"理解环境变量：为什么 API 密钥、数据库密码不能写在代码里？应该放哪？","tg":"概念"},{t:"了解 CI/CD：自动化测试和部署是什么概念？","tg":"概念"},
+  {t:"🛠 把 Phase 2 的笔记应用部署到 Vercel，让全世界都能访问","tg":"项目"},{t:"买一个便宜的域名（namecheap/阿里云），绑定到你的应用","tg":"项目"},{t:"配置好 HTTPS（Vercel 一般自动配好）","tg":"项目"},
+  {t:"🔍 自查：Vercel 帮我做了什么？","tg":"自查"},{t:"🔍 自查：买了域名为什么还要配 DNS？","tg":"自查"},{t:"🔍 自查：HTTPS 的小锁代表什么？","tg":"自查"},{t:"🔍 自查：API 密钥为什么不能写在代码里？","tg":"自查"},
+]},
+
+{ topic:"Phase 3 · 集成第三方服务", items:[
+  {t:"📺 Stripe 订阅支付 Next.js 完整教程：BV127xkeQEat ⭐","tg":"教程"},{t:"📺 完整 SaaS 实战（Stripe+Shadcn+NextAuth）：BV1vN4y1C7cU","tg":"教程"},{t:"📖 文字教程：Stripe 支付全指南（blog.wenhaofree.com）","tg":"教程"},{t:"📖 文字教程：Vercel 官方 Stripe 指南（vercel.com）","tg":"教程"},
+  {t:"理解 Stripe Checkout 完整流程：创建 Session → 前端跳转支付页 → Webhook 回调确认","tg":"概念"},{t:"理解 Webhook：为什么支付系统需要 Webhook？而不只是前端告诉我「支付成功」？","tg":"概念"},{t:"理解第三方服务优先原则：独立开发者为什么尽量用 SaaS 服务而非自建？","tg":"概念"},{t:"了解邮件服务：Resend / SendGrid 的基本使用场景","tg":"概念"},{t:"了解文件上传方案：上传到哪里？返回的 URL 怎么存在数据库？","tg":"概念"},
+  {t:"🛠 给笔记应用加上付费功能（用 Stripe 测试模式，不真的收钱）","tg":"项目"},
+  {t:"🔍 自查：Stripe Checkout 的完整流程是怎样的？","tg":"自查"},{t:"🔍 自查：什么是 Webhook？为什么支付系统需要它？","tg":"自查"},{t:"🔍 自查：为什么独立开发者应该多用 SaaS 服务？","tg":"自查"},
+]},
+
+{ topic:"Phase 4 · 产品1 — SaaS 工具箱", items:[
+  {t:"🛠 做一个在线工具合集网站","tg":"项目"},{t:"功能1：JSON 格式化/校验工具","tg":"项目"},{t:"功能2：Base64 编解码工具","tg":"项目"},{t:"功能3：URL 编解码工具","tg":"项目"},{t:"功能4：Markdown 实时预览工具","tg":"项目"},{t:"UI：Tailwind + shadcn/ui 做漂亮界面","tg":"项目"},{t:"SEO：Next.js Metadata API 优化搜索引擎","tg":"项目"},{t:"部署：Vercel 一键上线","tg":"项目"},{t:"📖 参考工具站找灵感：tool.lu、json.cn、bejson.com","tg":"练习"},
+]},
+
+{ topic:"Phase 4 · 产品2 — 微型 SaaS", items:[
+  {t:"🛠 选一个方向做完整 SaaS 产品（习惯追踪器 / AI读书笔记 / 发票生成器 三选一）","tg":"项目"},{t:"用户注册/登录（NextAuth.js）","tg":"项目"},{t:"数据库设计（Prisma + PostgreSQL 或 SQLite）","tg":"项目"},{t:"核心功能开发（你的产品独特卖点）","tg":"项目"},{t:"付费墙：Stripe Checkout 集成","tg":"项目"},{t:"邮件通知：Resend 发送欢迎邮件、付费确认邮件","tg":"项目"},{t:"后台管理页：看用户数据、订单数据","tg":"项目"},{t:"部署上线 + 绑定域名","tg":"项目"},
+]},
+
+{ topic:"Phase 4 · 产品3 — 自由选题", items:[
+  {t:"🛠 选一个你真正想做、觉得有商业潜力的方向","tg":"项目"},{t:"第1步：需求分析 + 技术选型 + 数据库设计","tg":"项目"},{t:"第2步：核心功能开发（你是主导，AI 辅助执行）","tg":"项目"},{t:"第3步：打磨细节 + 部署上线 + 公开发布","tg":"项目"},
+  {t:"📢 部署到 Vercel + 绑定域名 + HTTPS","tg":"项目"},{t:"📢 配置 Stripe 生产环境（真的可以收钱了！）","tg":"项目"},{t:"📢 写一篇发布文章，发到 Twitter/X、V2EX、即刻等平台","tg":"项目"},{t:"📢 提交到 Product Hunt","tg":"项目"},
+]},
+
+{ topic:"Phase 5 · AI 协作精通（贯穿全阶段）", items:[
+  {t:"📌 解释模式：「逐行解释这段代码，用简单的比喻」— 每天用","tg":"AI"},{t:"📌 对比模式：「实现这个功能有几种方案？对比优缺点」— 每个功能设计前用","tg":"AI"},{t:"📌 审查模式：「审查这段代码：安全性、性能、可维护性」— 每个项目完成时用","tg":"AI"},{t:"📌 教学模式：「用生活中的比喻解释这个概念」— 遇到不懂概念时用","tg":"AI"},{t:"📌 师徒模式：「用苏格拉底式提问引导我思考，别直接给代码」— 想自己思考时用","tg":"AI"},
+  {t:"自评：你当前在 AI 协作五级中的哪一级？（L1→L5），每周评估一次","tg":"AI"},{t:"L2 目标：能用精准技术语言描述需求（如：「JWT认证、密码bcrypt哈希」）","tg":"AI"},{t:"L3 目标：AI 生成代码后能读懂、能判断好坏、能指出问题","tg":"AI"},{t:"L4 目标：能做架构决策（如「这个项目用 Next.js + PostgreSQL + Prisma」）","tg":"AI"},{t:"L5 目标：能同时驱动多个 AI 实例做不同任务，你来协调验证","tg":"AI"},
+]},
+
+{ topic:"📚 学习资源快速索引", items:[
+  {t:"计算机基础：BV1kid5BnEPH（2026全新计算机网络教学）","tg":"教程"},{t:"HTML+CSS 首选：BV1MvaVzUEuz（Pink老师2025前端）","tg":"教程"},{t:"HTML+CSS 备选：BV1wQ5PzNE4W（140集全套前端）","tg":"教程"},{t:"JavaScript 速通：BV12rYYzuE79（2小时快速入门）","tg":"教程"},{t:"JavaScript 完整：BV11NAUeyEAQ（276集零基础到精通）","tg":"教程"},{t:"Next.js 入门：BV1SKJazTEKN（1.5小时快速上手）","tg":"教程"},{t:"Next.js 全栈：BV14NaJzYEmi（SaaS 实战完整教程）","tg":"教程"},{t:"Tailwind CSS：BV1MJMwzoE8X（90分钟极速掌握）","tg":"教程"},{t:"SQL/MySQL：BV1Lbt4zxECX（57集零基础入门）","tg":"教程"},{t:"NextAuth 认证：BV1burTYLEia（2025终极认证指南）","tg":"教程"},{t:"FastAPI 入门：BV1JTCQBQERg（1小时快速学会）","tg":"教程"},{t:"Git 快速：BV1KarSY8E8v（30分钟掌握）","tg":"教程"},{t:"Vercel 部署：BV1EJ2pYHEH8（免费部署实战）","tg":"教程"},{t:"Stripe 支付：BV127xkeQEat（订阅支付完整教程）","tg":"教程"},
+]},
+];
+
+// ==================== APP LOGIC ====================
+let data = [];
+let STORAGE_KEY = 'lc_data_v2';
+
+function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0 && parsed[0].items) {
+        data = parsed;
+        render();
+        return;
+      }
+    } catch(e) { /* corrupted, fall through */ }
+  }
+  // First time: load from embedded plan
+  data = PLAN.map(t => ({ topic: t.topic, items: t.items.map(i => ({ text: i.t, tags: i.tg ? [i.tg] : [], done: false })) }));
+  render();
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function render() {
+  save();
+  const list = document.getElementById('list');
+  const stats = document.getElementById('stats');
+  let total = 0, done = 0;
+  data.forEach(t => { total += t.items.length; t.items.forEach(i => { if (i.done) done++; }); });
+
+  // Stats (simple)
+  stats.innerHTML = `
+    <div class="stat-card"><div class="num">${data.length}</div><div class="label">知识模块</div></div>
+    <div class="stat-card"><div class="num">${total}</div><div class="label">总知识点</div></div>
+    <div class="stat-card"><div class="num">${done}</div><div class="label">已完成</div></div>
+    <div class="stat-card"><div class="num">${total ? Math.round(done/total*100) : 0}%</div><div class="label">完成率</div></div>
+  `;
+
+  let num = 0;
+  let html = '';
+
+  data.forEach((topic, ti) => {
+    const topicDone = topic.items.filter(i => i.done).length;
+    const startNum = num + 1;
+    const isOpen = (topic._collapsed !== true);
+
+    let body = '';
+    let lastTag = '';
+    topic.items.forEach((item, ii) => {
+      num++;
+      const tag = item.tags[0] || '';
+      if (tag !== lastTag && tag) {
+        const labels = { '教程':'📺 学习教程', '概念':'💡 核心概念', '自查':'🔍 自我检查', '项目':'🛠 项目实战', '练习':'✏️ 动手练习', '复习':'🔄 复习回顾', 'AI':'🤖 AI 协作' };
+        if (labels[tag]) body += `<div class="sub-header">${labels[tag]}</div>`;
+        lastTag = tag;
+      }
+      const dc = item.done ? ' done' : '';
+      const cc = item.done ? ' done' : '';
+      const tagHtml = (item.tags||[]).map(tg => {
+        const cls = 'tag-'+tg;
+        return `<span class="tag ${cls}">${tg}</span>`;
+      }).join('');
+      body += `<div class="item${dc}" data-t="${ti}" data-i="${ii}"><div class="item-num">${num}</div><div class="item-check${cc}" onclick="toggle(${ti},${ii})"></div><div class="item-text">${item.text}${tagHtml}</div></div>`;
+    });
+
+    const endNum = num;
+    html += `<div class="topic-section"><div class="topic-header" onclick="toggleSection(${ti})"><h2><span class="badge">#${startNum}-${endNum}</span>${topic.topic}</h2><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:0.78rem;color:#999;">${topicDone}/${topic.items.length}</span><span class="arrow${isOpen?' open':''}">▶</span></div></div><div class="topic-body${isOpen?' open':''}">${body}</div></div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+function toggle(ti, ii) {
+  data[ti].items[ii].done = !data[ti].items[ii].done;
+  render();
+}
+
+function toggleSection(ti) {
+  data[ti]._collapsed = !data[ti]._collapsed;
+  render();
+}
+
+function expandAll() { data.forEach(t => t._collapsed = false); render(); }
+function collapseAll() { data.forEach(t => t._collapsed = true); render(); }
+
+function resetData() {
+  if (!confirm('确定要重置所有勾选状态吗？')) return;
+  data.forEach(t => t.items.forEach(i => i.done = false));
+  data.forEach(t => t._collapsed = false);
+  render();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({data, exportedAt: new Date().toISOString()}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '学习进度_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function importData() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (d.data && d.data.length > 0) { data = d.data; render(); alert('进度已恢复！'); }
+        else alert('文件格式不对');
+      } catch(err) { alert('文件解析失败'); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+function doSearch() {
+  const q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.item').forEach(el => {
+    el.style.display = el.querySelector('.item-text').textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('.topic-section').forEach(sec => {
+    const vis = sec.querySelectorAll('.item[style*="none"]').length < sec.querySelectorAll('.item').length;
+    sec.style.display = vis ? '' : 'none';
+  });
+}
+
+// ==================== BOOT ====================
+init();
+</script>
+</body>
+</html>

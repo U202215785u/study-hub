@@ -25,6 +25,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent  # .claude/scripts/
 WORKSPACE_ROOT = SCRIPT_DIR.parent.parent  # study web/
 # 项目代码在 study-hub/ 子目录下
 PROJECT_ROOT = WORKSPACE_ROOT / "study-hub"
+MODS_ROOT = WORKSPACE_ROOT / "mods"
 README_PATH = PROJECT_ROOT / "README.md"
 AUTO_START = "<!-- AUTO-GENERATED-START -->"
 AUTO_END = "<!-- AUTO-GENERATED-END -->"
@@ -735,6 +736,31 @@ def generate_auto_readme() -> str:
         out.append("```")
         out.append("")
 
+    # ==================== 工具百宝箱 (mods/) ====================
+    if MODS_ROOT.exists():
+        out.append("## 工具百宝箱 (mods/)")
+        out.append("")
+        mod_dirs = sorted([d for d in MODS_ROOT.iterdir() if d.is_dir() and not d.name.startswith(".")])
+        for mod_dir in mod_dirs:
+            mod_name = mod_dir.name
+            mod_files = []
+            for mf in sorted(mod_dir.rglob("*")):
+                if mf.is_file() and not any(skip in mf.parts for skip in ["node_modules", ".git", "__pycache__", "dist", "build", ".superpowers", ".claude"]):
+                    mod_files.append(mf)
+            if not mod_files:
+                continue
+            out.append(f"### {mod_name}")
+            out.append("")
+            out.append("| 文件 | 行数 |")
+            out.append("|------|------|")
+            for mf in mod_files[:50]:
+                rp = str(mf.relative_to(mod_dir)).replace("\\", "/")
+                lines = len(safe_read(mf).split("\n"))
+                out.append(f"| `{rp}` | {lines} |")
+            if len(mod_files) > 50:
+                out.append(f"| ... | 还有 {len(mod_files) - 50} 个文件 |")
+            out.append("")
+
     # ==================== 文件指纹（用于检测变更） ====================
     out.append("## 文件完整性指纹")
     out.append("")
@@ -745,8 +771,8 @@ def generate_auto_readme() -> str:
         files["backend_python"] + files["backend_processing"] + files["backend_endpoints"] +
         files["root_python"] + files["frontend"] + files["extension"]
     )
-    for fp in sorted(all_source_files, key=lambda x: rel(x)):
-        rp = rel(fp)
+    for fp in sorted(all_source_files, key=lambda x: str(x)):
+        rp = rel(fp) if PROJECT_ROOT in fp.parents else str(fp.relative_to(WORKSPACE_ROOT)).replace("\\", "/")
         fhash = hash_file(fp)
         flines = len(safe_read(fp).split("\n"))
         out.append(f"| `{rp}` | `{fhash}` | {flines} |")
@@ -798,6 +824,11 @@ def check_stale() -> bool:
         files["backend_python"] + files["backend_processing"] + files["backend_endpoints"] +
         files["root_python"] + files["frontend"] + files["extension"]
     )
+    # 添加 mods/ 文件
+    if MODS_ROOT.exists():
+        for mf in sorted(MODS_ROOT.rglob("*")):
+            if mf.is_file() and not any(skip in mf.parts for skip in ["node_modules", ".git", "__pycache__", "dist", "build", ".superpowers", ".claude"]):
+                all_source_files.append(mf)
 
     for fp in all_source_files:
         rp = rel(fp)

@@ -1,0 +1,16 @@
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m190[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.64.1:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://10.21.97.239:[1m5173[22m/[39m
+Error: [31m  Failed to scan for dependencies from entries:
+  F:/360MoveData/Users/Administrator/Desktop/vibecoding/suit/index.html
+
+  [39mThe service was stopped
+    at F:\360MoveData\Users\Administrator\Desktop\vibecoding\suit\node_modules\esbuild\lib\main.js:968:34
+    at responseCallbacks.<computed> (F:\360MoveData\Users\Administrator\Desktop\vibecoding\suit\node_modules\esbuild\lib\main.js:622:9)
+    at Socket.afterClose (F:\360MoveData\Users\Administrator\Desktop\vibecoding\suit\node_modules\esbuild\lib\main.js:613:28)
+    at Socket.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1696:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)

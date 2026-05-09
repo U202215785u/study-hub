@@ -2,6 +2,15 @@
 .env
 **/.env
 
+# mods/ — 工具百宝箱模块（排除构建产物和依赖）
+mods/**/node_modules/
+mods/**/dist/
+mods/**/build/
+mods/**/__pycache__/
+mods/**/*.pyc
+mods/**/.claude/worktrees/
+mods/**/.superpowers/
+
 # Python
 __pycache__/
 *.pyc
