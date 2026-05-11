@@ -2,6 +2,7 @@ import os, sys, tempfile, json
 from fastapi import APIRouter, UploadFile, File, Form
 from database import get_db
 from processing.processors import can_handle, process_bytes, sha256, is_duplicate
+from endpoints.links import sync_document_links, parse_wiki_links
 
 router = APIRouter()
 
@@ -55,8 +56,15 @@ async def upload_file(file: UploadFile = File(...), category_id: int = Form(None
     except Exception as e:
         print(f"向量化失败 (文档 {doc_id}): {e}")
 
+    # 解析并存储 [[wiki-link]]
+    try:
+        sync_document_links(doc_id, text)
+    except Exception as e:
+        print(f"链接解析失败 (文档 {doc_id}): {e}")
+
     conn.close()
-    return {"id": doc_id, "title": file.filename, "char_count": len(text), "category_name": category_name}
+    wiki_links = parse_wiki_links(text)
+    return {"id": doc_id, "title": file.filename, "char_count": len(text), "category_name": category_name, "wiki_links": len(wiki_links)}
 
 
 @router.post("/upload/text")
@@ -97,29 +105,54 @@ async def upload_text(payload: dict):
     except Exception as e:
         print(f"向量化失败 (文档 {doc_id}): {e}")
 
+    try:
+        sync_document_links(doc_id, text)
+    except Exception as e:
+        print(f"链接解析失败 (文档 {doc_id}): {e}")
+
     conn.close()
-    return {"id": doc_id, "title": title, "char_count": len(text), "category_name": category_name}
+    wiki_links = parse_wiki_links(text)
+    return {"id": doc_id, "title": title, "char_count": len(text), "category_name": category_name, "wiki_links": len(wiki_links)}
 
 
 @router.get("/documents")
-def list_documents(category_id: int = None):
+def list_documents(category_id: int = None, search: str = None, tag: str = None,
+                   date_from: str = None, date_to: str = None, limit: int = 50):
     conn = get_db()
+    conditions = []
+    params = []
+
     if category_id:
-        rows = conn.execute(
-            """SELECT d.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color
+        conditions.append("d.category_id = ?")
+        params.append(category_id)
+
+    if search:
+        conditions.append("(d.title LIKE ? OR d.content LIKE ?)")
+        like = f"%{search}%"
+        params.extend([like, like])
+
+    if tag:
+        # 标签以 JSON 数组存储，用 LIKE 模糊匹配
+        conditions.append("d.tags LIKE ?")
+        params.append(f"%{tag}%")
+
+    if date_from:
+        conditions.append("d.created_at >= ?")
+        params.append(date_from)
+
+    if date_to:
+        conditions.append("d.created_at <= ?")
+        params.append(date_to + " 23:59:59")
+
+    where = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    query = f"""SELECT d.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color
                FROM documents d
                LEFT JOIN categories c ON d.category_id = c.id
-               WHERE d.category_id = ?
-               ORDER BY d.created_at DESC LIMIT 50""",
-            (category_id,),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            """SELECT d.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color
-               FROM documents d
-               LEFT JOIN categories c ON d.category_id = c.id
-               ORDER BY d.created_at DESC LIMIT 50"""
-        ).fetchall()
+               {where}
+               ORDER BY d.created_at DESC LIMIT ?"""
+    params.append(limit)
+
+    rows = conn.execute(query, params).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 

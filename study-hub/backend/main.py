@@ -20,6 +20,7 @@ from endpoints.automation import router as automation_router
 from endpoints.wiki import router as wiki_router
 from endpoints.evolution import router as evolution_router
 from endpoints.ai_search import router as ai_search_router
+from endpoints.brainstorm import router as brainstorm_router
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 INBOX_DIR = os.path.join(os.path.dirname(__file__), "data", "inbox")
@@ -66,6 +67,7 @@ app.include_router(automation_router)
 app.include_router(wiki_router)
 app.include_router(evolution_router)
 app.include_router(ai_search_router)
+app.include_router(brainstorm_router)
 
 @app.get("/inbox/open")
 def open_inbox():

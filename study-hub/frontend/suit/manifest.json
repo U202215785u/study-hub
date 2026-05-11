@@ -1,0 +1,22 @@
+{
+  "name": "私人减肥教练",
+  "short_name": "减肥教练",
+  "description": "你的私人减肥助手，健身计划、饮食记录、体重追踪一站式解决",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f97316",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

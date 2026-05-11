@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习路线</title>
+<style>
+:root {
+  --bg: #0f0f14;
+  --surface: #1a1a24;
+  --surface-hover: #22222f;
+  --border: #2a2a3a;
+  --text: #e0e0e8;
+  --text-secondary: #8888a0;
+  --accent: #7c8aff;
+  --accent-glow: rgba(124, 138, 255, 0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex; justify-content: center;
+  min-height: 100vh; padding: 40px 20px 80px;
+  line-height: 1.6;
+}
+main { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 24px; }
+
+.nav { display: flex; align-items: center; gap: 16px; margin-bottom: 4px; }
+.nav a { font-size: 13px; color: var(--text-secondary); text-decoration: none; transition: color 0.15s; }
+.nav a:hover { color: var(--accent); }
+.nav h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+.cards { display: flex; flex-direction: column; gap: 14px; }
+.card {
+  display: block; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; text-decoration: none;
+  transition: all 0.2s; cursor: pointer; color: var(--text);
+}
+.card:hover { border-color: var(--accent); background: var(--surface-hover); transform: translateY(-1px); }
+.card-icon { font-size: 28px; margin-bottom: 10px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.card-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.card-tags span {
+  padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+  background: rgba(124, 138, 255, 0.12); color: var(--accent);
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="nav">
+    <a href="/">← 仪表盘</a>
+    <h1>学习路线</h1>
+  </div>
+
+  <div class="cards">
+    <a class="card" href="/learning-checklist.html">
+      <div class="card-icon">📋</div>
+      <div class="card-title">全栈 Vibe Coding 学习清单</div>
+      <div class="card-desc">213 个知识点，12 个模块，按 Phase 0~5 递进排列。勾选追踪进度，自动保存到浏览器，支持搜索和导入导出。</div>
+      <div class="card-tags">
+        <span>交互清单</span><span>进度追踪</span><span>搜索过滤</span>
+      </div>
+    </a>
+
+    <a class="card" href="/learning-plan.html?plan=vibe-coding">
+      <div class="card-icon">🗓️</div>
+      <div class="card-title">20 周全栈学习计划</div>
+      <div class="card-desc">Phase 0~5 系统路线图，从心智热身到 AI 协作精通。每阶段有明确的教程、练习、自查和项目要求。</div>
+      <div class="card-tags">
+        <span>路线蓝图</span><span>20周计划</span><span>系统学习</span>
+      </div>
+    </a>
+
+    <a class="card" href="/learning-plan.html?plan=super-learner">
+      <div class="card-icon">🎯</div>
+      <div class="card-title">超级学习管家 · 每日路线</div>
+      <div class="card-desc">精细化到每一天的微管理学习计划。上午 / 下午 / 晚上分别做什么，间隔复习提醒，每周自检问题。</div>
+      <div class="card-tags">
+        <span>每日计划</span><span>间隔复习</span><span>周自检</span>
+      </div>
+    </a>
+  </div>
+</main>
+</body>
+</html>

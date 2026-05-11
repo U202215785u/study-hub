@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 头脑风暴</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@17.0.6/marked.min.js"></script>
+<style>
+:root {
+  --bg: #0f0f14;
+  --surface: #1a1a24;
+  --surface-hover: #22222f;
+  --border: #2a2a3a;
+  --text: #e0e0e8;
+  --text-secondary: #8888a0;
+  --accent: #7c8aff;
+  --accent-glow: rgba(124, 138, 255, 0.15);
+  --danger: #ff5c7a;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --gap: 16px;
+  --idea-color: #f59e0b;
+  --prompt-color: #10b981;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; justify-content: center;
+  min-height: 100vh; padding: 40px 20px 80px;
+  line-height: 1.6;
+}
+main { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 24px; }
+
+.nav { display: flex; align-items: center; gap: 16px; margin-bottom: 4px; }
+.nav a { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+.nav a:hover { color: var(--accent); }
+.nav h1 { font-size: 20px; font-weight: 700; }
+
+.btn {
+  padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  font-weight: 600; transition: all 0.15s; font-family: inherit;
+}
+.btn:hover { background: var(--surface-hover); border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #6a78e8; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Step 1 — Mode selection */
+.mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mode-card {
+  background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
+  padding: 28px 24px; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.mode-card:hover { border-color: var(--accent); background: var(--surface-hover); transform: translateY(-2px); }
+.mode-card.selected { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+.mode-card .icon { font-size: 36px; margin-bottom: 10px; }
+.mode-card .title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.mode-card .sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.mode-card .tags { font-size: 11px; color: var(--text-secondary); opacity: 0.7; }
+
+.step-indicator { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 8px; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid var(--border); color: var(--text-secondary); transition: all 0.2s; }
+.step-dot.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.step-dot.done { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.1); }
+.step-line { width: 32px; height: 2px; background: var(--border); }
+.step-line.done { background: #10b981; }
+
+textarea {
+  width: 100%; padding: 16px; border-radius: var(--radius); border: 2px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 15px; outline: none;
+  resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.6;
+  transition: border-color 0.2s;
+}
+textarea:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+
+/* Step 2 — Conversation */
+.conversation { display: flex; flex-direction: column; gap: 14px; }
+.msg { padding: 16px 18px; border-radius: var(--radius); animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.msg.user { background: rgba(124,138,255,0.08); border: 1px solid rgba(124,138,255,0.2); align-self: flex-end; max-width: 85%; }
+.msg.ai { background: var(--surface); border: 1px solid var(--border); }
+.msg .role { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.msg .q { font-size: 15px; font-weight: 600; margin-bottom: 12px; line-height: 1.5; }
+.msg .q .round { display: inline-block; background: var(--accent); color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 8px; margin-right: 6px; font-weight: 700; vertical-align: 2px; }
+
+.options { display: flex; flex-direction: column; gap: 8px; }
+.opt-btn {
+  display: block; width: 100%; text-align: left; padding: 10px 14px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--surface-hover); color: var(--text); font-size: 14px;
+  cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.opt-btn:hover { border-color: var(--accent); background: rgba(124,138,255,0.08); }
+.opt-btn.custom { opacity: 0.7; font-style: italic; }
+
+.dig-bar { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+.dig-bar .hint { font-size: 12px; color: #10b981; flex: 1; }
+.dig-bar .hint.hidden { display: none; }
+
+.loading-dots { text-align: center; padding: 20px; color: var(--text-secondary); }
+.loading-dots span { animation: blink 1.4s infinite both; font-size: 20px; letter-spacing: 2px; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+/* Step 3 — Output */
+.output { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.output h1 { font-size: 1.3rem; margin-bottom: 0.5em; }
+.output h2 { font-size: 1.1rem; margin: 1.2em 0 0.4em; color: var(--accent); }
+.output h3 { font-size: 1rem; margin: 1em 0 0.3em; }
+.output p { margin: 0.5em 0; }
+.output ul, .output ol { padding-left: 1.5em; margin: 0.4em 0; }
+.output li { margin: 0.2em 0; }
+.output code { background: rgba(124,138,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+.output pre { background: #0d0d14; border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 0.8em 0; }
+.output pre code { background: none; padding: 0; }
+.output blockquote { border-left: 3px solid var(--accent); padding-left: 16px; margin: 0.6em 0; color: var(--text-secondary); }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  z-index: 100; animation: toastIn 0.3s; pointer-events: none;
+}
+.toast.error { background: var(--danger); color: #fff; }
+.toast.info { background: var(--accent); color: #fff; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+@media (max-width: 500px) {
+  .mode-cards { grid-template-columns: 1fr; }
+  .actions { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="nav">
+    <a href="/">← 仪表盘</a>
+    <h1>AI 头脑风暴</h1>
+  </div>
+
+  <div id="app"></div>
+</main>
+<script>
+const API_BASE = (() => {
+  const stored = localStorage.getItem('api_base');
+  if (stored) return stored;
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return window.location.origin;
+  }
+  return 'http://localhost:8741';
+})();
+
+// ── State ──────────────────────────────────────────────
+let state = {
+  mode: null,        // 'idea' | 'prompt'
+  step: 1,           // 1 | 2 | 3
+  messages: [],      // [{role, content, questions?, options?, round?}]
+  loading: false,
+  digRecommended: false,
+  round: 0,
+};
+
+function toast(msg, isError) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (isError ? 'error' : 'info');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// ── API ────────────────────────────────────────────────
+async function callStep2() {
+  state.loading = true; render();
+  try {
+    const res = await fetch(`${API_BASE}/brainstorm/step2`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: state.mode, messages: state.messages }),
+    });
+    const data = await res.json();
+    if (data.error) { toast(data.error, true); state.loading = false; render(); return; }
+    state.round++;
+    state.messages.push({
+      role: 'assistant',
+      content: data.raw,
+      questions: [data.question],
+      options: data.options,
+      round: state.round,
+    });
+    state.digRecommended = data.dig_recommended;
+    state.loading = false;
+    render();
+    // Scroll to latest
+    const conv = document.getElementById('convEnd');
+    if (conv) conv.scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    toast('请求失败: ' + e.message, true);
+    state.loading = false; render();
+  }
+}
+
+async function callStep3() {
+  state.loading = true; render();
+  try {
+    const res = await fetch(`${API_BASE}/brainstorm/step3`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: state.mode, messages: state.messages }),
+    });
+    const data = await res.json();
+    if (data.error) { toast(data.error, true); state.loading = false; render(); return; }
+    state.step = 3;
+    state.output = data.output;
+    state.loading = false;
+    render();
+  } catch (e) {
+    toast('请求失败: ' + e.message, true);
+    state.loading = false; render();
+  }
+}
+
+// ── Handlers ───────────────────────────────────────────
+function selectMode(mode) {
+  state.mode = mode;
+  render();
+}
+
+function startBrainstorm() {
+  const ta = document.getElementById('ideaInput');
+  const content = ta ? ta.value.trim() : '';
+  if (!content) { toast('请输入内容', true); return; }
+  state.messages = [{ role: 'user', content }];
+  state.step = 2;
+  state.round = 0;
+  state.digRecommended = false;
+  callStep2();
+}
+
+function chooseOption(opt) {
+  if (state.loading) return;
+  state.messages.push({ role: 'user', content: opt });
+  callStep2();
+}
+
+function chooseCustom() {
+  if (state.loading) return;
+  const input = document.getElementById('customInput');
+  const val = input ? input.value.trim() : '';
+  if (!val) { toast('请输入你的想法', true); return; }
+  state.messages.push({ role: 'user', content: val });
+  callStep2();
+}
+
+function goToStep3() {
+  if (state.loading) return;
+  callStep3();
+}
+
+function reset() {
+  state = { mode: state.mode, step: 1, messages: [], loading: false, digRecommended: false, round: 0 };
+  render();
+}
+
+function goBackToStep2() {
+  // Remove last assistant message to continue questioning
+  if (state.messages.length > 0 && state.messages[state.messages.length - 1].role === 'assistant') {
+    // Keep it — just switch back to step 2 view
+  }
+  state.step = 2;
+  state.digRecommended = false;
+  render();
+}
+
+// ── Render ─────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  const steps = state.mode === 'idea' ? ['起点', '反问', '发散'] : ['需求', '反问', '生成'];
+
+  let stepInd = '';
+  for (let i = 0; i < 3; i++) {
+    const cls = state.step > i+1 ? 'done' : state.step === i+1 ? 'active' : '';
+    stepInd += `<div class="step-dot ${cls}">${state.step > i+1 ? '✓' : i+1}</div>`;
+    if (i < 2) stepInd += `<div class="step-line ${state.step > i+1 ? 'done' : ''}"></div>`;
+  }
+
+  let body = '';
+
+  if (state.step === 1) {
+    // ── Mode Selection ──
+    const ideaSel = state.mode === 'idea' ? ' selected' : '';
+    const promptSel = state.mode === 'prompt' ? ' selected' : '';
+    body = `
+      <div class="mode-cards">
+        <div class="mode-card${ideaSel}" onclick="selectMode('idea')">
+          <div class="icon">💡</div>
+          <div class="title">想法发散</div>
+          <div class="sub">给我一个起点，帮你展开</div>
+          <div class="tags">变体 · 组合 · 跨界 · 反转</div>
+        </div>
+        <div class="mode-card${promptSel}" onclick="selectMode('prompt')">
+          <div class="icon">✨</div>
+          <div class="title">提示词优化</div>
+          <div class="sub">告诉我你想让 AI 做什么</div>
+          <div class="tags">目标 · 格式 · 风格 · 约束</div>
+        </div>
+      </div>`;
+
+    if (state.mode) {
+      const ph = state.mode === 'idea' ? '输入你的想法起点…一个词、一句话、一个方向都可以' : '描述你想让 AI 完成的任务…越具体越好，我会帮你打磨成精准的提示词';
+      const title = state.mode === 'idea' ? '给我一个起点' : '描述你的需求';
+      const sub = state.mode === 'idea' ? '一个词、一句话、一个方向都可以' : '越具体越好，我会帮你打磨成精准的提示词';
+      body += `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:16px;">
+          <div style="font-weight:600;margin-bottom:4px;">${title}</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">${sub}</div>
+          <textarea id="ideaInput" placeholder="${ph}"></textarea>
+          <div style="margin-top:12px;">
+            <button class="btn primary" onclick="startBrainstorm()">开始 →</button>
+          </div>
+        </div>`;
+    }
+  } else if (state.step === 2) {
+    // ── Conversation ──
+    let conv = '<div class="conversation">';
+    for (const m of state.messages) {
+      if (m.role === 'user') {
+        conv += `<div class="msg user"><div class="role">你</div><div>${esc(m.content)}</div></div>`;
+      } else {
+        const r = m.round || '';
+        conv += `<div class="msg ai"><div class="role">AI ${r ? '# '+r : ''}</div><div class="q">${esc(m.questions ? m.questions[0] : '')}</div>`;
+        conv += '<div class="options">';
+        if (m.options) {
+          for (const opt of m.options) {
+            if (opt === '✏️ 其他' || opt.includes('其他')) {
+              conv += `<div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><input id="customInput" placeholder="输入你的想法…" style="flex:1;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')chooseCustom()"><button class="btn" onclick="chooseCustom()" style="font-size:12px;">发送</button></div>`;
+            } else {
+              conv += `<button class="opt-btn" onclick="chooseOption('${escAttr(opt)}')">${esc(opt)}</button>`;
+            }
+          }
+        }
+        conv += '</div></div>';
+      }
+    }
+    if (state.loading) {
+      conv += '<div class="loading-dots"><span>●</span><span>●</span><span>●</span></div>';
+    }
+    conv += '<div id="convEnd"></div></div>';
+
+    const digHint = state.digRecommended ? '' : 'hidden';
+
+    body = conv + `
+      <div class="dig-bar" style="margin-top:0;">
+        <span class="hint ${digHint}" style="color:#f59e0b;">💡 AI 建议可以收尾了，可以继续深挖也可以直接进入下一步</span>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="reset()">重新开始</button>
+        <button class="btn primary" onclick="goToStep3()" ${state.loading ? 'disabled' : ''}>${state.mode === 'idea' ? '挖够了，进入发散 →' : '挖够了，生成提示词 →'}</button>
+      </div>`;
+  } else if (state.step === 3) {
+    // ── Output ──
+    const html = renderMd(state.output || '');
+    // Build a summary of the conversation
+    let summary = '<details style="margin-bottom:16px;"><summary style="cursor:pointer;font-size:13px;color:var(--text-secondary);">查看对话历史</summary><div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">';
+    for (const m of state.messages) {
+      if (m.role === 'user') {
+        summary += `<div style="font-size:13px;color:var(--text-secondary);">你：${esc(m.content)}</div>`;
+      } else {
+        summary += `<div style="font-size:13px;color:var(--accent);">AI：${esc(m.questions ? m.questions[0] : m.content?.slice(0,100) || '')}</div>`;
+      }
+    }
+    summary += '</div></details>';
+
+    body = summary + `<div class="output">${html}</div>
+      <div class="actions">
+        <button class="btn" onclick="reset()">重新开始</button>
+        <button class="btn" onclick="goBackToStep2()">继续追问</button>
+        <button class="btn" onclick="copyOutput()">复制结果</button>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    <div class="step-indicator">${stepInd}</div>
+    <div style="text-align:center;font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${steps[state.step-1]}</div>
+    ${body}`;
+}
+
+// ── Helpers ────────────────────────────────────────────
+function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function escAttr(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+function renderMd(str) {
+  if (typeof marked !== 'undefined') {
+    return marked.parse(str || '');
+  }
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+}
+
+function copyOutput() {
+  navigator.clipboard.writeText(state.output || '').then(() => toast('已复制到剪贴板'));
+}
+
+// ── Init ───────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

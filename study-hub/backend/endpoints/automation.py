@@ -1,5 +1,6 @@
-import os, sys, json, subprocess, re, tempfile, time, requests
+import os, sys, json, subprocess, re, tempfile, time, requests, uuid, threading
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, Future
 from fastapi import APIRouter
 from database import get_db
 from processing.chunker import chunk_text
@@ -10,6 +11,7 @@ if _STUDY_HUB_DIR not in sys.path:
     sys.path.insert(0, _STUDY_HUB_DIR)
 
 from social_parsers import BilibiliParser, XiaohongshuParser, QwenASR, HEADERS_BILIBILI
+from douyin_mcp_server.server import DouyinProcessor
 
 router = APIRouter()
 
@@ -21,59 +23,35 @@ CLAUDE_CMD = r"C:\Users\Administrator\AppData\Roaming\npm\claude.cmd"
 
 MODULES = {
     "douyin-summary": {
-        "name": "抖音摘要",
-        "icon": "📹",
-        "output_dir": SUMMARIES_DIR,
-        "source_tag": "douyin-summary",
-        "engine": "claude",
-        "prompt_template": (
-            "请帮我总结这个抖音视频：{input}\n\n"
-            "请使用 douyin-summary skill 完成。要求：\n"
-            "1. 提取视频中的文字内容\n"
-            "2. 识别文中提到的链接/资源\n"
-            "3. 扩展相关知识\n"
-            "4. 输出结构化 Markdown 文档"
-        ),
+        "name": "抖音摘要", "icon": "📹", "output_dir": SUMMARIES_DIR,
+        "source_tag": "douyin-summary", "engine": "deep",
     },
     "bilibili-summary": {
-        "name": "B站解析",
-        "icon": "📺",
-        "output_dir": BILIBILI_DIR,
-        "source_tag": "bilibili-summary",
-        "engine": "deep",
+        "name": "B站解析", "icon": "📺", "output_dir": BILIBILI_DIR,
+        "source_tag": "bilibili-summary", "engine": "deep",
     },
     "xiaohongshu-summary": {
-        "name": "小红书解析",
-        "icon": "📕",
-        "output_dir": XHS_DIR,
-        "source_tag": "xiaohongshu-summary",
-        "engine": "deep",
+        "name": "小红书解析", "icon": "📕", "output_dir": XHS_DIR,
+        "source_tag": "xiaohongshu-summary", "engine": "deep",
     },
 }
 
 
-# ====== 数据提取（native） ======
+# ====== Data extraction (native) ======
 
 def _extract_bilibili_raw(user_input: str) -> dict:
-    """调用 B站 API 提取原始数据，尝试 ASR 语音识别"""
     info = BilibiliParser.get_video_info(user_input)
     raw = {
-        "platform": "B站",
-        "type": "视频",
+        "platform": "B站", "type": "视频",
         "url": f"https://www.bilibili.com/video/{info['bvid']}",
-        "title": info["title"],
-        "author": info["owner"]["name"],
+        "title": info["title"], "author": info["owner"]["name"],
         "description": info.get("description", ""),
         "duration": f"{info['duration'] // 60}分{info['duration'] % 60}秒",
-        "category": info.get("tname", ""),
-        "cover": info.get("cover", ""),
+        "category": info.get("tname", ""), "cover": info.get("cover", ""),
         "stats": {
-            "播放": info["stat"]["view"],
-            "弹幕": info["stat"]["danmaku"],
-            "点赞": info["stat"]["like"],
-            "硬币": info["stat"]["coin"],
-            "收藏": info["stat"]["favorite"],
-            "分享": info["stat"]["share"],
+            "播放": info["stat"]["view"], "弹幕": info["stat"]["danmaku"],
+            "点赞": info["stat"]["like"], "硬币": info["stat"]["coin"],
+            "收藏": info["stat"]["favorite"], "分享": info["stat"]["share"],
             "评论": info["stat"]["reply"],
         },
     }
@@ -85,7 +63,6 @@ def _extract_bilibili_raw(user_input: str) -> dict:
         try:
             audio_url, _ = BilibiliParser.get_audio_url(user_input)
             asr = QwenASR(api_key)
-            # B站音频URL有防盗链，先下载到本地再识别
             tmp_path = os.path.join(tempfile.gettempdir(), f"bilibili_asr_{info['bvid']}.m4a")
             try:
                 audio_resp = requests.get(audio_url, headers=HEADERS_BILIBILI, timeout=60)
@@ -95,7 +72,6 @@ def _extract_bilibili_raw(user_input: str) -> dict:
                 result = asr.recognize(tmp_path, language="zh")
                 os.remove(tmp_path)
             except Exception:
-                # 下载失败则回退到直接传URL
                 result = asr.recognize(audio_url, language="zh")
             if result["success"] and result["text"]:
                 raw["asr_text"] = result["text"]
@@ -109,23 +85,19 @@ def _extract_bilibili_raw(user_input: str) -> dict:
             raw["asr_error"] = str(e)
     else:
         raw["asr_error"] = "DASHSCOPE_API_KEY 未配置，请在 .env 中设置"
-
     return raw
 
 
 def _extract_xiaohongshu_raw(user_input: str) -> dict:
-    """调用小红书解析器提取原始数据，视频笔记尝试 ASR"""
     info = XiaohongshuParser.get_note_info(user_input)
     note_id = info.get("note_id", "")
     raw = {
-        "platform": "小红书",
-        "type": "视频" if info.get("video_url") else "图文",
+        "platform": "小红书", "type": "视频" if info.get("video_url") else "图文",
         "url": f"https://www.xiaohongshu.com/explore/{note_id}",
         "title": info.get("title", "无标题"),
         "author": info.get("author", {}).get("name", ""),
         "description": info.get("description", ""),
-        "tags": info.get("tags", []),
-        "location": info.get("ip_location", ""),
+        "tags": info.get("tags", []), "location": info.get("ip_location", ""),
         "stats": {
             "点赞": info.get("stat", {}).get("liked", 0),
             "收藏": info.get("stat", {}).get("collected", 0),
@@ -151,14 +123,45 @@ def _extract_xiaohongshu_raw(user_input: str) -> dict:
                 raw["asr_error"] = str(e)
         else:
             raw["asr_error"] = "DASHSCOPE_API_KEY 未配置，请在 .env 中设置"
-
     return raw
 
 
-# ====== Deep Summary Prompt 构建 ======
+def _extract_douyin_raw(user_input: str) -> dict:
+    """用 DouyinProcessor 解析抖音视频，提取元数据 + ASR 文本。"""
+    processor = DouyinProcessor("")
+    info = processor.parse_share_url(user_input)
+
+    raw = {
+        "platform": "抖音", "type": "视频",
+        "url": f"https://www.douyin.com/video/{info['video_id']}",
+        "title": info["title"],
+        "video_id": info["video_id"],
+    }
+
+    api_key = os.getenv("DASHSCOPE_API_KEY")
+    if api_key:
+        try:
+            asr = QwenASR(api_key)
+            # 传视频 URL 给 DashScope ASR
+            result = asr.recognize(info["url"], language="zh")
+            if result["success"] and result["text"]:
+                raw["asr_text"] = result["text"]
+            elif result["success"] and not result["text"]:
+                raw["asr_error"] = "视频无语音或语音过短，无法识别"
+            else:
+                raw["asr_error"] = result.get("error", "识别失败")
+                if "overdue" in raw["asr_error"].lower() or "access denied" in raw["asr_error"].lower():
+                    raw["asr_error"] += "（阿里云百炼账号欠费，请充值后重试）"
+        except Exception as e:
+            raw["asr_error"] = str(e)
+    else:
+        raw["asr_error"] = "DASHSCOPE_API_KEY 未配置，请在 .env 中设置"
+    return raw
+
+
+# ====== Deep Summary Prompt ======
 
 def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
-    """根据平台原始数据构建 deep-summary prompt，格式对齐 douyin-summary skill"""
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     raw_json = json.dumps(raw, ensure_ascii=False, indent=2)
 
@@ -184,10 +187,7 @@ def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
 4. 扩展阅读（用 WebSearch 搜索相关主题，3-5 条，优先中文）
 5. 一句话思考总结（50 字以内）
 
-如果 ASR 文本提取失败（存在 asr_error 字段），在核心内容章节如实引用错误原因，例如：
-- 欠费 → 「⚠️ 语音提取失败（阿里云百炼账号欠费），以下基于标题和描述重建」
-- API Key 未配置 → 「⚠️ 语音提取失败（API Key 未配置），以下基于标题和描述重建」
-- 其他错误 → 「⚠️ 语音提取失败（{{错误原因}}），以下基于标题和描述重建」
+如果 ASR 文本提取失败（存在 asr_error 字段），在核心内容章节如实引用错误原因。
 
 ## 必须严格按照以下格式输出
 
@@ -238,12 +238,10 @@ def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
 - 直接输出以上格式的 Markdown 文档，不要任何额外内容"""
 
 
-# ====== Claude Code 执行 ======
+# ====== Claude Code execution ======
 
 def _run_claude(prompt: str, output_dir: str, timeout: int = 480) -> dict:
-    """通过 claude -p 执行，优先使用 Claude 写入/更新的 .md 文件，否则回退到 stdout"""
     os.makedirs(output_dir, exist_ok=True)
-    # 记录执行前最后修改时间，用于检测新增或被覆盖的文件
     cutoff = time.time()
 
     try:
@@ -257,7 +255,6 @@ def _run_claude(prompt: str, output_dir: str, timeout: int = 480) -> dict:
     except FileNotFoundError:
         return {"error": "未找到 claude 命令，请确认 Claude Code 已安装"}
 
-    # 找到执行后修改/新增的 .md 文件（按修改时间倒序）
     md_files = []
     for f in os.listdir(output_dir):
         fp = os.path.join(output_dir, f)
@@ -265,14 +262,12 @@ def _run_claude(prompt: str, output_dir: str, timeout: int = 480) -> dict:
             md_files.append((os.path.getmtime(fp), fp))
     md_files.sort(reverse=True)
 
-    # 优先使用 Claude 通过 Write 工具生成/更新的文件
     if md_files:
         md_path = md_files[0][1]
         with open(md_path, "r", encoding="utf-8") as f:
             content = f.read()
         return {"md_path": md_path, "content": content}
 
-    # 回退：stdout 直接输出
     stdout = (result.stdout or "").strip() if result else ""
     stderr = (result.stderr or "").strip() if result else ""
 
@@ -296,18 +291,119 @@ def _run_claude(prompt: str, output_dir: str, timeout: int = 480) -> dict:
     }
 
 
-# ====== API 端点 ======
+# ====== Task Queue ======
+
+MAX_WORKERS = 3
+_executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+_tasks: dict[str, dict] = {}  # task_id → {status, module_id, input, result, doc_id, title, error, created_at}
+_lock = threading.Lock()
+
+
+def _process_single_task(task_id: str):
+    """Worker: process one task and store result."""
+    with _lock:
+        task = _tasks.get(task_id)
+        if not task:
+            return
+        task["status"] = "extracting"
+
+    module_id = task["module_id"]
+    user_input = task["input"]
+    module = MODULES[module_id]
+    engine = module.get("engine", "claude")
+    output_dir = module["output_dir"]
+
+    try:
+        # Step 1: Extract
+        with _lock:
+            _tasks[task_id]["status"] = "extracting"
+            _tasks[task_id]["progress"] = "正在提取数据…"
+
+        if engine == "deep":
+            if module_id == "bilibili-summary":
+                raw = _extract_bilibili_raw(user_input)
+            elif module_id == "xiaohongshu-summary":
+                raw = _extract_xiaohongshu_raw(user_input)
+            elif module_id == "douyin-summary":
+                raw = _extract_douyin_raw(user_input)
+            else:
+                raise ValueError(f"未知 deep 模块: {module_id}")
+        else:
+            raw = {"platform": "未知", "type": ""}
+
+        # Step 2: Summarize
+        with _lock:
+            _tasks[task_id]["status"] = "summarizing"
+            _tasks[task_id]["progress"] = "正在 AI 深度分析…"
+
+        if engine == "deep":
+            prompt = _build_deep_prompt(module_id, raw, user_input)
+        else:
+            prompt = module["prompt_template"].format(input=user_input)
+
+        result = _run_claude(prompt, output_dir, timeout=300 if engine == "claude" else 480)
+
+        if "error" in result:
+            raise RuntimeError(result["error"])
+        if result.get("status") == "no_output":
+            raise RuntimeError(result.get("message", "输出内容过短"))
+
+        # Step 3: Import
+        with _lock:
+            _tasks[task_id]["status"] = "importing"
+            _tasks[task_id]["progress"] = "正在入库 + 向量化…"
+
+        content = result["content"]
+        md_path = result["md_path"]
+
+        title = os.path.basename(md_path).replace(".md", "")
+        for line in content.split("\n"):
+            line = line.strip()
+            if line.startswith("# "):
+                title = line[2:].strip()
+                break
+
+        conn = get_db()
+        cur = conn.execute(
+            "INSERT INTO documents (title, content, content_type, source, char_count) VALUES (?, ?, ?, ?, ?)",
+            (title, content, "text", module["source_tag"], len(content)),
+        )
+        doc_id = cur.lastrowid
+        conn.commit()
+
+        try:
+            chunks = chunk_text(content)
+            vs = get_vector_store()
+            vs.add_document(doc_id, title, chunks)
+            conn.execute("UPDATE documents SET chunk_count = ? WHERE id = ?", (len(chunks), doc_id))
+            conn.commit()
+        except Exception as e:
+            print(f"向量化失败 (文档 {doc_id}): {e}")
+
+        conn.close()
+
+        with _lock:
+            _tasks[task_id]["status"] = "done"
+            _tasks[task_id]["progress"] = "完成"
+            _tasks[task_id]["result"] = {"doc_id": doc_id, "title": title}
+
+    except Exception as e:
+        with _lock:
+            _tasks[task_id]["status"] = "error"
+            _tasks[task_id]["progress"] = "失败"
+            _tasks[task_id]["error"] = str(e)
+
+
+# ====== API endpoints ======
 
 @router.get("/automation/modules")
 def list_modules():
-    return [
-        {"id": mid, "name": m["name"], "icon": m["icon"]}
-        for mid, m in MODULES.items()
-    ]
+    return [{"id": mid, "name": m["name"], "icon": m["icon"]} for mid, m in MODULES.items()]
 
 
 @router.post("/automation/run")
 def run_automation(payload: dict):
+    """同步执行（保持向后兼容）—— 单任务阻塞等待。"""
     module_id = payload.get("module_id", "")
     user_input = (payload.get("input") or "").strip()
 
@@ -318,64 +414,307 @@ def run_automation(payload: dict):
     if len(user_input) > 10000:
         return {"error": "输入内容过长，请限制在 10000 字以内"}
 
-    module = MODULES[module_id]
-    engine = module.get("engine", "claude")
-    output_dir = module["output_dir"]
+    task_id = str(uuid.uuid4())[:8]
+    _tasks[task_id] = {
+        "task_id": task_id, "status": "pending", "module_id": module_id,
+        "module_name": MODULES[module_id]["name"],
+        "input": user_input[:200], "progress": "排队中…",
+        "created_at": datetime.now().isoformat(),
+    }
 
-    # ---- 数据提取 + Claude 深度格式化 ----
-    if engine == "deep":
-        try:
-            if module_id == "bilibili-summary":
-                raw = _extract_bilibili_raw(user_input)
-            elif module_id == "xiaohongshu-summary":
-                raw = _extract_xiaohongshu_raw(user_input)
-            else:
-                return {"error": f"未知 deep 模块: {module_id}"}
-        except Exception as e:
-            return {"error": f"数据提取失败: {str(e)}"}
+    future: Future = _executor.submit(_process_single_task, task_id)
+    future.result()  # 阻塞等待
 
-        prompt = _build_deep_prompt(module_id, raw, user_input)
-        result = _run_claude(prompt, output_dir)
+    task = _tasks.get(task_id, {})
+    if task.get("status") == "done":
+        return {"status": "done", "task_id": task_id, **task.get("result", {})}
+    return {"status": "error", "task_id": task_id, "error": task.get("error", "未知错误")}
 
-    elif engine == "claude":
-        # 抖音：直接使用 skill prompt
-        prompt = module["prompt_template"].format(input=user_input)
-        result = _run_claude(prompt, output_dir, timeout=300)
 
-    else:
-        return {"error": f"未知引擎: {engine}"}
+@router.post("/automation/queue")
+def queue_tasks(payload: dict):
+    """批量提交任务，立即返回任务 ID 列表。支持多个链接（\\n 分隔或数组）。"""
+    module_id = payload.get("module_id", "")
+    inputs = payload.get("inputs", [])
 
-    if "error" in result or result.get("status") == "no_output":
-        return result
+    # 支持单个 input 字符串（换行分隔）
+    if not inputs:
+        single = (payload.get("input") or "").strip()
+        if single:
+            inputs = [line.strip() for line in single.split("\n") if line.strip()]
 
-    content = result["content"]
-    md_path = result["md_path"]
+    if module_id not in MODULES:
+        return {"error": f"未知模块: {module_id}"}
+    if not inputs:
+        return {"error": "请输入至少一个链接"}
 
-    # 从内容提取标题
-    title = os.path.basename(md_path).replace(".md", "")
-    for line in content.split("\n"):
-        line = line.strip()
-        if line.startswith("# "):
-            title = line[2:].strip()
-            break
+    tasks_created = []
+    for inp in inputs:
+        if len(inp) > 10000:
+            continue
+        task_id = str(uuid.uuid4())[:8]
+        with _lock:
+            _tasks[task_id] = {
+                "task_id": task_id, "status": "pending", "module_id": module_id,
+                "module_name": MODULES[module_id]["name"],
+                "input": inp[:200], "progress": "排队中…",
+                "created_at": datetime.now().isoformat(),
+            }
+        _executor.submit(_process_single_task, task_id)
+        tasks_created.append(task_id)
 
-    # ---- 入库 + 向量化 ----
+    return {
+        "status": "queued",
+        "count": len(tasks_created),
+        "task_ids": tasks_created,
+        "message": f"已提交 {len(tasks_created)} 个任务，最多 {MAX_WORKERS} 个并行处理",
+    }
+
+
+@router.get("/automation/queue/status")
+def queue_status():
+    """获取所有任务状态（最近 50 个）。"""
+    with _lock:
+        all_tasks = list(_tasks.values())
+
+    # 按创建时间倒序，最多 50 个
+    all_tasks.sort(key=lambda t: t.get("created_at", ""), reverse=True)
+    recent = all_tasks[:50]
+
+    stats = {
+        "total": len(recent),
+        "pending": sum(1 for t in recent if t["status"] == "pending"),
+        "running": sum(1 for t in recent if t["status"] in ("extracting", "summarizing", "importing")),
+        "done": sum(1 for t in recent if t["status"] == "done"),
+        "error": sum(1 for t in recent if t["status"] == "error"),
+        "max_workers": MAX_WORKERS,
+    }
+
+    # 精简返回字段
+    items = []
+    for t in recent:
+        items.append({
+            "task_id": t["task_id"], "status": t["status"],
+            "module_name": t.get("module_name", ""),
+            "input": t.get("input", "")[:100],
+            "progress": t.get("progress", ""),
+            "error": t.get("error", ""),
+            "doc_id": (t.get("result") or {}).get("doc_id") if t.get("result") else None,
+            "title": (t.get("result") or {}).get("title") if t.get("result") else None,
+            "created_at": t.get("created_at", ""),
+        })
+
+    return {"stats": stats, "tasks": items}
+
+
+@router.get("/automation/queue/{task_id}")
+def task_status(task_id: str):
+    """查询单个任务状态。"""
+    task = _tasks.get(task_id)
+    if not task:
+        return {"error": "任务不存在"}
+    return {
+        "task_id": task["task_id"], "status": task["status"],
+        "module_name": task.get("module_name", ""),
+        "input": task.get("input", "")[:200],
+        "progress": task.get("progress", ""),
+        "error": task.get("error", ""),
+        "result": task.get("result"),
+        "created_at": task.get("created_at", ""),
+    }
+
+
+@router.delete("/automation/queue/clear")
+def clear_completed():
+    """清除已完成和失败的任务。"""
+    with _lock:
+        to_remove = [tid for tid, t in _tasks.items() if t["status"] in ("done", "error")]
+        for tid in to_remove:
+            del _tasks[tid]
+    return {"cleared": len(to_remove)}
+
+
+# ====== 重解析 & 清理 ======
+
+@router.post("/automation/reparse/{doc_id}")
+def reparse_document(doc_id: int):
+    """
+    重新解析失败的抖音摘要文档。
+    提取原始抖音链接 → 删除旧文档 → 重新提交自动化任务。
+    """
+    import re
+
     conn = get_db()
-    cur = conn.execute(
-        "INSERT INTO documents (title, content, content_type, source, char_count) VALUES (?, ?, ?, ?, ?)",
-        (title, content, "text", module["source_tag"], len(content)),
-    )
-    doc_id = cur.lastrowid
-    conn.commit()
+    doc = conn.execute("SELECT * FROM documents WHERE id = ?", (doc_id,)).fetchone()
+    if not doc:
+        conn.close()
+        return {"error": "文档不存在"}
 
-    try:
-        chunks = chunk_text(content)
-        vs = get_vector_store()
-        vs.add_document(doc_id, title, chunks)
-        conn.execute("UPDATE documents SET chunk_count = ? WHERE id = ?", (len(chunks), doc_id))
-        conn.commit()
-    except Exception as e:
-        print(f"向量化失败 (文档 {doc_id}): {e}")
+    content = doc["content"] or ""
+    title = doc["title"] or ""
+
+    # 提取抖音链接
+    douyin_match = re.search(r'https?://v\.douyin\.com/[^\s)\]]+', content)
+    if not douyin_match:
+        douyin_match = re.search(r'https?://www\.douyin\.com/[^\s)\]]+', content)
+    if not douyin_match:
+        conn.close()
+        return {"error": "文档中未找到抖音链接，无法重新解析"}
+
+    original_link = douyin_match.group(0).rstrip('.。，,')
+    conn.close()
+
+    # 删除旧文档（含向量库）
+    _delete_document_full(doc_id)
+
+    # 提交新任务
+    task_id = str(uuid.uuid4())[:8]
+    with _lock:
+        _tasks[task_id] = {
+            "task_id": task_id, "status": "pending", "module_id": "douyin-summary",
+            "module_name": "抖音摘要（重新解析）",
+            "input": original_link[:200], "progress": "排队中…",
+            "created_at": datetime.now().isoformat(),
+        }
+    _executor.submit(_process_single_task, task_id)
+
+    return {
+        "status": "queued",
+        "task_id": task_id,
+        "message": f"已重新提交解析任务（原文档：{title}），处理中…",
+        "original_link": original_link,
+    }
+
+
+@router.get("/automation/reparseable")
+def list_reparseable():
+    """列出可以重新解析的文档（ASR 失败或内容不完整）。"""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, title, content, source, char_count, created_at FROM documents "
+        "WHERE source IN ('douyin-summary', 'bilibili-summary', 'xiaohongshu-summary') "
+        "ORDER BY created_at DESC LIMIT 100"
+    ).fetchall()
+    conn.close()
+
+    import re
+    result = []
+    for r in rows:
+        content = r["content"] or ""
+        is_failed = "语音提取失败" in content or "⚠️ 语音提取失败" in content
+        is_api_fail = "API" in content[:500] and ("不可用" in content[:500] or "欠费" in content[:500])
+        is_level3 = "Level 3" in content[:1000] and "基于视频标题" in content[:1000]
+        has_link = bool(re.search(r'https?://v\.douyin\.com/[^\s)\]]+', content))
+
+        if is_failed or is_api_fail or is_level3:
+            result.append({
+                "doc_id": r["id"], "title": r["title"],
+                "source": r["source"], "char_count": r["char_count"],
+                "created_at": r["created_at"],
+                "fail_reason": "API不可用" if is_api_fail else ("ASR失败" if is_failed else "仅标题推断"),
+                "has_link": has_link,
+            })
+
+    return {"count": len(result), "documents": result}
+
+
+@router.post("/documents/cleanup")
+def cleanup_documents(payload: dict = None):
+    """
+    批量清理测试文档、重复文档、无意义短文档。
+    支持模式：
+    - test: 标题含 test/测试 的文档
+    - short: 少于 50 字的文档
+    - duplicates: 标题重复的文档（保留第一个）
+    - all: 以上全部
+    """
+    if payload is None:
+        payload = {}
+    mode = payload.get("mode", "all")
+    dry_run = payload.get("dry_run", True)  # 默认预演，不实际删除
+
+    conn = get_db()
+    to_delete = set()
+
+    # 1. 测试文档
+    if mode in ("test", "all"):
+        test_rows = conn.execute(
+            "SELECT id, title FROM documents WHERE lower(title) LIKE '%test%' OR title LIKE '%测试%' OR title = 'MCP测试'"
+        ).fetchall()
+        for r in test_rows:
+            to_delete.add(r["id"])
+
+    # 2. 短文档（< 50 字，且不是 douyin/bilibili/xiaohongshu 摘要）
+    if mode in ("short", "all"):
+        short_rows = conn.execute(
+            "SELECT id, title, char_count FROM documents WHERE char_count < 50 "
+            "AND source NOT IN ('douyin-summary', 'bilibili-summary', 'xiaohongshu-summary')"
+        ).fetchall()
+        for r in short_rows:
+            to_delete.add(r["id"])
+
+    # 3. 重复文档（仅检测 upload/extension/claude-desktop 来源，排除摘要文档）
+    if mode in ("duplicates", "all"):
+        dup_rows = conn.execute(
+            "SELECT id, title, source, created_at FROM documents "
+            "WHERE source IN ('upload', 'extension', 'claude-desktop', 'inbox') "
+            "ORDER BY title, created_at"
+        ).fetchall()
+        seen_titles = {}
+        for r in dup_rows:
+            normalized = r["title"].strip().lower().replace(" ", "").replace("-", "").replace("_", "")
+            key = normalized[:40]
+            if key in seen_titles:
+                to_delete.add(r["id"])
+            else:
+                seen_titles[key] = r["id"]
 
     conn.close()
-    return {"status": "done", "doc_id": doc_id, "title": title}
+
+    if dry_run:
+        # 返回将要删除的文档列表
+        conn = get_db()
+        details = []
+        for did in to_delete:
+            row = conn.execute("SELECT id, title, source, char_count FROM documents WHERE id = ?", (did,)).fetchone()
+            if row:
+                details.append({"id": row["id"], "title": row["title"], "source": row["source"], "char_count": row["char_count"]})
+        conn.close()
+        return {
+            "dry_run": True,
+            "count": len(to_delete),
+            "documents": details,
+            "message": f"预演模式：将删除 {len(to_delete)} 个文档。设置 dry_run=false 确认执行。",
+        }
+
+    # 实际删除
+    deleted_count = 0
+    for did in to_delete:
+        try:
+            _delete_document_full(did)
+            deleted_count += 1
+        except Exception:
+            pass
+
+    return {"dry_run": False, "deleted": deleted_count}
+
+
+def _delete_document_full(doc_id: int):
+    """完整删除文档：SQLite + 向量库。"""
+    conn = get_db()
+    doc = conn.execute("SELECT * FROM documents WHERE id = ?", (doc_id,)).fetchone()
+    if not doc:
+        conn.close()
+        return
+
+    conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+    conn.commit()
+    conn.close()
+
+    try:
+        vs = get_vector_store()
+        existing = vs.collection.get(where={"doc_id": doc_id})
+        if existing and existing["ids"]:
+            vs.collection.delete(ids=existing["ids"])
+    except Exception:
+        pass

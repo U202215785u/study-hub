@@ -84,6 +84,16 @@ def init_db():
             applied_at TIMESTAMP,
             rejected_at TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS document_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_doc_id INTEGER NOT NULL,
+            target_title TEXT NOT NULL,
+            target_doc_id INTEGER,
+            link_text TEXT DEFAULT '',
+            FOREIGN KEY (source_doc_id) REFERENCES documents(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_doc_links_source ON document_links(source_doc_id);
+        CREATE INDEX IF NOT EXISTS idx_doc_links_target ON document_links(target_title);
         CREATE TABLE IF NOT EXISTS system_snapshots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             snapshot_type TEXT NOT NULL CHECK(snapshot_type IN ('daily','weekly','manual')),
@@ -107,6 +117,20 @@ def init_db():
     ]:
         try:
             conn.execute(f"SELECT {col} FROM documents LIMIT 1")
+        except:
+            conn.execute(sql)
+    conn.commit()
+
+    # 兼容旧表：wiki_pages 新增框架字段
+    for col, sql in [
+        ("content_type", "ALTER TABLE wiki_pages ADD COLUMN content_type TEXT DEFAULT ''"),
+        ("difficulty", "ALTER TABLE wiki_pages ADD COLUMN difficulty TEXT DEFAULT ''"),
+        ("external_links", "ALTER TABLE wiki_pages ADD COLUMN external_links TEXT DEFAULT '[]'"),
+        ("prerequisites", "ALTER TABLE wiki_pages ADD COLUMN prerequisites TEXT DEFAULT '[]'"),
+        ("next_steps", "ALTER TABLE wiki_pages ADD COLUMN next_steps TEXT DEFAULT '[]'"),
+    ]:
+        try:
+            conn.execute(f"SELECT {col} FROM wiki_pages LIMIT 1")
         except:
             conn.execute(sql)
     conn.commit()
