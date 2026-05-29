@@ -1,29 +1,21 @@
 {
   "manifest_version": 3,
   "name": "学习中枢 - 对话采集",
-  "version": "1.1",
-  "description": "自动采集 AI 网站对话，回流传入知识库。支持 Claude / ChatGPT / DeepSeek / Kimi / 豆包",
+  "version": "2.0",
+  "description": "自动采集 AI 网站对话，支持自定义网站配置。五层记忆系统：角色/项目/工作流/会话/世界",
   "permissions": ["storage", "tabs", "scripting", "activeTab"],
   "host_permissions": [
-    "https://claude.ai/*",
-    "https://chat.openai.com/*",
-    "https://chat.deepseek.com/*",
-    "https://kimi.moonshot.cn/*",
-    "https://www.doubao.com/*"
+    "https://*/*",
+    "http://localhost:8741/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://claude.ai/*",
-        "https://chat.openai.com/*",
-        "https://chat.deepseek.com/*",
-        "https://kimi.moonshot.cn/*",
-        "https://www.doubao.com/*"
-      ],
-      "js": ["adapters.js", "content.js"]
+      "matches": ["https://*/*"],
+      "js": ["adapters.js", "content.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {
