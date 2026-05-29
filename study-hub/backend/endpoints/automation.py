@@ -121,6 +121,31 @@ def _extract_xiaohongshu_raw(user_input: str) -> dict:
     return raw
 
 
+def _preprocess_douyin_input(user_input: str) -> str:
+    """预处理抖音输入：从口令/分享文本中提取有效链接。
+
+    抖音分享口令可能包含以下格式：
+    - 标准 URL: https://v.douyin.com/xxxxx
+    - 无协议短链: v.douyin.com/xxxxx
+    - 图集链接: www.iesdouyin.com/share/note/xxxxx
+    本函数会把无协议的短链补全为 https:// 格式。
+    """
+    text = user_input.strip()
+    # 1. 如果已经包含标准 http(s) URL，直接返回
+    if re.search(r'https?://', text):
+        return text
+    # 2. 提取 v.douyin.com/xxxxx 短链并补全协议
+    m = re.search(r'v\.douyin\.com/[a-zA-Z0-9]+', text)
+    if m:
+        return 'https://' + m.group(0)
+    # 3. 提取 iesdouyin.com 链接并补全协议
+    m = re.search(r'www\.iesdouyin\.com/share/(?:video|note)/\d+', text)
+    if m:
+        return 'https://' + m.group(0)
+    # 4. 兜底：原样返回，让下游抛出更具体的错误
+    return text
+
+
 def _extract_douyin_raw(user_input: str) -> dict:
     """用 DouyinProcessor 解析抖音视频，提取元数据 + ASR 文本。
 
@@ -130,7 +155,8 @@ def _extract_douyin_raw(user_input: str) -> dict:
     3. 全部失败则记录错误原因
     """
     processor = DouyinProcessor("")
-    info = processor.parse_share_url(user_input)
+    cleaned_input = _preprocess_douyin_input(user_input)
+    info = processor.parse_share_url(cleaned_input)
 
     raw = {
         "platform": "抖音", "type": "视频",
@@ -336,8 +362,6 @@ _executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 # 细粒度进度步骤定义
 STEPS = [
     ("extract_meta", "提取元数据"),
-    ("download_audio", "下载音频"),
-    ("asr", "ASR 识别"),
     ("summarize", "AI 总结"),
     ("import", "生成文档"),
 ]
