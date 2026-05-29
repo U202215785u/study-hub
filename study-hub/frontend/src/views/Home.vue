@@ -333,12 +333,12 @@
 
   <!-- Document Modal -->
   <div v-if="docModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]" @click.self="docModal = false">
-    <div class="bg-surface border border-border rounded-[12px] p-6 w-[90%] max-w-[700px] flex flex-col gap-4 max-h-[80vh]">
-      <h3 class="text-base">{{ docTitle }}</h3>
-      <div class="overflow-y-auto max-h-[60vh]">
+    <div class="bg-surface border border-border rounded-[12px] p-5 w-[98%] md:w-[96%] max-w-none flex flex-col gap-4 h-[95vh]">
+      <h3 class="text-base font-semibold shrink-0">{{ docTitle }}</h3>
+      <div class="overflow-y-auto text-sm leading-relaxed bg-bg p-5 rounded-[8px] flex-1 min-h-0">
         <MarkdownRenderer :content="docContent" />
       </div>
-      <div class="flex gap-2.5 justify-end">
+      <div class="flex gap-2.5 justify-end shrink-0">
         <button @click="docModal = false" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] hover:bg-surface-hover">关闭</button>
       </div>
     </div>
