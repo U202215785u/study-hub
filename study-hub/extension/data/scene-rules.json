@@ -1,0 +1,93 @@
+{
+  "scenes": [
+    {
+      "id": "tool_find",
+      "name": "工具查找",
+      "icon": "🛠️",
+      "keywords": ["工具", "抠图", "压缩", "转换", "生成器", "编辑器", "计算器", "翻译", "下载", "解析"],
+      "sources": [
+        { "name": "GitHub", "domain": "github.com", "icon": "🐙" },
+        { "name": "Product Hunt", "domain": "producthunt.com", "icon": "🚀" },
+        { "name": "官网", "domain": "", "icon": "🏠" }
+      ],
+      "tips": [
+        "优先选择开源免费工具",
+        "注意前几条搜索结果可能是广告推广"
+      ],
+      "recommendations": [
+        { "name": "remove.bg", "url": "https://www.remove.bg", "desc": "在线自动抠图，免费版够用" },
+        { "name": "TinyPNG", "url": "https://tinypng.com", "desc": "图片压缩工具" }
+      ]
+    },
+    {
+      "id": "tech_doc",
+      "name": "技术文档",
+      "icon": "📘",
+      "keywords": ["文档", "API", "教程", "UE5", "Unity", "React", "Vue", "Python", "JavaScript", "TypeScript", "Node.js", "Docker", "Kubernetes"],
+      "sources": [
+        { "name": "官方文档", "domain": "", "icon": "📘" },
+        { "name": "StackOverflow", "domain": "stackoverflow.com", "icon": "💬" },
+        { "name": "GitHub Issues", "domain": "github.com", "icon": "🐛" },
+        { "name": "MDN", "domain": "developer.mozilla.org", "icon": "🦊" }
+      ],
+      "tips": [
+        "官方文档最权威，优先查看",
+        "知乎/CSDN 内容可能较旧，注意时效性"
+      ],
+      "recommendations": []
+    },
+    {
+      "id": "find_official",
+      "name": "找官网",
+      "icon": "🎯",
+      "keywords": ["官网", "官方网站", "下载", "正版"],
+      "sources": [
+        { "name": "官网", "domain": "", "icon": "🏠" }
+      ],
+      "tips": [
+        "认准官方域名，警惕山寨网站",
+        "搜索结果前几条可能是广告推广"
+      ],
+      "recommendations": []
+    },
+    {
+      "id": "product_review",
+      "name": "产品测评",
+      "icon": "🎧",
+      "keywords": ["测评", "评测", "推荐", "对比", "耳机", "手机", "相机", "笔记本", "显示器", "键盘", "鼠标"],
+      "sources": [
+        { "name": "什么值得买", "domain": "smzdm.com", "icon": "💰" },
+        { "name": "知乎", "domain": "zhihu.com", "icon": "❓" },
+        { "name": "B站", "domain": "bilibili.com", "icon": "📺" },
+        { "name": "小红书", "domain": "xiaohongshu.com", "icon": "📕" }
+      ],
+      "tips": [
+        "建议优先看图文测评了解参数",
+        "再看视频了解实际体验",
+        "注意区分真实测评和软文带货"
+      ],
+      "recommendations": [
+        { "name": "先看评测", "url": "https://space.bilibili.com/2871017", "desc": "B站知名科技测评UP主" },
+        { "name": "爱否科技", "url": "https://space.bilibili.com/356211451", "desc": "独立第三方测评" }
+      ]
+    },
+    {
+      "id": "tutorial",
+      "name": "教程学习",
+      "icon": "📚",
+      "keywords": ["教程", "入门", "学习", "课程", "指南", "how to", " beginner", "新手"],
+      "sources": [
+        { "name": "B站", "domain": "bilibili.com", "icon": "📺" },
+        { "name": "YouTube", "domain": "youtube.com", "icon": "▶️" },
+        { "name": "知乎", "domain": "zhihu.com", "icon": "❓" },
+        { "name": "菜鸟教程", "domain": "runoob.com", "icon": "🐦" }
+      ],
+      "tips": [
+        "视频教程适合入门，图文适合查阅",
+        "官方教程最系统，社区教程更实战"
+      ],
+      "recommendations": []
+    }
+  ],
+  "defaultScene": "tool_find"
+}

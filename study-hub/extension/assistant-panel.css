@@ -1,0 +1,592 @@
+/* Study Hub 搜索助手浮窗样式 */
+/* 完全自包含，不依赖 Bing 页面 CSS */
+
+#studyhub-assistant-host {
+  all: initial !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+#studyhub-assistant-host * {
+  all: unset;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+}
+
+.studyhub-panel {
+  position: fixed !important;
+  top: 72px !important;
+  right: 16px !important;
+  width: 360px !important;
+  max-height: calc(100vh - 100px) !important;
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 999999 !important;
+  transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease !important;
+}
+
+.studyhub-panel.dark-mode {
+  background: #1a1a2e !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+.studyhub-panel.collapsed {
+  width: 60px !important;
+  overflow: hidden !important;
+}
+
+.studyhub-panel.collapsed .studyhub-body,
+.studyhub-panel.collapsed .studyhub-tabs {
+  display: none !important;
+}
+
+.studyhub-panel.collapsed .studyhub-header-text {
+  display: none !important;
+}
+
+/* 标题栏 */
+.studyhub-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  cursor: move !important;
+  user-select: none !important;
+  flex-shrink: 0 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-header {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+}
+
+.studyhub-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.studyhub-header-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.studyhub-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  font-size: 13px !important;
+  transition: background 0.2s !important;
+  border: none !important;
+}
+
+.studyhub-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 场景标签页 */
+.studyhub-tabs {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 8px 12px 0 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  overflow-x: auto !important;
+  flex-shrink: 0 !important;
+  scrollbar-width: none !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-tabs {
+  border-bottom-color: #374151 !important;
+}
+
+.studyhub-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.studyhub-tab {
+  padding: 6px 12px !important;
+  border-radius: 8px 8px 0 0 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.2s !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-tab {
+  color: #9ca3af !important;
+}
+
+.studyhub-tab:hover {
+  color: #4b5563 !important;
+  background: #f3f4f6 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-tab:hover {
+  color: #d1d5db !important;
+  background: #374151 !important;
+}
+
+.studyhub-tab.active {
+  color: #667eea !important;
+  background: #eef2ff !important;
+  font-weight: 600 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-tab.active {
+  color: #a78bfa !important;
+  background: #3730a3 !important;
+}
+
+/* 内容区 */
+.studyhub-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #d1d5db transparent !important;
+}
+
+.studyhub-body::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.studyhub-body::-webkit-scrollbar-thumb {
+  background: #d1d5db !important;
+  border-radius: 2px !important;
+}
+
+/* 场景标题 */
+.studyhub-scene-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin-bottom: 4px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-scene-title {
+  color: #f9fafb !important;
+}
+
+.studyhub-scene-subtitle {
+  font-size: 12px !important;
+  color: #6b7280 !important;
+  margin-bottom: 16px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-scene-subtitle {
+  color: #9ca3af !important;
+}
+
+/* 推荐列表 */
+.studyhub-section {
+  margin-bottom: 16px !important;
+}
+
+.studyhub-section-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-section-title {
+  color: #d1d5db !important;
+}
+
+.studyhub-rec-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  background: #f9fafb !important;
+  border-radius: 8px !important;
+  margin-bottom: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  text-decoration: none !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-rec-item {
+  background: #1f2937 !important;
+}
+
+.studyhub-rec-item:hover {
+  background: #f3f4f6 !important;
+  transform: translateX(2px) !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-rec-item:hover {
+  background: #374151 !important;
+}
+
+.studyhub-rec-icon {
+  font-size: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.studyhub-rec-content {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.studyhub-rec-name {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  margin-bottom: 2px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-rec-name {
+  color: #f9fafb !important;
+}
+
+.studyhub-rec-desc {
+  font-size: 11px !important;
+  color: #6b7280 !important;
+  line-height: 1.4 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-rec-desc {
+  color: #9ca3af !important;
+}
+
+/* 提示 */
+.studyhub-tip {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+  background: #fef3c7 !important;
+  border-radius: 8px !important;
+  margin-bottom: 16px !important;
+  font-size: 12px !important;
+  color: #92400e !important;
+  line-height: 1.5 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-tip {
+  background: #451a03 !important;
+  color: #fcd34d !important;
+}
+
+.studyhub-tip-icon {
+  font-size: 14px !important;
+  flex-shrink: 0 !important;
+  margin-top: 1px !important;
+}
+
+/* 来源筛选 */
+.studyhub-filter-section {
+  border-top: 1px solid #e5e7eb !important;
+  padding-top: 16px !important;
+  margin-top: 16px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-filter-section {
+  border-top-color: #374151 !important;
+}
+
+.studyhub-filter-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 10px !important;
+}
+
+.studyhub-filter-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-filter-title {
+  color: #d1d5db !important;
+}
+
+.studyhub-filter-reset {
+  font-size: 11px !important;
+  color: #667eea !important;
+  cursor: pointer !important;
+  background: none !important;
+  border: none !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-filter-reset {
+  color: #a78bfa !important;
+}
+
+.studyhub-filter-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.studyhub-filter-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 8px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: background 0.15s !important;
+}
+
+.studyhub-filter-item:hover {
+  background: #f3f4f6 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-filter-item:hover {
+  background: #374151 !important;
+}
+
+.studyhub-filter-checkbox {
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.studyhub-filter-checkbox.checked {
+  background: #667eea !important;
+  border-color: #667eea !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-filter-checkbox.checked {
+  background: #8b5cf6 !important;
+  border-color: #8b5cf6 !important;
+}
+
+.studyhub-filter-checkbox.checked::after {
+  content: '✓' !important;
+  color: white !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+}
+
+.studyhub-filter-icon {
+  font-size: 14px !important;
+}
+
+.studyhub-filter-name {
+  font-size: 12px !important;
+  color: #374151 !important;
+  flex: 1 !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-filter-name {
+  color: #d1d5db !important;
+}
+
+.studyhub-filter-memory {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #9ca3af !important;
+  flex-shrink: 0 !important;
+}
+
+/* 记忆标记 tooltip */
+.studyhub-filter-item[data-memory="true"] .studyhub-filter-memory {
+  background: #667eea !important;
+}
+
+/* 应用筛选按钮 */
+.studyhub-apply-btn {
+  width: 100% !important;
+  padding: 10px !important;
+  margin-top: 12px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: opacity 0.2s !important;
+}
+
+.studyhub-apply-btn:hover {
+  opacity: 0.9 !important;
+}
+
+/* AI 分析区域 */
+.studyhub-ai-section {
+  border-top: 1px solid #e5e7eb !important;
+  padding-top: 16px !important;
+  margin-top: 16px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-ai-section {
+  border-top-color: #374151 !important;
+}
+
+.studyhub-ai-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-ai-title {
+  color: #d1d5db !important;
+}
+
+.studyhub-ai-content {
+  font-size: 12px !important;
+  color: #4b5563 !important;
+  line-height: 1.6 !important;
+  padding: 10px 12px !important;
+  background: #f3f4f6 !important;
+  border-radius: 8px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-ai-content {
+  color: #d1d5db !important;
+  background: #1f2937 !important;
+}
+
+/* 关联场景 */
+.studyhub-related {
+  margin-top: 12px !important;
+  padding-top: 12px !important;
+  border-top: 1px dashed #e5e7eb !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-related {
+  border-top-color: #374151 !important;
+}
+
+.studyhub-related-title {
+  font-size: 11px !important;
+  color: #9ca3af !important;
+  margin-bottom: 8px !important;
+}
+
+.studyhub-related-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 10px !important;
+  background: #f3f4f6 !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  color: #4b5563 !important;
+  cursor: pointer !important;
+  margin-right: 6px !important;
+  margin-bottom: 6px !important;
+  transition: background 0.2s !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-related-item {
+  background: #374151 !important;
+  color: #d1d5db !important;
+}
+
+.studyhub-related-item:hover {
+  background: #e5e7eb !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-related-item:hover {
+  background: #4b5563 !important;
+}
+
+/* 小圆点（关闭后恢复） */
+.studyhub-dot {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
+  z-index: 999999 !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+
+.studyhub-dot:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5) !important;
+}
+
+/* 首次引导 */
+.studyhub-guide {
+  position: absolute !important;
+  bottom: -36px !important;
+  left: 0 !important;
+  right: 0 !important;
+  text-align: center !important;
+  font-size: 11px !important;
+  color: #9ca3af !important;
+  padding: 8px !important;
+  background: #f9fafb !important;
+  border-radius: 0 0 12px 12px !important;
+}
+
+.studyhub-panel.dark-mode .studyhub-guide {
+  background: #1f2937 !important;
+  color: #6b7280 !important;
+}
+
+/* 动画 */
+@keyframes studyhub-slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.studyhub-panel.animating {
+  animation: studyhub-slideIn 0.3s ease !important;
+}
+
+/* 拖拽中 */
+.studyhub-panel.dragging {
+  transition: none !important;
+  cursor: move !important;
+}
