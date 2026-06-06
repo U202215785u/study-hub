@@ -32,6 +32,7 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 20px; border-bottom: 1px solid var(--border);
   background: rgba(6,10,16,0.95); z-index: 20;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 .topbar .logo {
@@ -86,6 +87,7 @@ body {
   border-left: 1px solid var(--border);
   display: flex; flex-direction: column;
   overflow-y: auto; padding: 16px;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px); gap: 14px;
   transition: transform 0.3s;
 }
@@ -180,6 +182,7 @@ body {
   gap: 18px; padding: 10px 20px 16px;
   border-top: 1px solid var(--border);
   background: rgba(6,10,16,0.95); z-index: 20;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 .ctrl-btn {
@@ -199,12 +202,23 @@ body {
   background: radial-gradient(circle, rgba(0,180,255,0.2), transparent);
 }
 .ctrl-label { font-size: 9px; letter-spacing: 1px; color: var(--text2); text-align: center; margin-top: 3px; }
+.ctrl-group { text-align: center; }
+.status-online { color: #4caf7d; }
+.memory-info { font-size: 10px; color: var(--text2); }
+.empty-state { color: var(--text2); font-size: 10px; }
+.empty-text { color: var(--text2); }
+.layer-header { color: var(--text2); font-size: 9px; margin: 3px 0 2px; text-transform: uppercase; letter-spacing: 1px; }
+.suppress-tag { display: inline-block; padding: 1px 6px; margin: 1px; border-radius: 3px; background: rgba(85,102,119,0.2); color: #667788; font-size: 9px; }
+.stat-cyan { color: var(--cyan); }
+.stat-green { color: #4caf7d; }
+.stat-dim { color: var(--text2); }
 @keyframes btnGlow { 0%,100%{box-shadow:0 0 20px rgba(0,200,255,0.3)} 50%{box-shadow:0 0 50px rgba(0,200,255,0.7)} }
 
 .chat-input-bar {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 20px; border-top: 1px solid var(--border);
   background: rgba(6,10,16,0.98); z-index: 20;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 .chat-input {
@@ -231,7 +245,9 @@ body {
   border: 1px solid var(--cyan); border-radius: var(--radius);
   padding: 16px; z-index: 50; font-size: 11px;
   box-shadow: 0 0 30px rgba(0,180,255,0.2);
-  display: none; backdrop-filter: blur(12px);
+  display: none;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 .decision-overlay.show { display: block; }
 .decision-overlay h4 { color: var(--cyan); font-size: 11px; letter-spacing: 3px; margin-bottom: 10px; }
@@ -266,7 +282,7 @@ body {
   <div class="stats">
     <span id="statMemory">0</span> 记忆 ·
     <span id="statProjects">0</span> 项目 ·
-    <span id="statStatus" style="color:#4caf7d">在线</span>
+    <span id="statStatus" class="status-online">在线</span>
   </div>
 </div>
 
@@ -318,7 +334,7 @@ body {
     </div>
     <div class="panel-section">
       <h4>◆ 记忆库</h4>
-      <div id="memoryInfo" style="font-size:10px;color:var(--text2)">加载中…</div>
+      <div id="memoryInfo" class="memory-info">加载中…</div>
     </div>
   </div>
 </div>
@@ -329,10 +345,10 @@ body {
 </div>
 
 <div class="ctrl-bar">
-  <div style="text-align:center"><button class="ctrl-btn" id="btnPanel" title="显示/隐藏面板">☰</button><div class="ctrl-label">面板</div></div>
-  <div style="text-align:center"><button class="ctrl-btn voice-btn" id="btnVoice" title="语音对话">🎤</button><div class="ctrl-label">语音</div></div>
-  <div style="text-align:center"><button class="ctrl-btn" id="btnDecide" title="分析想法">⚡</button><div class="ctrl-label">分析</div></div>
-  <div style="text-align:center"><button class="ctrl-btn" id="btnReset" title="重置头像">⟳</button><div class="ctrl-label">重置</div></div>
+  <div class="ctrl-group"><button class="ctrl-btn" id="btnPanel" title="显示/隐藏面板">☰</button><div class="ctrl-label">面板</div></div>
+  <div class="ctrl-group"><button class="ctrl-btn voice-btn" id="btnVoice" title="语音对话">🎤</button><div class="ctrl-label">语音</div></div>
+  <div class="ctrl-group"><button class="ctrl-btn" id="btnDecide" title="分析想法">⚡</button><div class="ctrl-label">分析</div></div>
+  <div class="ctrl-group"><button class="ctrl-btn" id="btnReset" title="重置头像">⟳</button><div class="ctrl-label">重置</div></div>
 </div>
 
 <div class="decision-overlay" id="decisionOverlay">
@@ -366,7 +382,7 @@ async function loadDashboard() {
         <div class="info">${esc(p.progress || '')}</div>
         <div class="info${stallClass}">更新: ${updated} (${daysAgo}天前)</div>
       </div>`;
-    }).join('') || '<div style="color:var(--text2);font-size:10px">暂无项目</div>';
+    }).join('') || '<div class="empty-state">暂无项目</div>';
 
     const items = self.dashboard?.maintenance_items || [];
     document.getElementById('maintList').innerHTML = items.slice(0, 6).map(i =>
@@ -374,13 +390,13 @@ async function loadDashboard() {
         <div class="task">${esc(i.task)}</div>
         <div class="deadline">${esc(i.deadline || '')}</div>
       </div>`
-    ).join('') || '<div style="color:var(--text2);font-size:10px">暂无待办</div>';
+    ).join('') || '<div class="empty-state">暂无待办</div>';
 
     document.getElementById('statMemory').textContent = mem.total || 0;
     document.getElementById('memoryInfo').innerHTML = `
-      总计 <b style="color:var(--cyan)">${mem.total||0}</b> 条 ·
-      活跃 <b style="color:#4caf7d">${mem.active||0}</b> 条 ·
-      休眠 <b style="color:var(--text2)">${mem.dormant||0}</b> 条
+      总计 <b class="stat-cyan">${mem.total||0}</b> 条 ·
+      活跃 <b class="stat-green">${mem.active||0}</b> 条 ·
+      休眠 <b class="stat-dim">${mem.dormant||0}</b> 条
     `;
   } catch (e) {
     console.error('Dashboard load error:', e);
@@ -420,7 +436,7 @@ function showMemoryField(field) {
       </div>`;
     }
   }
-  coreEl.innerHTML = coreHtml || '<span style="color:var(--text2)">—</span>';
+  coreEl.innerHTML = coreHtml || '<span class="empty-text">—</span>';
 
   const activeEl = document.getElementById('activeLayerItems');
   const activated = field.activated || {};
@@ -440,16 +456,16 @@ function showMemoryField(field) {
       </div>`;
     }
   }
-  activeEl.innerHTML = activeHtml || '<span style="color:var(--text2)">—</span>';
+  activeEl.innerHTML = activeHtml || '<span class="empty-text">—</span>';
 
   const suppressEl = document.getElementById('suppressLayerItems');
   const suppressed = field.suppressed || [];
   if (suppressed.length > 0) {
     suppressEl.innerHTML = suppressed.map(s =>
-      `<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:3px;background:rgba(85,102,119,0.2);color:#667788;font-size:9px;">${esc(s)}</span>`
+      `<span class="suppress-tag">${esc(s)}</span>`
     ).join(' ');
   } else {
-    suppressEl.innerHTML = '<span style="color:var(--text2)">—</span>';
+    suppressEl.innerHTML = '<span class="empty-text">—</span>';
   }
 }
 
