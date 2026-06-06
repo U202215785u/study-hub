@@ -45,3 +45,16 @@ bilibili-summaries/
 # OS
 .DS_Store
 Thumbs.db
+
+# 嵌入的git仓库
+image2api/
+
+# Playwright MCP 日志
+.playwright-mcp/
+
+# Node modules
+node_modules/
+
+# Virtual environments
+venv/
+.venv/

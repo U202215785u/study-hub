@@ -1,7 +1,6 @@
 ---
 name: douyin-summary
 description: 抖音视频内容总结——提取视频文本、识别文中链接/资源、扩展相关知识，输出结构化 Markdown 文档
-trigger: 用户发送抖音分享链接（v.douyin.com 或 douyin.com）
 ---
 
 # 抖音视频深度总结
@@ -10,18 +9,47 @@ trigger: 用户发送抖音分享链接（v.douyin.com 或 douyin.com）
 
 ## 执行流程
 
+### 第零步：预处理链接（必须执行）
+
+用户输入的分享文本可能包含多种格式，直接调用 MCP 工具会因"找不到地址"而失败。
+
+**预处理规则**（按顺序执行）：
+
+1. **提取短链并补全协议**：如果文本中包含不带 `http://` 或 `https://` 的短链（如 `v.douyin.com/xxxxx`），补全为 `https://v.douyin.com/xxxxx`
+2. **提取 iesdouyin 链接**：如果文本中包含 `www.iesdouyin.com/share/video/数字` 或 `www.iesdouyin.com/share/note/数字`，补全 `https://`
+3. **兜底检查**：如果预处理后仍不包含 `https://` 开头的 douyin 链接，直接告知用户"这个分享文本里找不到有效的抖音链接，请重新复制分享链接后再试"，终止流程
+
+**实现方式**：用正则从文本中提取并修复，参照以下逻辑：
+
+```
+如果文本包含 https:// 开头 → 直接用
+否则：
+  - 匹配 v.douyin.com/[字母数字]+ → 补全 https://
+  - 匹配 www.iesdouyin.com/share/(video|note)/\d+ → 补全 https://
+  - 都匹配不到 → 告诉用户链接无效，停止
+```
+
+预处理后的干净链接记作 `{clean_link}`，后续所有步骤使用 `{clean_link}` 而非原始输入。
+
 ### 第一步：解析视频信息
 
-调用 `mcp__douyin-mcp__parse_douyin_video_info` 获取视频标题、视频ID、下载链接等基本信息。
+调用 `mcp__douyin-mcp__parse_douyin_video_info`，传入 `{clean_link}`，获取视频标题、视频ID、下载链接等基本信息。
+
+**如果解析失败**（返回 error 或 status 为 error）：
+- 检查错误信息，区分两种情况：
+  - **"未找到有效的分享链接"**：预处理未生效，检查 `{clean_link}` 是否被正确提取
+  - **"从HTML中解析视频信息失败"** 或 **"list index out of range"**：链接可能已过期或抖音限制访问，告知用户"这个链接可能过期了，试试重新从抖音复制分享链接"
+  - **其他错误**：把错误信息原样告诉用户
+- 终止流程，不继续后续步骤
 
 ### 第二步：提取视频文本（三级降级策略）
 
 **Level 1 — 直接 ASR**
-调用 `mcp__douyin-mcp__extract_douyin_text` 提取视频中的语音文本。
+调用 `mcp__douyin-mcp__extract_douyin_text`，传入 `{clean_link}`，提取视频中的语音文本。
 
 **Level 2 — 下载音频后识别**
 如果 Level 1 因「文件过大」失败：
-1. 调用 `mcp__douyin-mcp__get_douyin_download_link` 获取无水印下载链接
+1. 调用 `mcp__douyin-mcp__get_douyin_download_link`，传入 `{clean_link}`，获取无水印下载链接
 2. 用 ffmpeg 提取纯音频（去掉视频轨道，大幅缩小文件）：
    ```bash
    ffmpeg -i "<download_url>" -vn -acodec libmp3lame -b:a 64k -y "douyin-summaries/_temp_audio.mp3"
@@ -119,8 +147,10 @@ trigger: 用户发送抖音分享链接（v.douyin.com 或 douyin.com）
 
 ## 注意事项
 
-1. **信息准确性优先**：所有链接必须验证后才列入文档，死链、猜测的链接不要放
-2. **适度扩展**：扩展阅读控制在 3-5 条，不要堆砌
-3. **文件命名**：视频标题简化为 10 个字以内的文件名，去除特殊字符
-4. **目录管理**：如果 `douyin-summaries/` 目录不存在，先创建
-5. **ASR 失败处理**：如果文本提取完全失败，在"核心内容"章节改为"根据视频标题和描述推断"，并标注数据来源不完整
+1. **链接预处理（必须）**：执行第一步前，必须先做"第零步"预处理，否则大量合法链接会被误判为"找不到地址"
+2. **信息准确性优先**：所有链接必须验证后才列入文档，死链、猜测的链接不要放
+3. **适度扩展**：扩展阅读控制在 3-5 条，不要堆砌
+4. **文件命名**：视频标题简化为 10 个字以内的文件名，去除特殊字符
+5. **目录管理**：如果 `douyin-summaries/` 目录不存在，先创建
+6. **ASR 失败处理**：如果文本提取完全失败，在"核心内容"章节改为"根据视频标题和描述推断"，并标注数据来源不完整
+7. **解析失败不硬试**：第一步解析就失败的话（链接过期/被拦截/格式不支持），直接告诉用户原因，不走后续降级流程

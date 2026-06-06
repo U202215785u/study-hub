@@ -1,4 +1,4 @@
-import os, sys, subprocess, platform
+import os, sys, subprocess, platform, asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -22,11 +22,19 @@ from endpoints.review import router as review_router
 from endpoints.categories import router as categories_router
 from endpoints.automation import router as automation_router
 from endpoints.wiki import router as wiki_router
-from endpoints.evolution import router as evolution_router
 from endpoints.ai_search import router as ai_search_router
 from endpoints.brainstorm import router as brainstorm_router
 from endpoints.admin import router as admin_router
 from endpoints.memory import router as memory_router
+from endpoints.images import router as images_router
+from endpoints.second_self import router as second_self_router
+from endpoints.workflow import router as workflow_router
+from endpoints.ddl import router as ddl_router
+from endpoints.sop import router as sop_router
+from endpoints.creator import router as creator_router
+from endpoints.skills import router as skills_router
+from endpoints.journal import router as journal_router
+from endpoints.operations import router as operations_router
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 INBOX_DIR = os.path.join(os.path.dirname(__file__), "data", "inbox")
@@ -39,9 +47,56 @@ async def lifespan(app: FastAPI):
     init_db()
     from watcher import start_watcher
     start_watcher()
+    # 启动文件注入器定时任务
+    asyncio.create_task(_file_injector_loop())
+    # 校验外部依赖（ffmpeg / Claude Code）
+    _verify_startup_deps()
+    # 恢复未完成的任务 + 孤儿 .md 文件（防止重启丢失）
+    # 注：暂时异步化以避免阻塞启动
+    asyncio.create_task(_async_recover_automation_state())
+    # 启动网页变更监控定时任务（每 6 小时）
+    asyncio.create_task(_url_monitor_loop())
     yield
     from watcher import stop_watcher
     stop_watcher()
+
+
+async def _url_monitor_loop():
+    """网页变更监控定时任务：每 6 小时检查一次监控的 URL"""
+    import logging
+    logger = logging.getLogger("studyhub")
+    # 首次启动延迟 10 分钟
+    await asyncio.sleep(600)
+    while True:
+        try:
+            from endpoints.admin import check_monitored_urls
+            result = check_monitored_urls()
+            if result.get("changed", 0) > 0:
+                logger.info(f"[url_monitor] 检测到 {result['changed']} 个网页有变更")
+            else:
+                logger.info(f"[url_monitor] 检查了 {result.get('checked', 0)} 个 URL，无变更")
+        except Exception as e:
+            logger.error(f"[url_monitor] 定时任务异常: {e}")
+        await asyncio.sleep(21600)  # 6 小时
+
+
+async def _file_injector_loop():
+    """文件注入器定时任务：每5分钟检查并更新记忆文件"""
+    import logging
+    logger = logging.getLogger("studyhub")
+    # 首次启动延迟30秒，避免与启动过程竞争
+    await asyncio.sleep(30)
+    while True:
+        try:
+            from core.file_injector import generate_memory_files
+            result = generate_memory_files()
+            if result.get("errors"):
+                logger.warning(f"[file_injector] 部分文件生成失败: {result['errors']}")
+            else:
+                logger.info(f"[file_injector] 记忆文件已更新: {result['stats']}")
+        except Exception as e:
+            logger.error(f"[file_injector] 定时任务异常: {e}")
+        await asyncio.sleep(300)  # 5分钟
 
 
 def _sanitize_pid_file():
@@ -89,6 +144,54 @@ def _sanitize_pid_file():
     except Exception:
         pass
 
+
+async def _async_recover_automation_state():
+    """异步版：避免阻塞 lifespan 启动。"""
+    await asyncio.sleep(3)  # 等数据库和文件系统就绪
+    try:
+        from endpoints.automation import recover_tasks_on_startup
+        recover_tasks_on_startup()
+    except Exception as e:
+        import logging
+        logger = logging.getLogger("studyhub")
+        logger.warning(f"[startup] 自动化任务恢复失败: {e}")
+
+
+def _recover_automation_state():
+    """启动时恢复自动化任务队列 + 孤儿 .md 文件。"""
+    try:
+        from endpoints.automation import recover_tasks_on_startup
+        recover_tasks_on_startup()
+    except Exception as e:
+        import logging
+        logger = logging.getLogger("studyhub")
+        logger.warning(f"[startup] 自动化任务恢复失败: {e}")
+
+
+def _verify_startup_deps():
+    """启动时校验外部依赖可用性，输出警告到控制台和日志。"""
+    import logging
+    logger = logging.getLogger("studyhub")
+
+    try:
+        from endpoints.automation import verify_external_deps
+        report = verify_external_deps()
+    except Exception as e:
+        logger.warning(f"[startup] 无法校验外部依赖: {e}")
+        return
+
+    warnings = []
+    for name, info in report.items():
+        if info.get("warning"):
+            warnings.append(f"  ⚠ {name}: {info['warning']}")
+        else:
+            print(f"[startup] {name}: {info['path']} [OK]")
+
+    if warnings:
+        print("\n".join(warnings))
+        for w in warnings:
+            logger.warning(f"[startup] {w}")
+
 app = FastAPI(title="学习中枢 API", lifespan=lifespan)
 
 class StripApiPrefixMiddleware(BaseHTTPMiddleware):
@@ -126,11 +229,19 @@ app.include_router(review_router)
 app.include_router(categories_router)
 app.include_router(automation_router)
 app.include_router(wiki_router)
-app.include_router(evolution_router)
 app.include_router(ai_search_router)
 app.include_router(brainstorm_router)
 app.include_router(admin_router)
 app.include_router(memory_router)
+app.include_router(images_router)
+app.include_router(second_self_router)
+app.include_router(workflow_router)
+app.include_router(ddl_router)
+app.include_router(sop_router)
+app.include_router(creator_router)
+app.include_router(skills_router)
+app.include_router(journal_router)
+app.include_router(operations_router)
 
 def _extract_plan_meta(path: str) -> dict:
     title = ""
@@ -317,6 +428,10 @@ def open_inbox():
         return {"status": "ok", "path": INBOX_DIR}
     except Exception as e:
         return {"error": str(e)}
+
+IMAGES_DIR = os.path.join(os.path.dirname(__file__), "data", "images")
+if os.path.isdir(IMAGES_DIR):
+    app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
 if os.path.isdir(LEARNING_DIR):
     app.mount("/mods/learning", StaticFiles(directory=LEARNING_DIR), name="mods_learning")

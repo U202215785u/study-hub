@@ -1,0 +1,23 @@
+{
+  "name": "study-hub-electron",
+  "version": "1.0.0",
+  "description": "学习中枢桌面工作台 — Electron Desktop Dashboard",
+  "main": "main.js",
+  "author": "Study-Hub",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron .",
+    "build:frontend": "cd ../frontend && npx vite build",
+    "package:win": "npm run build:frontend && electron-builder --win",
+    "package:mac": "npm run build:frontend && electron-builder --mac",
+    "package:linux": "npm run build:frontend && electron-builder --linux"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0",
+    "electron-updater": "^6.1.0"
+  }
+}

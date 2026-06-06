@@ -1,0 +1,6 @@
+- [管家必须优先激活](butler-must-be-first.md) — 用户说"管家"时必须立即激活 butler skill，不能跳过
+- [因果记忆系统](causal-memory-system.md) — 放弃向量记忆，改为因果推理。借鉴 Hindsight + Graphiti，零外部依赖实现
+- [Three.js CDN 版本兼容性](threejs-cdn-version-trap.md) — 0.150+ 无 UMD 构建，必须用 0.140 或更早
+- [浏览器扩展交互设计](browser-extension-interaction.md) — Study Hub 扩展侧边栏的交互设计原则和踩坑记录
+- [Second Self 回复质量优化](second-self-prompt-optimization.md) — Markdown 渲染、System Prompt 长度控制、语气调整
+- [AI 文件操作事故](ai-file-operation-accident.md) — 2026-06-06 整理文件时 `mv; rm -rf` 导致 second-self 全部核心代码丢失。教训：绝不用 `;` 连接 mv 和 rm，绝不搭配 `2>/dev/null` 和 `rm -rf`

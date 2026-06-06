@@ -4,8 +4,8 @@
     <div class="text-center mb-1">
       <h1 class="text-[22px] font-bold tracking-tight">学习中枢</h1>
       <div class="mt-1">
-        <router-link to="/kb" class="text-xs text-text-secondary hover:text-accent mr-3">知识库管理 →</router-link>
-        <router-link to="/wiki" class="text-xs text-accent hover:text-[#a5b0ff]">🧠 Wiki 知识库 →</router-link>
+        <a href="/kb" target="_blank" rel="noopener noreferrer" class="text-xs text-text-secondary hover:text-accent mr-3">知识库管理 →</a>
+        <a href="/wiki" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:text-[#a5b0ff]">🧠 Wiki 知识库 →</a>
       </div>
     </div>
 
@@ -48,7 +48,7 @@
           @contextmenu.prevent="openShortcutModal(i)">
           <span class="text-[28px]">{{ s.icon }}</span>
           <span class="text-[13px] text-text-secondary">{{ s.name }}</span>
-          <button @click.prevent="settings.removeShortcut(i)" class="absolute top-1 right-1 w-[22px] h-[22px] rounded-full border-none bg-white/[0.08] text-text-secondary text-sm items-center justify-center hidden hover:bg-danger hover:text-white">×</button>
+          <button @click.prevent="confirmRemoveShortcut(i)" class="absolute top-1 right-1 w-[22px] h-[22px] rounded-full border-none bg-white/[0.08] text-text-secondary text-sm flex items-center justify-center hover:bg-danger hover:text-white">×</button>
         </a>
         <div @click="openShortcutModal()"
           class="aspect-square bg-surface border border-dashed border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all opacity-60 hover:opacity-100 gap-2">
@@ -62,11 +62,14 @@
     <div>
       <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">AI 启动器</div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div v-for="(a, i) in settings.launcherItems" :key="i" @click="launchAI(a.url)"
-          class="bg-surface border border-border rounded-[12px] p-5 text-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent flex flex-col items-center gap-2">
-          <span class="text-[32px]">{{ a.icon }}</span>
-          <span class="text-sm font-semibold">{{ a.name }}</span>
-          <span class="text-[11px] text-text-secondary break-all">{{ a.url }}</span>
+        <div v-for="(a, i) in settings.launcherItems" :key="i"
+          class="relative bg-surface border border-border rounded-[12px] p-5 text-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent flex flex-col items-center gap-2">
+          <div @click="launchAI(a.url)" class="flex flex-col items-center gap-2 flex-1">
+            <span class="text-[32px]">{{ a.icon }}</span>
+            <span class="text-sm font-semibold">{{ a.name }}</span>
+            <span class="text-[11px] text-text-secondary break-all">{{ a.url }}</span>
+          </div>
+          <button @click.stop="confirmRemoveLauncher(i)" class="absolute top-1 right-1 w-[22px] h-[22px] rounded-full border-none bg-white/[0.08] text-text-secondary text-sm flex items-center justify-center hover:bg-danger hover:text-white">×</button>
         </div>
         <div @click="openAIModal()"
           class="bg-surface border border-dashed border-border rounded-[12px] p-5 text-center cursor-pointer transition-all opacity-60 hover:opacity-100 flex flex-col items-center gap-2">
@@ -88,10 +91,18 @@
           <span class="text-[28px]">📋</span>
           <span class="text-[13px] text-text-secondary">学习清单</span>
         </router-link>
-        <a href="/suit/index.html" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
+        <a v-if="!isElectron" href="/suit/index.html" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
           <span class="text-[28px]">🏋️</span>
           <span class="text-[13px] text-text-secondary">前端套件</span>
         </a>
+        <router-link to="/creator" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
+          <span class="text-[28px]">🎨</span>
+          <span class="text-[13px] text-text-secondary">创作中心</span>
+        </router-link>
+        <router-link to="/skills" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
+          <span class="text-[28px]">🧩</span>
+          <span class="text-[13px] text-text-secondary">Skill 市场</span>
+        </router-link>
       </div>
     </div>
 
@@ -102,6 +113,12 @@
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <span class="font-semibold">最近文档</span>
           <div class="flex gap-2 items-center">
+            <select v-model="docSort" @change="loadDocuments" class="px-2.5 py-1.5 bg-bg border border-border rounded-[8px] text-text text-[12px] outline-none cursor-pointer focus:border-accent">
+              <option value="created_at:desc">最新优先</option>
+              <option value="created_at:asc">最早优先</option>
+              <option value="title:asc">标题 A-Z</option>
+              <option value="title:desc">标题 Z-A</option>
+            </select>
             <input ref="fileInput" type="file" accept=".txt,.md,.pdf" multiple class="hidden" @change="handleUpload">
             <button @click="$refs.fileInput.click()" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer hover:bg-surface-hover hover:border-accent">上传文档</button>
             <button @click="doKBSearch" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] cursor-pointer hover:opacity-90">搜索知识库</button>
@@ -116,7 +133,16 @@
               <span v-if="d.category_name" class="text-[11px]" :style="{color: d.category_color || '#7c8aff'}">{{ d.category_icon }} {{ d.category_name }}</span>
               <span class="text-text-secondary text-xs">{{ d.created_at?.slice(0,10) }} · {{ d.char_count || 0 }}字</span>
             </span>
-            <div class="flex gap-1">
+            <div class="flex gap-1 items-center">
+              <!-- ASR 失败：重新识别 -->
+              <button
+                v-if="d.asr_failed"
+                @click.stop="reparseDocument(d.id)"
+                class="px-2 py-0.5 rounded-[6px] border border-danger bg-danger/10 text-danger text-[11px] hover:bg-danger hover:text-white whitespace-nowrap"
+                title="重新识别（ASR 失败）"
+              >
+                🔄 重识
+              </button>
               <button @click.stop="copyDocument(d)" class="px-2 py-0.5 rounded-[6px] border border-border bg-surface text-text-secondary text-[12px] hover:bg-surface-hover hover:border-accent" title="复制全文">复制</button>
               <button @click.stop="deleteDocument(d.id)" class="px-2 py-0.5 rounded-[6px] border border-border bg-surface text-text-secondary text-[12px] hover:bg-danger hover:text-white hover:border-danger" title="删除">删除</button>
             </div>
@@ -149,42 +175,22 @@
       </div>
     </div>
 
-    <!-- 学习系统进化 -->
+    <!-- SOP 建议 -->
     <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">学习系统进化</div>
+      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">SOP 建议</div>
       <div class="bg-surface border border-border rounded-[12px] p-5">
-        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <span class="font-semibold">技能补丁 & 快照</span>
-          <div class="flex gap-2">
-            <button @click="createSnapshot" :disabled="snapshotLoading" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer hover:bg-surface-hover hover:border-accent disabled:opacity-50">创建快照</button>
-            <button @click="triggerAnalysis" :disabled="analysisLoading" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-50">手动分析</button>
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-semibold">Wiki → SOP</span>
+          <router-link to="/sop" class="px-3 py-1.5 rounded-[8px] border border-border bg-surface text-text text-[12px] cursor-pointer hover:bg-surface-hover hover:border-accent no-underline">前往 SOP →</router-link>
+        </div>
+        <div class="text-[13px] text-text-secondary mb-3">{{ sopSummary }}</div>
+        <div v-if="sopPending.length" class="flex flex-col gap-1.5">
+          <div v-for="s in sopPending.slice(0, 5)" :key="s.id" class="px-3 py-2 bg-bg rounded-[8px] flex items-center gap-2">
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full" :class="sopTypeClass(s.suggestion_type)">{{ sopTypeLabel(s.suggestion_type) }}</span>
+            <span class="text-[12px] truncate flex-1">{{ s.suggested_title }}</span>
           </div>
         </div>
-        <div class="text-[13px] text-text-secondary mb-3">{{ evoStatus }}</div>
-        <div class="flex flex-col gap-1.5">
-          <div v-for="p in patches" :key="p.id" class="flex items-center justify-between px-3 py-2 bg-bg rounded-[8px] gap-2">
-            <div class="flex-1 min-w-0">
-              <span class="text-[13px] font-semibold">{{ p.skill_name }}</span>
-              <span class="text-[11px] ml-2" :style="{color: riskColors[p.risk_level]}">[{{ riskLabels[p.risk_level] }}风险]</span>
-              <div class="text-[11px] text-text-secondary truncate">{{ p.rationale }}</div>
-            </div>
-            <div class="flex gap-1.5 flex-shrink-0">
-              <button v-if="p.risk_level !== 'high'" @click="applyPatch(p.id)" class="px-2.5 py-1 bg-surface border border-border rounded-[8px] text-[11px] hover:bg-surface-hover hover:border-accent">应用</button>
-              <button @click="rejectPatch(p.id)" class="px-2.5 py-1 bg-surface border border-border rounded-[8px] text-[11px] hover:bg-surface-hover hover:border-accent">拒绝</button>
-            </div>
-          </div>
-          <span v-if="!patches.length" class="text-xs text-text-secondary">无待处理补丁</span>
-        </div>
-        <details class="mt-3">
-          <summary class="cursor-pointer text-[13px] text-accent">查看历史快照</summary>
-          <div class="mt-2 flex flex-col gap-1 max-h-[200px] overflow-y-auto">
-            <div v-for="s in snapshots" :key="s.id" class="text-[12px] px-2 py-1 flex justify-between rounded hover:bg-surface-hover cursor-pointer">
-              <span>📸 {{ s.snapshot_date }} ({{ s.snapshot_type }})</span>
-              <span class="text-text-secondary">{{ s.evolution_notes }}</span>
-            </div>
-            <span v-if="!snapshots.length" class="text-xs text-text-secondary">无快照记录</span>
-          </div>
-        </details>
+        <span v-if="!sopPending.length" class="text-xs text-text-secondary">无待处理建议</span>
       </div>
     </div>
 
@@ -206,6 +212,14 @@
             </div>
           </div>
           <input v-model="mod.input" :placeholder="mod.placeholder" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
+          <!-- 抖音模块：额外的批量导入区 -->
+          <div v-if="mod.id === 'douyin-summary'" class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-text-secondary">📥 批量导入（每行一个链接）</span>
+              <button @click="mod.showBatch = !mod.showBatch" class="text-[11px] text-accent hover:underline">{{ mod.showBatch ? '收起' : '展开' }}</button>
+            </div>
+            <textarea v-if="mod.showBatch" v-model="mod.batchInput" placeholder="粘贴多个抖音分享链接，每行一个…&#10;例如：&#10;https://v.douyin.com/xxxxx/&#10;https://v.douyin.com/yyyyy/" rows="4" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent resize-none"></textarea>
+          </div>
           <!-- 细粒度进度指示器 -->
           <div v-if="mod.activeTaskId && taskSteps[mod.activeTaskId]" class="flex flex-col gap-1.5">
             <div class="flex items-center gap-2 text-xs">
@@ -284,7 +298,12 @@
                 :title="step.label"
               ></div>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-text-secondary">
+            <!-- API Key 无效错误提示 -->
+            <div v-if="t.api_key_error" class="flex items-center gap-2 bg-danger/10 border border-danger/30 rounded-[6px] px-2.5 py-1.5">
+              <span class="text-danger text-[11px] flex-1">⚠️ API Key 无效：{{ t.api_key_error_msg }}</span>
+              <button @click="retryTask(t.task_id)" class="px-2 py-0.5 rounded-[4px] bg-danger text-white text-[10px] hover:bg-danger/80 flex-shrink-0">🔄 重新加载</button>
+            </div>
+            <div v-else class="flex items-center justify-between text-[11px] text-text-secondary">
               <span class="truncate max-w-[140px]">{{ t.progress }}</span>
               <span v-if="t.error" class="text-danger truncate max-w-[140px] text-right" :title="t.error">{{ t.error }}</span>
               <span v-else-if="t.doc_id">
@@ -333,9 +352,9 @@
 
   <!-- Document Modal -->
   <div v-if="docModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]" @click.self="docModal = false">
-    <div class="bg-surface border border-border rounded-[12px] p-5 w-[98%] md:w-[96%] max-w-none flex flex-col gap-4 h-[95vh]">
+    <div class="bg-surface border border-border rounded-[12px] p-5 w-[92%] md:w-[88%] max-w-[1200px] flex flex-col gap-4 max-h-[90vh]">
       <h3 class="text-base font-semibold shrink-0">{{ docTitle }}</h3>
-      <div class="overflow-y-auto text-sm leading-relaxed bg-bg p-5 rounded-[8px] flex-1 min-h-0">
+      <div class="overflow-y-auto bg-bg p-5 rounded-[8px] flex-1 min-h-0">
         <MarkdownRenderer :content="docContent" />
       </div>
       <div class="flex gap-2.5 justify-end shrink-0">
@@ -372,6 +391,18 @@ import TaskStatusBadge from '../components/TaskStatusBadge.vue'
 
 const settings = useSettingsStore()
 
+// Electron 环境检测
+const isElectron = !!(window.electronAPI)
+
+// 安全打开外部链接
+function openExternal(url) {
+  if (isElectron) {
+    window.electronAPI.openExternal(url)
+  } else {
+    window.open(url, '_blank')
+  }
+}
+
 // ===== 搜索 =====
 const searchMode = ref('ai')
 const searchInput = ref('')
@@ -394,13 +425,16 @@ async function doSearch() {
 
   try {
     if (searchMode.value === 'web') {
-      window.location.href = `https://www.bing.com/search?q=${encodeURIComponent(val)}`
+      const sid = 'sh_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6)
+      const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(val)}&ref=studyhub&sid=${sid}`
+      openExternal(bingUrl)
+      searchLoading.value = false
       return
     }
     if (searchMode.value === 'cmd') {
       const commands = settings.loadFromStorage('commands', {})
       const url = commands[val]
-      if (url) window.open(url, '_blank')
+      if (url) openExternal(url)
       else showToast(`未知命令: ${val}`, true)
       searchLoading.value = false
       return
@@ -471,22 +505,42 @@ function saveAI() {
   aiModal.value = false
 }
 
-function launchAI(url) { window.open(url, '_blank') }
+function launchAI(url) { openExternal(url) }
+
+function confirmRemoveShortcut(i) {
+  if (confirm('确定删除这个常用网站吗？')) {
+    settings.removeShortcut(i)
+  }
+}
+
+function confirmRemoveLauncher(i) {
+  if (confirm('确定删除这个 AI 服务吗？')) {
+    settings.removeLauncher(i)
+  }
+}
 
 // ===== 知识库 =====
 const documents = ref([])
 const docModal = ref(false)
 const docTitle = ref('')
 const docContent = ref('')
+const docSort = ref('created_at:desc')
 
 async function loadDocuments() {
-  try { documents.value = await settings.apiGet('/documents') }
+  try {
+    const [sortBy, sortOrder] = docSort.value.split(':')
+    documents.value = await settings.apiGet(`/documents?sort_by=${sortBy}&sort_order=${sortOrder}`)
+  }
   catch { documents.value = [] }
 }
 
 async function viewDocument(id) {
   try {
     const doc = await settings.apiGet(`/documents/${id}`)
+    if (doc.error) {
+      showToast(doc.error, true)
+      return
+    }
     docTitle.value = doc.title
     docContent.value = doc.content || ''
     docModal.value = true
@@ -507,6 +561,21 @@ async function deleteDocument(id) {
     showToast('文档已删除')
     loadDocuments()
   } catch { showToast('删除失败', true) }
+}
+
+async function reparseDocument(id) {
+  const doc = documents.value.find(d => d.id === id)
+  if (!doc) return
+  if (!confirm(`重新识别 "${doc.title}"？\n将重新提取语音文本并更新文档。`)) return
+  try {
+    const data = await settings.apiPost(`/automation/reparse/${id}`)
+    if (data.error) {
+      showToast(data.error, true)
+    } else {
+      showToast('已重新提交识别任务，处理完成后自动刷新')
+      startQueuePoll()  // 启动轮询，等任务完成后自动刷新文档列表
+    }
+  } catch { showToast('重新识别失败', true) }
 }
 
 async function handleUpload(e) {
@@ -609,70 +678,39 @@ function viewReview(r) {
   reviewResult.value = r.polished || r.raw_text || ''
 }
 
-// ===== 进化面板 =====
-const patches = ref([])
-const snapshots = ref([])
-const evoStatus = ref('自动分析在学习中触发…')
-const analysisLoading = ref(false)
-const snapshotLoading = ref(false)
-const riskColors = { low: '#4ec9a0', medium: '#f59e0b', high: '#ff5c7a' }
-const riskLabels = { low: '低', medium: '中', high: '高' }
+// ===== SOP 建议摘要 =====
+const sopPending = ref([])
+const sopSummary = ref('')
 
-async function loadPatches() {
-  try { patches.value = await settings.apiGet('/evolution/patches?status=pending&limit=5') }
-  catch { patches.value = [] }
-}
-
-async function loadSnapshots() {
-  try { snapshots.value = await settings.apiGet('/evolution/snapshots?limit=10') }
-  catch { snapshots.value = [] }
-}
-
-async function triggerAnalysis() {
-  analysisLoading.value = true
-  evoStatus.value = '⏳ 正在分析…'
+async function loadSopPending() {
   try {
-    const data = await settings.apiPost('/evolution/analyze', { source_event_type: 'manual', new_pages: [], updated_pages: [], contradictions: [], review_summary: '' })
-    if (data.status === 'ok') {
-      const parts = []
-      if (data.low_risk_applied > 0) parts.push(`${data.low_risk_applied} 个低风险补丁已自动应用`)
-      if (data.medium_risk_pending > 0) parts.push(`${data.medium_risk_pending} 个中风险补丁待审核`)
-      if (data.high_risk_logged > 0) parts.push(`${data.high_risk_logged} 个高风险建议已记录`)
-      evoStatus.value = '✅ ' + (parts.length ? parts.join('；') : '无需调整')
-    } else { evoStatus.value = '分析完成（无更改建议）' }
-    loadPatches()
-    loadSnapshots()
-  } catch { evoStatus.value = '分析失败' }
-  finally { analysisLoading.value = false }
+    sopPending.value = await settings.apiGet('/sop/suggestions?status=pending&limit=5')
+    sopSummary.value = sopPending.value.length
+      ? `${sopPending.value.length} 条待审核建议`
+      : '暂无待处理建议'
+  } catch {
+    sopPending.value = []
+    sopSummary.value = '加载失败'
+  }
 }
 
-async function createSnapshot() {
-  snapshotLoading.value = true
-  try {
-    const data = await settings.apiPost('/evolution/snapshots', {})
-    if (data.status === 'ok') { showToast(`快照 #${data.snapshot_id} 已创建`); loadSnapshots() }
-  } catch { showToast('创建快照失败', true) }
-  finally { snapshotLoading.value = false }
+function sopTypeLabel(type) {
+  return { new_block: '新环节', merge_into_block: '合并', insert_into_chain: '插链', enrich_block: '丰富', extract_chain: '提取流程' }[type] || type
 }
 
-async function applyPatch(id) {
-  try {
-    const data = await settings.apiPost(`/evolution/patches/${id}/apply`, {})
-    if (data.applied) { showToast(`补丁 #${id} 已应用`); loadPatches() }
-    else showToast(`应用失败`, true)
-  } catch { showToast('请求失败', true) }
-}
-
-async function rejectPatch(id) {
-  try {
-    const data = await settings.apiPost(`/evolution/patches/${id}/reject`, { reason: '手动拒绝' })
-    if (data.rejected) { showToast(`补丁 #${id} 已拒绝`); loadPatches() }
-  } catch { showToast('请求失败', true) }
+function sopTypeClass(type) {
+  return {
+    new_block: 'bg-green-500/15 text-green-400',
+    merge_into_block: 'bg-blue-500/15 text-blue-400',
+    insert_into_chain: 'bg-accent/15 text-accent',
+    enrich_block: 'bg-yellow-500/15 text-yellow-400',
+    extract_chain: 'bg-purple-500/15 text-purple-400',
+  }[type] || 'bg-white/10 text-text-secondary'
 }
 
 // ===== 自动化工具 =====
 const automationModules = ref([
-  { id: 'douyin-summary', name: '抖音摘要', icon: '📹', desc: '粘贴抖音分享链接，自动提取文本、识别资源、生成文档', placeholder: '粘贴抖音分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
+  { id: 'douyin-summary', name: '抖音摘要', icon: '📹', desc: '粘贴抖音分享链接，自动提取文本、识别资源、生成文档', placeholder: '粘贴抖音分享链接…', input: '', batchInput: '', showBatch: false, loading: false, status: '', statusClass: '', activeTaskId: '' },
   { id: 'bilibili-summary', name: 'B站解析', icon: '📺', desc: '粘贴B站分享链接，自动解析视频信息、提取语音文本、生成文档', placeholder: '粘贴B站分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
   { id: 'xiaohongshu-summary', name: '小红书解析', icon: '📕', desc: '粘贴小红书分享链接，自动提取笔记内容、图片视频、生成文档', placeholder: '粘贴小红书分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
 ])
@@ -684,6 +722,7 @@ const queueStats = ref({ total: 0, pending: 0, running: 0, done: 0, error: 0 })
 const taskSteps = ref({})   // task_id → steps[]
 const taskProgressText = ref({}) // task_id → progress text
 let queuePollTimer = null
+const _seenDoneTasks = new Set()  // 已处理过的完成/失败任务，避免重复刷新文档列表
 
 async function fetchQueue() {
   try {
@@ -696,6 +735,15 @@ async function fetchQueue() {
         if (t.steps) taskSteps.value[t.task_id] = t.steps
         if (t.progress) taskProgressText.value[t.task_id] = t.progress
       }
+      // 检测新完成的任务 → 刷新文档列表（用于重新解析等场景）
+      let needRefresh = false
+      for (const t of data.tasks) {
+        if ((t.status === 'done' || t.status === 'error') && !_seenDoneTasks.has(t.task_id)) {
+          _seenDoneTasks.add(t.task_id)
+          needRefresh = true
+        }
+      }
+      if (needRefresh) loadDocuments()
     }
   } catch { /* ignore */ }
 }
@@ -716,22 +764,57 @@ async function clearQueue() {
     showToast('已清除已完成任务')
   } catch { showToast('清除失败', true) }
 }
+
+async function retryTask(taskId) {
+  try {
+    const data = await settings.apiPost(`/automation/queue/retry/${taskId}`)
+    if (data.error) {
+      if (data.api_key_invalid) {
+        alert(data.error + '\n\n请按以下步骤操作:\n1. 打开 backend/.env 文件\n2. 更新 DASHSCOPE_API_KEY=你的新密钥\n3. 重启后端服务\n4. 再次点击重试')
+      } else {
+        showToast(data.error, true)
+      }
+    } else {
+      showToast('任务已重新提交')
+      fetchQueue()
+    }
+  } catch { showToast('重试失败', true) }
+}
 function refreshQueue() { fetchQueue(); showToast('已刷新') }
 
 async function runAutomation(mod) {
-  if (!mod.input.trim()) { showToast('请粘贴分享链接', true); return }
+  // 检查是否有批量输入（仅抖音模块）
+  const batchText = (mod.batchInput || '').trim()
+  const singleInput = mod.input.trim()
+  const hasBatch = mod.id === 'douyin-summary' && batchText
+
+  if (!hasBatch && !singleInput) { showToast('请粘贴分享链接', true); return }
   mod.loading = true
   mod.status = '⏳ 已提交，正在处理…'
   mod.statusClass = 'text-text-secondary'
+
   try {
-    const data = await settings.apiPost('/automation/queue', { module_id: mod.id, input: mod.input })
+    let payload
+    if (hasBatch) {
+      // 批量模式：从 textarea 提取所有行
+      const lines = batchText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+      if (singleInput) lines.unshift(singleInput) // 把单独输入框的链接也加上
+      payload = { module_id: mod.id, inputs: lines }
+    } else {
+      payload = { module_id: mod.id, input: singleInput }
+    }
+
+    const data = await settings.apiPost('/automation/queue', payload)
     if (data.error) {
       mod.status = data.error
       mod.statusClass = 'text-danger'
       showToast('提交失败', true)
     } else if (data.task_ids && data.task_ids.length) {
       mod.activeTaskId = data.task_ids[0]
-      mod.status = `⏳ 已提交（任务 ${mod.activeTaskId}），排队中…`
+      const count = data.count || data.task_ids.length
+      mod.status = `⏳ 已提交 ${count} 个任务，排队中…`
+      // 清空批量输入
+      if (hasBatch) mod.batchInput = ''
       startQueuePoll()
     } else {
       mod.status = '提交完成'
@@ -761,8 +844,7 @@ function showToast(msg, isError = false) {
 onMounted(async () => {
   loadDocuments()
   loadReviewHistory()
-  loadPatches()
-  loadSnapshots()
+  loadSopPending()
   fetchQueue()
   try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
 })

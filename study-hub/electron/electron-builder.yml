@@ -1,0 +1,56 @@
+appId: com.studyhub.dashboard
+productName: 学习中枢
+copyright: Copyright © 2026 Study-Hub
+
+directories:
+  output: dist
+
+files:
+  - main.js
+  - preload.js
+  - package.json
+  - node_modules/**/*
+  - "!node_modules/.cache"
+
+extraResources:
+  - from: ../backend
+    to: backend
+    filter:
+      - "**/*.py"
+      - "**/*.txt"
+      - "**/*.json"
+      - "**/requirements.txt"
+      - "!__pycache__/**"
+      - "!venv/**"
+      - "!.pytest_cache/**"
+      - "!data/**"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 学习中枢
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.icns
+  category: public.app-category.productivity
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  category: Office

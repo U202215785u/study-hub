@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Second Self</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     Second Self · 统一界面 — 贾维斯式 AI 交互系统
+     ═══════════════════════════════════════════════════════════ */
+  :root {
+    --cyan:   #00d4ff;
+    --blue:   #0066cc;
+    --dark:   #060a10;
+    --panel:  #0a1018;
+    --border: #0d2030;
+    --text:   #8899aa;
+    --text2:  #556677;
+    --glow:   0 0 20px rgba(0,212,255,0.3);
+    --radius: 4px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--dark);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 扫描线 ──────────────────────────────────── */
+  .scanlines {
+    position: fixed; inset: 0; z-index: 100; pointer-events: none;
+    background: repeating-linear-gradient(0deg,
+      transparent, transparent 2px,
+      rgba(0,20,40,0.06) 2px, rgba(0,20,40,0.06) 4px);
+  }
+
+  /* ── 顶部状态栏 ──────────────────────────────── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; border-bottom: 1px solid var(--border);
+    background: rgba(6,10,16,0.95); z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+  .topbar .logo {
+    font-size: 15px; font-weight: 700; color: var(--cyan);
+    letter-spacing: 3px; text-shadow: var(--glow);
+  }
+  .topbar .stats {
+    display: flex; gap: 20px; font-size: 11px; letter-spacing: 1px;
+    color: var(--text2);
+  }
+  .topbar .stats span { color: var(--cyan); }
+  .topbar .dot-msg {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan); animation: dotPulse 2s infinite;
+  }
+  @keyframes dotPulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  /* ── 主体：左右布局 ──────────────────────────── */
+  .main-layout {
+    flex: 1; display: flex; min-height: 0; position: relative; z-index: 1;
+  }
+
+  /* ── Hero 区（左 / 中心） ───────────────────── */
+  .hero-area {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; min-width: 0;
+  }
+  #hero-canvas {
+    position: absolute; inset: 0; cursor: grab;
+  }
+  #hero-canvas:active { cursor: grabbing; }
+
+  /* 光环 */
+  .hero-ring {
+    position: absolute; border-radius: 50%;
+    border: 1px solid rgba(0,212,255,0.12); pointer-events: none;
+  }
+  .hero-ring.r1 { width: 420px; height: 420px; top:50%; left:50%; transform: translate(-50%,-50%); animation: spin 30s linear infinite; }
+  .hero-ring.r2 { width: 300px; height: 300px; top:50%; left:50%; transform: translate(-50%,-50%); animation: spin 20s linear infinite reverse; border-color: rgba(0,212,255,0.2); }
+  .hero-ring.r3 { width: 180px; height: 180px; top:50%; left:50%; transform: translate(-50%,-50%); animation: spin 12s linear infinite; border-color: rgba(0,212,255,0.3); box-shadow: var(--glow); }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* 状态文字 */
+  .hero-label {
+    position: absolute; bottom: 100px;
+    text-align: center; pointer-events: none;
+  }
+  .hero-label .mode { font-size: 12px; letter-spacing: 4px; color: var(--cyan); text-shadow: var(--glow); }
+  .hero-label .hint { font-size: 10px; color: var(--text2); margin-top: 4px; }
+
+  /* ── 右侧面板 ───────────────────────────────── */
+  .side-panel {
+    width: 320px; background: rgba(10,16,24,0.96);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto; padding: 16px;
+    backdrop-filter: blur(8px); gap: 14px;
+    transition: transform 0.3s;
+  }
+  .side-panel.hidden { transform: translateX(320px); }
+
+  .panel-section h4 {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text2); margin-bottom: 8px; border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  .project-card, .memory-item, .maint-item {
+    background: rgba(0,20,40,0.5); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px;
+    font-size: 11px;
+  }
+  .project-card .name { color: #cce; font-weight: 600; }
+  .project-card .info { color: var(--text2); margin-top: 3px; font-size: 10px; }
+  .project-card .stalled { color: #e05555; }
+  .maint-item .task { color: #aac; }
+  .maint-item .deadline { color: #665; font-size: 10px; }
+
+  /* ── 底部控制栏 ──────────────────────────────── */
+  .ctrl-bar {
+    display: flex; justify-content: center; align-items: center;
+    gap: 18px; padding: 10px 20px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(6,10,16,0.95); z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+  .ctrl-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--cyan); cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover { border-color: var(--cyan); box-shadow: var(--glow); }
+  .ctrl-btn.active {
+    background: rgba(0,180,255,0.2); border-color: var(--cyan);
+    box-shadow: 0 0 30px rgba(0,200,255,0.5); animation: btnGlow 1.5s infinite;
+  }
+  .ctrl-btn.voice-btn {
+    width: 64px; height: 64px; font-size: 26px;
+    background: radial-gradient(circle, rgba(0,180,255,0.2), transparent);
+  }
+  .ctrl-label { font-size: 9px; letter-spacing: 1px; color: var(--text2); text-align: center; margin-top: 3px; }
+  @keyframes btnGlow { 0%,100%{box-shadow:0 0 20px rgba(0,200,255,0.3)} 50%{box-shadow:0 0 50px rgba(0,200,255,0.7)} }
+
+  #fileInput { display: none; }
+
+  /* ── AI 响应气泡 ─────────────────────────────── */
+  .response-bubble {
+    position: absolute; bottom: 140px; left: 50%; transform: translateX(-50%);
+    max-width: 500px; text-align: center; font-size: 13px; line-height: 1.7;
+    color: #aaccee; text-shadow: 0 0 10px rgba(100,180,255,0.2);
+    pointer-events: none; transition: opacity 0.4s;
+  }
+  .response-bubble .quote { color: var(--cyan); font-style: italic; }
+  .response-bubble .result { margin-top: 6px; font-size: 11px; color: var(--text2); }
+
+  /* ── 决策浮层 ───────────────────────────────── */
+  .decision-overlay {
+    position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
+    width: 270px; background: rgba(10,16,24,0.97);
+    border: 1px solid var(--cyan); border-radius: var(--radius);
+    padding: 16px; z-index: 50; font-size: 11px;
+    box-shadow: 0 0 30px rgba(0,180,255,0.2);
+    display: none; backdrop-filter: blur(12px);
+  }
+  .decision-overlay.show { display: block; }
+  .decision-overlay h4 { color: var(--cyan); font-size: 11px; letter-spacing: 3px; margin-bottom: 10px; }
+  .decision-overlay .row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(0,30,60,0.5); }
+  .decision-overlay .row .k { color: #556677; }
+  .decision-overlay .row .v { color: #aaccee; max-width: 160px; text-align: right; }
+  .decision-overlay .v.high { color: #ff6644; }
+  .decision-overlay .v.med  { color: #ffaa33; }
+  .decision-overlay .v.low  { color: #44aacc; }
+
+  /* ── Toast ───────────────────────────────────── */
+  .toast {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,20,40,0.95); border: 1px solid var(--cyan);
+    color: var(--cyan); padding: 8px 20px; border-radius: 2px;
+    font-size: 11px; letter-spacing: 2px; z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 768px) {
+    .side-panel { width: 260px; }
+    .side-panel.hidden { transform: translateX(260px); }
+    .ctrl-btn { width: 40px; height: 40px; font-size: 15px; }
+    .ctrl-btn.voice-btn { width: 52px; height: 52px; font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<!-- ═══════════ 顶部状态栏 ═══════════ -->
+<div class="topbar">
+  <span class="logo">◈ SECOND SELF</span>
+  <div class="stats">
+    <span id="statMemory">0</span> 记忆 ·
+    <span id="statProjects">0</span> 项目 ·
+    <span id="statStatus" style="color:#4caf7d">在线</span>
+  </div>
+  <div class="dot-msg"></div>
+</div>
+
+<!-- ═══════════ 主体 ═══════════ -->
+<div class="main-layout">
+
+  <!-- Hero 区 -->
+  <div class="hero-area" id="heroArea">
+    <div id="hero-canvas"></div>
+    <div class="hero-ring r1"></div>
+    <div class="hero-ring r2"></div>
+    <div class="hero-ring r3"></div>
+
+    <div class="hero-label">
+      <div class="mode" id="modeLabel">系统就绪</div>
+      <div class="hint" id="hintLabel">空格键语音 · 回车键分析 · 点击头像</div>
+    </div>
+
+    <div class="response-bubble" id="responseBubble"></div>
+  </div>
+
+  <!-- 右侧面板 -->
+  <div class="side-panel" id="sidePanel">
+    <div class="panel-section">
+      <h4>◆ 战略项目</h4>
+      <div id="projectsList">加载中…</div>
+    </div>
+    <div class="panel-section">
+      <h4>◆ 维护清单</h4>
+      <div id="maintList">加载中…</div>
+    </div>
+    <div class="panel-section">
+      <h4>◆ 记忆库</h4>
+      <div id="memoryInfo" style="font-size:10px;color:var(--text2)">加载中…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 底部控制 ═══════════ -->
+<div class="ctrl-bar">
+  <div style="text-align:center">
+    <button class="ctrl-btn" id="btnPanel" title="显示/隐藏面板">☰</button>
+    <div class="ctrl-label">面板</div>
+  </div>
+  <div style="text-align:center">
+    <button class="ctrl-btn" id="btnUpload" title="上传3D模型">⬆</button>
+    <div class="ctrl-label">模型</div>
+  </div>
+  <input type="file" id="fileInput" accept=".glb,.gltf">
+
+  <div style="text-align:center">
+    <button class="ctrl-btn voice-btn" id="btnVoice" title="语音对话">🎤</button>
+    <div class="ctrl-label">语音</div>
+  </div>
+
+  <div style="text-align:center">
+    <button class="ctrl-btn" id="btnDecide" title="分析想法">⚡</button>
+    <div class="ctrl-label">分析</div>
+  </div>
+
+  <div style="text-align:center">
+    <button class="ctrl-btn" id="btnReset" title="重置头像">⟳</button>
+    <div class="ctrl-label">重置</div>
+  </div>
+</div>
+
+<!-- ═══════════ 决策浮层 ═══════════ -->
+<div class="decision-overlay" id="decisionOverlay">
+  <h4>◈ 决策分析</h4>
+  <div id="decisionContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     脚本
+     ══════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/loaders/GLTFLoader.js"></script>
+<script type="module">
+import { initHero, loadUploadedModel, startMicVisualization, stopMicVisualization } from '/second-self/hero.js';
+
+const API = '/second-self/api';
+let heroAPI, recognition, isListening = false;
+let panelVisible = true;
+
+// ── 初始化 ──────────────────────────────────────────
+try {
+  heroAPI = await Promise.race([
+    initHero('hero-canvas'),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('3D 加载超时')), 10000))
+  ]);
+  console.log('◈ 3D 头像就绪');
+} catch(e) {
+  console.warn('3D 头像初始化失败（页面仍可用）:', e.message);
+  // 隐藏 canvas 但保留界面
+  const canvas = document.getElementById('hero-canvas');
+  if (canvas) canvas.style.display = 'none';
+  document.getElementById('modeLabel').textContent = '3D 离线模式';
+}
+loadDashboard();
+initSpeech();
+bindEvents();
+console.log('◈ Second Self 已就绪');
+
+// ── 加载仪表盘数据 ─────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [selfResp, memResp] = await Promise.all([
+      fetch(`${API}/self`),
+      fetch(`${API}/memory/stats`),
+    ]);
+    const self = await selfResp.json();
+    const mem = await memResp.json();
+
+    // 项目列表
+    const projects = self.dashboard?.strategic_projects || [];
+    document.getElementById('statProjects').textContent = projects.length;
+    document.getElementById('projectsList').innerHTML = projects.map(p => {
+      const updated = p.updated || '未知';
+      const daysAgo = calcDaysAgo(updated);
+      const stallClass = daysAgo > 14 ? ' stalled' : '';
+      return `<div class="project-card">
+        <div class="name">${esc(p.name)}</div>
+        <div class="info">${esc(p.progress || '')}</div>
+        <div class="info${stallClass}">更新: ${updated} (${daysAgo}天前)</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--text2);font-size:10px">暂无项目</div>';
+
+    // 维护清单
+    const items = self.dashboard?.maintenance_items || [];
+    const overdue = items.filter(i => {
+      const dl = i.deadline || '';
+      return dl.includes('逾期') || dl.includes('已过');
+    });
+    document.getElementById('maintList').innerHTML = items.slice(0, 6).map(i =>
+      `<div class="maint-item">
+        <div class="task">${esc(i.task)}</div>
+        <div class="deadline">${esc(i.deadline || '')}</div>
+      </div>`
+    ).join('') || '<div style="color:var(--text2);font-size:10px">暂无待办</div>';
+
+    // 记忆统计
+    document.getElementById('statMemory').textContent = mem.total || 0;
+    document.getElementById('memoryInfo').innerHTML = `
+      总计 <b style="color:var(--cyan)">${mem.total||0}</b> 条 ·
+      活跃 <b style="color:#4caf7d">${mem.active||0}</b> 条 ·
+      休眠 <b style="color:var(--text2)">${mem.dormant||0}</b> 条
+    `;
+  } catch (e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+// ── 语音识别 ───────────────────────────────────────
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.lang = 'zh-CN';
+  recognition.interimResults = false;
+  recognition.continuous = false;
+
+  recognition.onstart = () => {
+    isListening = true;
+    setMode('listening', '正在聆听...');
+    document.getElementById('btnVoice').classList.add('active');
+    startMicVisualization();
+  };
+  recognition.onresult = async (e) => {
+    const text = e.results[0][0].transcript;
+    showResponse(`"${text}"`);
+    stopMicVisualization();
+    document.getElementById('btnVoice').classList.remove('active');
+    isListening = false;
+    setMode('thinking', '分析中...');
+    heroAPI.pulse();
+    await processMessage(text);
+    setMode('idle', '系统就绪');
+    loadDashboard();
+  };
+  recognition.onerror = () => {
+    stopMicVisualization();
+    document.getElementById('btnVoice').classList.remove('active');
+    isListening = false;
+    setMode('idle', '系统就绪');
+    toast('语音识别失败，请重试');
+  };
+  recognition.onend = () => {
+    if (!isListening) {
+      stopMicVisualization();
+      document.getElementById('btnVoice').classList.remove('active');
+    }
+  };
+}
+
+// ── 事件绑定 ───────────────────────────────────────
+function bindEvents() {
+  document.getElementById('btnVoice').addEventListener('click', toggleVoice);
+  document.getElementById('btnDecide').addEventListener('click', analyzeText);
+  document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
+  document.getElementById('btnReset').addEventListener('click', () => { heroAPI.resetAvatar(); toast('头像已重置'); });
+  document.getElementById('btnPanel').addEventListener('click', togglePanel);
+
+  document.getElementById('fileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast('正在转换模型...');
+    setMode('thinking', '映射中...');
+    try {
+      const r = await loadUploadedModel(file);
+      toast(`已加载 · ${r.vertexCount.toLocaleString()} 粒子`);
+      showResponse('全息映射完成。新交互界面已就绪。');
+    } catch(err) { toast('加载失败: ' + err.message); }
+    setMode('idle', '系统就绪');
+    e.target.value = '';
+  });
+
+  heroAPI._onClick = () => heroAPI.pulse();
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' && !e.target.closest('input')) { e.preventDefault(); toggleVoice(); }
+    if (e.key === 'Enter' && !e.target.closest('input')) { e.preventDefault(); analyzeText(); }
+  });
+}
+
+// ── 语音开关 ───────────────────────────────────────
+async function toggleVoice() {
+  if (isListening) { recognition?.stop(); return; }
+  if (!recognition) { toast('浏览器不支持语音（请用 Chrome）'); return; }
+  try { recognition.start(); } catch(e) { toast('语音启动失败'); }
+}
+
+// ── 文本分析 ───────────────────────────────────────
+async function analyzeText() {
+  const text = prompt('输入想法，我帮你分析：');
+  if (!text?.trim()) return;
+  showResponse(`"${text}"`);
+  setMode('thinking', '分析中...');
+  heroAPI.pulse();
+  await processMessage(text);
+  setMode('idle', '系统就绪');
+}
+
+// ── 调 Self Engine ─────────────────────────────────
+async function processMessage(text) {
+  try {
+    // 使用流式对话 API
+    const resp = await fetch(`${API}/chat/stream`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: text }),
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let fullReply = '';
+    let decisionShown = false;
+
+    let buffer = '';
+    let flushTimer = null;
+
+    function flushDisplay() {
+      flushTimer = null;
+      if (buffer) {
+        fullReply += buffer;
+        buffer = '';
+        showResponseStreaming(`你说："${text}"`, fullReply);
+      }
+    }
+
+    function scheduleFlush() {
+      if (!flushTimer) {
+        flushTimer = setTimeout(flushDisplay, 50);
+      }
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const dataStr = line.slice(6).trim();
+        if (dataStr === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(dataStr);
+          if (parsed.decision && !decisionShown) {
+            decisionShown = true;
+            showDecision({ decision: parsed.decision });
+          }
+          if (parsed.token) {
+            buffer += parsed.token;
+            scheduleFlush();
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (flushTimer) clearTimeout(flushTimer);
+    flushDisplay();
+
+    if (fullReply) {
+      showResponseFinal(`你说："${text}"`, fullReply);
+    }
+  } catch(e) {
+    // 流式失败，回退到非流式
+    try {
+      const resp = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await resp.json();
+      showDecision(data);
+      showResponse(`"${text}"`, data.reply || '...');
+    } catch(e2) {
+      showResponse('', '连接失败，请确认服务器已启动 (8741)');
+    }
+  }
+}
+
+// ── 语音合成 ───────────────────────────────────────
+function speakText(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN'; u.rate = 1.1; u.volume = 0.8;
+  u.onstart = () => setMode('speaking', '回应中...');
+  u.onend = () => setMode('idle', '系统就绪');
+  u.onerror = () => setMode('idle', '系统就绪');
+  window.speechSynthesis.speak(u);
+}
+
+// ── UI 辅助 ─────────────────────────────────────────
+function setMode(mode, label) {
+  try { heroAPI?.setMode(mode); } catch(e) {}
+  document.getElementById('modeLabel').textContent = label || mode;
+}
+function showResponse(quote, result, streaming) {
+  const el = document.getElementById('responseBubble');
+  const q = quote ? `<span class="quote">${esc(quote)}</span>` : '';
+  const r = result ? (streaming ? result : esc(result)) : '';
+  el.innerHTML = q + (r ? `<div class="result">${r}</div>` : '');
+}
+
+// 流式更新：直接操作 DOM，不做 innerHTML 全量替换
+function showResponseStreaming(quoteText, resultText) {
+  const el = document.getElementById('responseBubble');
+  let quoteEl = el.querySelector('.quote');
+  if (!quoteEl && quoteText) {
+    quoteEl = document.createElement('span');
+    quoteEl.className = 'quote';
+    el.appendChild(quoteEl);
+  }
+  if (quoteEl) quoteEl.textContent = quoteText;
+
+  let resultEl = el.querySelector('.result');
+  if (!resultEl) {
+    resultEl = document.createElement('div');
+    resultEl.className = 'result';
+    el.appendChild(resultEl);
+  }
+  resultEl.textContent = resultText;
+}
+
+// 最终显示
+function showResponseFinal(quoteText, resultText) {
+  const el = document.getElementById('responseBubble');
+  const q = quoteText ? `<span class="quote">${esc(quoteText)}</span>` : '';
+  const r = resultText ? `<div class="result">${simpleMarkdown(resultText)}</div>` : '';
+  el.innerHTML = q + r;
+}
+
+function simpleMarkdown(text) {
+  let safe = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return safe
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+function showDecision(data) {
+  const d = data?.decision;
+  if (!d) return;
+  const rows = [
+    ['优先级', d.priority||'?', d.priority==='HIGH'?'high':d.priority==='MEDIUM'?'med':'low'],
+    ['关联项目', d.linked_project||'无', ''],
+    ['反模式', d.anti_pattern_risk?.detected?'⚠ '+d.anti_pattern_risk.description:'无', ''],
+    ['授权', d.autonomy_level?.level||'?', ''],
+    ['下一步', d.suggested_next_step||'', ''],
+  ];
+  document.getElementById('decisionContent').innerHTML = rows.map(([k,v,cls]) =>
+    `<div class="row"><span class="k">${k}</span><span class="v ${cls}">${esc(String(v))}</span></div>`
+  ).join('');
+  document.getElementById('decisionOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('decisionOverlay').classList.remove('show'), 8000);
+}
+function togglePanel() {
+  panelVisible = !panelVisible;
+  document.getElementById('sidePanel').classList.toggle('hidden', !panelVisible);
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function calcDaysAgo(dateStr) {
+  if (!dateStr) return '?';
+  const d = new Date(dateStr), now = new Date();
+  return Math.floor((now - d) / 86400000);
+}
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

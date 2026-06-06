@@ -1,0 +1,29 @@
+name: 抖音洗稿助手
+desc: 搜索抖音博主，获取文案并AI洗稿
+version: "1.0"
+params:
+  - name: blogger
+    type: string
+    ask: "请输入抖音博主名称（例如：甚三红）"
+steps:
+  - id: step_1
+    type: tool
+    tool: browser
+    input:
+      action: search
+      search: "抖音博主{{.params.blogger}}"
+    output:
+      label: "搜索结果页面"
+  - id: step_2
+    type: ask
+    ask: "请从抖音找到该博主，复制你想要洗稿的视频文案，粘贴在下方"
+    output:
+      label: "原始文案"
+  - id: step_3
+    type: tool
+    tool: ai
+    input:
+      prompt: "请对以下文案进行洗稿，改写内容，保持原意但避免重复，生成洗稿后的文案：\n\n{{.step_2.value}}"
+      format: report
+    output:
+      label: "洗稿结果"

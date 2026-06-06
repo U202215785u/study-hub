@@ -1,0 +1,98 @@
+name: 运营流水线-口播视频
+desc: 从选题到多平台发布的完整运营工作流
+version: "1.0"
+
+params:
+  - name: topic
+    type: string
+    ask: "请输入视频选题/标题"
+  - name: platform
+    type: string
+    ask: "主发布平台（douyin/xiaohongshu/bilibili/wechat）"
+  - name: style
+    type: string
+    ask: "口播风格（口播/剧情/科普/带货）"
+    default: "口播"
+  - name: duration
+    type: number
+    ask: "视频时长（秒）"
+    default: 60
+  - name: publish_platforms
+    type: string
+    ask: "分发平台，逗号分隔（douyin,xiaohongshu,bilibili,wechat）"
+    default: "douyin,xiaohongshu"
+
+steps:
+  # 步骤 1: 创建项目
+  - id: create_project
+    type: api
+    tool: api
+    input:
+      url: "http://localhost:8741/operations/projects"
+      method: POST
+      body:
+        title: "{{.params.topic}}"
+        platform: "{{.params.platform}}"
+    output:
+      label: "创建内容项目"
+
+  # 步骤 2: AI 生成口播稿
+  - id: generate_script
+    type: api
+    tool: api
+    input:
+      url: "http://localhost:8741/operations/projects/{{.create_project.id}}/script/generate"
+      method: POST
+      body:
+        style: "{{.params.style}}"
+        duration: "{{.params.duration}}"
+    output:
+      label: "AI 生成口播稿"
+
+  # 步骤 3: 生成剪辑方案
+  - id: editing_plan
+    type: api
+    tool: api
+    input:
+      url: "http://localhost:8741/operations/projects/{{.create_project.id}}/video/editing-plan"
+      method: POST
+    output:
+      label: "生成剪辑方案"
+
+  # 步骤 4: 人工确认 - 录制视频
+  - id: record_video
+    type: human
+    human: "请根据口播稿录制视频，录制完成后将视频文件放入 data/operations/ 目录，然后继续"
+    output:
+      label: "录制视频"
+
+  # 步骤 5: 生成封面
+  - id: generate_cover
+    type: api
+    tool: api
+    input:
+      url: "http://localhost:8741/operations/projects/{{.create_project.id}}/cover/generate"
+      method: POST
+      body:
+        style: "{{.params.platform}}"
+    output:
+      label: "AI 生成封面"
+
+  # 步骤 6: 生成各平台文案
+  - id: publish_content
+    type: api
+    tool: api
+    input:
+      url: "http://localhost:8741/operations/projects/{{.create_project.id}}/publish"
+      method: POST
+      body:
+        platforms: "{{.params.publish_platforms}}"
+    output:
+      label: "生成各平台发布文案"
+
+  # 步骤 7: 人工确认 - 发布
+  - id: manual_publish
+    type: human
+    human: "各平台文案已生成，请复制到对应平台手动发布，发布完成后确认"
+    output:
+      label: "手动发布到各平台"

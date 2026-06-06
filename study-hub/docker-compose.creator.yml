@@ -1,0 +1,173 @@
+# ============================================
+# 新媒体创作工作区 — 自托管服务编排
+# ============================================
+# 使用方法：
+#   docker compose -f docker-compose.creator.yml up -d
+#   docker compose -f docker-compose.creator.yml down
+#
+# 注意：这些服务独立于主 Study-Hub，可单独启停
+# ============================================
+
+services:
+  # ----------------------------------------
+  # Postiz — 社交媒体管理平台
+  # 支持 30+ 平台排期发布，AI 辅助创作
+  # 访问：http://localhost:4200
+  # ----------------------------------------
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:latest
+    container_name: creator-postiz
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    environment:
+      - DATABASE_URL=postgresql://postiz:postiz@postiz-db:5432/postiz
+      - REDIS_URL=redis://postiz-redis:6379
+      - BACKEND_INTERNAL_URL=http://localhost:3000
+      - IS_GENERAL=true
+      - NEXT_PUBLIC_UPLOAD_DIRECTORY=/uploads
+    volumes:
+      - postiz-uploads:/uploads
+    depends_on:
+      postiz-db:
+        condition: service_healthy
+      postiz-redis:
+        condition: service_started
+    networks:
+      - creator-network
+
+  postiz-db:
+    image: postgres:14-alpine
+    container_name: creator-postiz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postiz
+      POSTGRES_PASSWORD: postiz
+      POSTGRES_DB: postiz
+    volumes:
+      - postiz-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postiz -d postiz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - creator-network
+
+  postiz-redis:
+    image: redis:7-alpine
+    container_name: creator-postiz-redis
+    restart: unless-stopped
+    volumes:
+      - postiz-redis-data:/data
+    networks:
+      - creator-network
+
+  # ----------------------------------------
+  # n8n — 自动化工作流引擎
+  # 串联创作工具形成自动化流水线
+  # 访问：http://localhost:5678
+  # ----------------------------------------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: creator-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Shanghai
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - creator-network
+
+  # ----------------------------------------
+  # Ghost — 专业博客/出版平台
+  # 内容发布、会员订阅、SEO 优化
+  # 访问：http://localhost:2368
+  # ----------------------------------------
+  ghost:
+    image: ghost:5-alpine
+    container_name: creator-ghost
+    restart: unless-stopped
+    ports:
+      - "2368:2368"
+    environment:
+      - NODE_ENV=production
+      - url=http://localhost:2368
+      - database__client=sqlite3
+      - database__connection__filename=/var/lib/ghost/content/data/ghost.db
+      - database__useNullAsDefault=true
+      - database__debug=false
+    volumes:
+      - ghost-data:/var/lib/ghost/content
+    networks:
+      - creator-network
+
+  # ----------------------------------------
+  # Uptime Kuma — 服务状态监控
+  # 监控所有自托管服务的可用性
+  # 访问：http://localhost:3001
+  # ----------------------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: creator-uptime
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-data:/app/data
+    networks:
+      - creator-network
+
+  # ----------------------------------------
+  # Strapi — Headless CMS（可选）
+  # 内容类型构建、REST/GraphQL API
+  # 访问：http://localhost:1337
+  # 取消注释以启用
+  # ----------------------------------------
+  # strapi:
+  #   image: strapi/strapi:5
+  #   container_name: creator-strapi
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1337:1337"
+  #   environment:
+  #     - DATABASE_CLIENT=sqlite
+  #     - DATABASE_FILENAME=.tmp/data.db
+  #     - JWT_SECRET=your-jwt-secret
+  #     - ADMIN_JWT_SECRET=your-admin-jwt-secret
+  #     - APP_KEYS=key1,key2
+  #     - API_TOKEN_SALT=your-salt
+  #     - TRANSFER_TOKEN_SALT=your-transfer-salt
+  #   volumes:
+  #     - strapi-data:/srv/app
+  #   networks:
+  #     - creator-network
+
+# ============================================
+# 数据卷
+# ============================================
+volumes:
+  postiz-db-data:
+  postiz-redis-data:
+  postiz-uploads:
+  n8n-data:
+  ghost-data:
+  uptime-data:
+  # strapi-data:
+
+# ============================================
+# 网络
+# ============================================
+networks:
+  creator-network:
+    driver: bridge

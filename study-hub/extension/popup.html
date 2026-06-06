@@ -56,6 +56,7 @@ input:focus { border-color: #7c8aff; }
 <div class="tabs">
   <div class="tab active" data-tab="main">主面板</div>
   <div class="tab" data-tab="sites">网站配置</div>
+  <div class="tab" data-tab="selectors">选择器</div>
 </div>
 
 <!-- 主面板 -->
@@ -85,6 +86,17 @@ input:focus { border-color: #7c8aff; }
     <h3>🧠 手动操作</h3>
     <button class="btn success" id="rememberBtn">🧠 提取这段对话</button>
     <button class="btn secondary" id="captureBtn">📄 采集到知识库</button>
+    <button class="btn secondary" id="clipPageBtn">📄 剪藏当前网页</button>
+  </div>
+
+  <div class="section" id="douyinSection" style="display:none;">
+    <h3>📹 抖音收藏导入</h3>
+    <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
+      在抖音收藏页面点击下方按钮，自动采集并批量解析你收藏的视频。
+    </p>
+    <button class="btn success" id="douyinFavBtn">🔄 采集当前页收藏</button>
+    <div id="douyinStatus" style="font-size: 12px; color: #888; margin-top: 8px; min-height: 18px;"></div>
+    <div id="douyinLinkList" style="max-height: 120px; overflow-y: auto; font-size: 11px; color: #ccc; margin-top: 6px; display: none;"></div>
   </div>
 </div>
 
@@ -116,6 +128,19 @@ input:focus { border-color: #7c8aff; }
       3. 复制 CSS 选择器（如 <code>[class*="message"]</code>）<br>
       4. 粘贴到上方输入框，点击添加
     </p>
+  </div>
+</div>
+
+<!-- 选择器配置 -->
+<div id="tab-selectors" class="tab-content">
+  <div class="section">
+    <h3>🎯 可视化选择器</h3>
+    <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
+      在任意网页点击"配置此网站"按钮，鼠标悬停高亮元素，点击即可保存选择器。
+    </p>
+    <div class="site-list" id="selectorList">
+      <!-- 动态填充 -->
+    </div>
   </div>
 </div>
 

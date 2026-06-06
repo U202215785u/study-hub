@@ -4,7 +4,7 @@
       "id": "tool_find",
       "name": "工具查找",
       "icon": "🛠️",
-      "keywords": ["工具", "抠图", "压缩", "转换", "生成器", "编辑器", "计算器", "翻译", "下载", "解析"],
+      "keywords": ["工具", "抠图", "压缩", "转换", "生成器", "编辑器", "计算器", "翻译", "下载", "解析", "pdf", "图片处理", "格式转换"],
       "sources": [
         { "name": "GitHub", "domain": "github.com", "icon": "🐙" },
         { "name": "Product Hunt", "domain": "producthunt.com", "icon": "🚀" },
@@ -23,38 +23,46 @@
       "id": "tech_doc",
       "name": "技术文档",
       "icon": "📘",
-      "keywords": ["文档", "API", "教程", "UE5", "Unity", "React", "Vue", "Python", "JavaScript", "TypeScript", "Node.js", "Docker", "Kubernetes"],
+      "keywords": ["文档", "API", "教程", "UE5", "Unity", "React", "Vue", "Python", "JavaScript", "TypeScript", "Node.js", "Docker", "Kubernetes", "gpt", "llm", "ai", "openai", "claude", "模型", "神经网络", "深度学习", "机器学习"],
       "sources": [
         { "name": "官方文档", "domain": "", "icon": "📘" },
         { "name": "StackOverflow", "domain": "stackoverflow.com", "icon": "💬" },
         { "name": "GitHub Issues", "domain": "github.com", "icon": "🐛" },
-        { "name": "MDN", "domain": "developer.mozilla.org", "icon": "🦊" }
+        { "name": "MDN", "domain": "developer.mozilla.org", "icon": "🦊" },
+        { "name": "HuggingFace", "domain": "huggingface.co", "icon": "🤗" }
       ],
       "tips": [
         "官方文档最权威，优先查看",
-        "知乎/CSDN 内容可能较旧，注意时效性"
+        "AI 领域更新快，注意文档版本日期"
       ],
-      "recommendations": []
+      "recommendations": [
+        { "name": "OpenAI 文档", "url": "https://platform.openai.com/docs", "desc": "GPT API 官方文档，最权威" },
+        { "name": "HuggingFace", "url": "https://huggingface.co/docs", "desc": "开源模型和 Transformers 文档" }
+      ]
     },
     {
       "id": "find_official",
       "name": "找官网",
       "icon": "🎯",
-      "keywords": ["官网", "官方网站", "下载", "正版"],
+      "keywords": ["官网", "官方网站", "下载", "正版", "official"],
       "sources": [
-        { "name": "官网", "domain": "", "icon": "🏠" }
+        { "name": "官网", "domain": "", "icon": "🏠" },
+        { "name": "GitHub", "domain": "github.com", "icon": "🐙" },
+        { "name": "Product Hunt", "domain": "producthunt.com", "icon": "🚀" }
       ],
       "tips": [
         "认准官方域名，警惕山寨网站",
-        "搜索结果前几条可能是广告推广"
+        "软件下载优先选择官网或 GitHub"
       ],
-      "recommendations": []
+      "recommendations": [
+        { "name": "官网查询技巧", "url": "#", "desc": "在搜索词后加 \"official\" 或 \"github\" 提高准确率" }
+      ]
     },
     {
       "id": "product_review",
       "name": "产品测评",
       "icon": "🎧",
-      "keywords": ["测评", "评测", "推荐", "对比", "耳机", "手机", "相机", "笔记本", "显示器", "键盘", "鼠标"],
+      "keywords": ["测评", "评测", "推荐", "对比", "耳机", "手机", "相机", "笔记本", "显示器", "键盘", "鼠标", "音箱", "平板", "手表"],
       "sources": [
         { "name": "什么值得买", "domain": "smzdm.com", "icon": "💰" },
         { "name": "知乎", "domain": "zhihu.com", "icon": "❓" },
@@ -75,7 +83,7 @@
       "id": "tutorial",
       "name": "教程学习",
       "icon": "📚",
-      "keywords": ["教程", "入门", "学习", "课程", "指南", "how to", " beginner", "新手"],
+      "keywords": ["教程", "入门", "学习", "课程", "指南", "how to", " beginner", "新手", "零基础", "速通", "速成"],
       "sources": [
         { "name": "B站", "domain": "bilibili.com", "icon": "📺" },
         { "name": "YouTube", "domain": "youtube.com", "icon": "▶️" },
@@ -86,7 +94,9 @@
         "视频教程适合入门，图文适合查阅",
         "官方教程最系统，社区教程更实战"
       ],
-      "recommendations": []
+      "recommendations": [
+        { "name": "B站搜索", "url": "https://search.bilibili.com", "desc": "中文视频教程最丰富" }
+      ]
     }
   ],
   "defaultScene": "tool_find"

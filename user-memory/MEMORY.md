@@ -1,0 +1,4 @@
+- [用户哲学偏好](user-philosophy.md) — 向量匹配不是逻辑匹配，重视真正的理解而非表面相似
+- [浏览器插件+登录态采集模式](browser-extension-login-session.md) — 需要登录的网站优先用插件而非爬虫
+- [手账日记风格偏好](journal-preference.md) — 喜欢《陪安东尼度过漫长岁月》式无标点流水账风格，重视氛围感
+- [通用陷阱](universal-traps.md) — 跨项目高频陷阱（GBK编码、组件选型、环境问题、前端渲染、Prompt工程）

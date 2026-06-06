@@ -20,7 +20,7 @@ class AIClient:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=180) as client:
             resp = await client.post(url, headers=headers, json=body)
             if resp.status_code != 200:
                 return f"AI API 错误 ({resp.status_code}): {resp.text[:500]}"

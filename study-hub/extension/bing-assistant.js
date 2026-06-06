@@ -1,952 +1,752 @@
-
-
-    // 注入 CSS 到 Shadow DOM
-    const style = document.createElement('style');
-    style.textContent = getPanelCSS();
-    shadow.appendChild(style);// Study Hub Bing \u641c\u7d22\u52a9\u624b\u6d6e\u7a97
-// \u5728 Bing \u641c\u7d22\u7ed3\u679c\u9875\u6ce8\u5165\u8f85\u52a9\u6d6e\u7a97
+// Study Hub Bing 搜索助手浮窗 v3.0
+// 彻底重构：修复所有交互bug，简化逻辑，增强健壮性
 
 (function() {
   'use strict';
 
-  // ===== \u914d\u7f6e =====
+  // ==================== 配置 ====================
   const CONFIG = {
-    REF_PARAM: 'ref=studyhub',
+    STORAGE_STATE: 'studyhub_v3_state',
+    STORAGE_PREFS: 'studyhub_assistant_prefs',
     PANEL_WIDTH: 360,
-    PANEL_COLLAPSED_WIDTH: 60,
-    STORAGE_KEY_STATE: 'studyhub_assistant_state',
-    STORAGE_KEY_PREFERENCES: 'studyhub_assistant_prefs',
-    GUIDE_DISMISS_COUNT: 3, // \u5f15\u5bfc\u663e\u793a\u6b21\u6570
+    GUIDE_MAX: 3,
   };
 
-  // ===== \u72b6\u6001 =====
-  let panelEl = null;
-  let dotEl = null;
-  let isDragging = false;
-  let dragOffset = { x: 0, y: 0 };
-  let currentScene = null;
-  let sceneRules = null;
-  let searchQuery = '';
-  let sessionId = '';
-  let isPinned = true;
-  let isCollapsed = false;
-  let guideShownCount = 0;
+  // ==================== 状态（全部放在 app 对象里，避免全局变量污染）====================
+  const app = {
+    panel: null,          // 面板 DOM
+    dot: null,            // 小圆点 DOM
+    shadow: null,         // Shadow Root
+    scene: null,          // 当前场景
+    rules: null,          // 场景规则
+    query: '',            // 当前搜索词
+    pinned: false,        // 默认不固定，随时可拖拽
+    collapsed: false,     // 是否收起
+    closed: false,        // 是否关闭（显示小圆点）
+    dragging: false,      // 是否拖拽中
+    dragStart: { x: 0, y: 0, panelX: 0, panelY: 0 },
+    guideCount: 0,
+    initialized: false,
+  };
 
-  // ===== \u521d\u59cb\u5316 =====
+  // ==================== 初始化 ====================
 
-  async function init() {
-    console.log('[studyhub-assistant] ===== \u521d\u59cb\u5316\u5f00\u59cb =====');
-    console.log('[studyhub-assistant] URL:', window.location.href);
-    console.log('[studyhub-assistant] \u641c\u7d22\u53c2\u6570:', window.location.search);
+  async function main() {
+    if (app.initialized) return;
+    if (!isBingSearch()) return;
 
-    // \u68c0\u67e5\u662f\u5426\u662f\u6765\u81ea Study Hub \u7684\u641c\u7d22
-    if (!isFromStudyHub()) {
-      console.log('[studyhub-assistant] \u975e Study Hub \u6765\u6e90，\u4e0d\u6ce8\u5165\u6d6e\u7a97');
-      console.log('[studyhub-assistant] \u5f53\u524dURL\u4e0d\u542b ref=studyhub');
-      return;
-    }
+    console.log('[StudyHub] 初始化...');
+    app.initialized = true;
 
-    console.log('[studyhub-assistant] \u2705 \u68c0\u6d4b\u5230 Study Hub \u641c\u7d22\uff0c\u521d\u59cb\u5316\u6d6e\u7a97');
+    // 解析 URL
+    const params = new URLSearchParams(location.search);
+    app.query = params.get('q') || '';
 
-    // \u89e3\u6790 URL \u53c2\u6570
-    const urlParams = new URLSearchParams(window.location.search);
-    searchQuery = urlParams.get('q') || '';
-    sessionId = urlParams.get('sid') || generateSessionId();
-    let initialScene = urlParams.get('scene');
-
-    // \u52a0\u8f7d\u573a\u666f\u89c4\u5219
+    // 加载数据
     await loadSceneRules();
+    await loadState();
+    await loadPrefs();
 
-    // \u5c1d\u8bd5\u4ece sessionStorage \u6062\u590d\u7b5b\u9009\u72b6\u6001（\u9875\u9762\u5237\u65b0\u540e）
-    const savedFilterState = sessionStorage.getItem('studyhub_filter_state');
-    let restoredSources = null;
-    if (savedFilterState) {
-      try {
-        const filterState = JSON.parse(savedFilterState);
-        // \u68c0\u67e5\u662f\u5426\u5728 5 \u5206\u949f\u5185（\u907f\u514d\u8fc7\u671f\u72b6\u6001）
-        if (Date.now() - filterState.timestamp < 5 * 60 * 1000) {
-          if (filterState.sceneId) {
-            initialScene = filterState.sceneId;
-          }
-          restoredSources = filterState.checkedSources || [];
-          console.log('[studyhub-assistant] \u4ece sessionStorage \u6062\u590d\u7b5b\u9009\u72b6\u6001:', restoredSources);
-        } else {
-          // \u8fc7\u671f，\u6e05\u9664
-          sessionStorage.removeItem('studyhub_filter_state');
-        }
-      } catch (e) {
-        console.warn('[studyhub-assistant] \u89e3\u6790\u7b5b\u9009\u72b6\u6001\u5931\u8d25:', e);
-      }
+    // 匹配场景
+    const urlScene = params.get('scene');
+    const isFilterRefresh = app.query.includes('site:');
+    restoreFilterState(isFilterRefresh, urlScene);
+
+    // 渲染
+    if (app.closed) {
+      showDot();
+    } else {
+      showPanel();
     }
 
-    // \u5339\u914d\u573a\u666f
-    currentScene = initialScene
-      ? sceneRules.scenes.find(s => s.id === initialScene)
-      : matchScene(searchQuery);
-
-    if (!currentScene) {
-      currentScene = sceneRules.scenes.find(s => s.id === sceneRules.defaultScene);
-    }
-
-    // \u52a0\u8f7d\u7528\u6237\u504f\u597d
-    await loadPreferences();
-
-    // \u5982\u679c\u6709\u6062\u590d\u7684\u7b5b\u9009\u72b6\u6001，\u5e94\u7528\u5230\u5f53\u524d\u573a\u666f
-    if (restoredSources && currentScene) {
-      currentScene.sources.forEach(source => {
-        const key = source.domain || source.name;
-        if (restoredSources.includes(key)) {
-          source.checked = true;
-          source.fromMemory = true;
-        }
-      });
-    }
-
-    // \u521b\u5efa\u6d6e\u7a97
-    createPanel();
-
-    // \u8c03\u6574 Bing \u5e03\u5c40
-    adjustBingLayout();
-
-    // \u76d1\u542c\u9875\u9762\u53d8\u5316（Bing \u662f SPA，\u641c\u7d22\u65f6\u4e0d\u4f1a\u5237\u65b0\u9875\u9762）
-    observeUrlChanges();
+    // 监听
+    watchUrl();
+    bindGlobalEvents();
   }
 
-  function isFromStudyHub() {
-    const hasRef = window.location.search.includes(CONFIG.REF_PARAM);
-    console.log('[studyhub-assistant] \u68c0\u67e5 ref=studyhub:', hasRef, 'URL:', window.location.search);
-    return hasRef;
-  }
-
-  function generateSessionId() {
-    return 'sh_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
-  }
-
-  // ===== \u573a\u666f\u89c4\u5219\u52a0\u8f7d =====
+  // ==================== 数据加载 ====================
 
   async function loadSceneRules() {
     try {
-      // \u68c0\u67e5 chrome.runtime \u662f\u5426\u53ef\u7528
-      if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.getURL) {
-        console.warn("[studyhub-assistant] chrome.runtime \u4e0d\u53ef\u7528，\u4f7f\u7528\u5185\u7f6e\u89c4\u5219");
-        sceneRules = getBuiltinSceneRules();
-        return;
-      }
-      // \u5c1d\u8bd5\u4ece\u6269\u5c55\u8d44\u6e90\u52a0\u8f7d
-      const url = chrome.runtime.getURL("data/scene-rules.json");
-      // \u9a8c\u8bc1 URL \u662f\u5426\u6709\u6548（\u4e0d\u662f chrome-extension://invalid/）
-      if (url.includes("chrome-extension://invalid/")) {
-        console.warn("[studyhub-assistant] \u6269\u5c55 URL \u65e0\u6548，\u4f7f\u7528\u5185\u7f6e\u89c4\u5219");
-        sceneRules = getBuiltinSceneRules();
-        return;
-      }
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
-      sceneRules = await response.json();
+      const url = chrome.runtime.getURL('data/scene-rules.json');
+      const res = await fetch(url);
+      app.rules = await res.json();
     } catch (e) {
-      console.warn("[studyhub-assistant] \u52a0\u8f7d\u573a\u666f\u89c4\u5219\u5931\u8d25，\u4f7f\u7528\u5185\u7f6e\u89c4\u5219:", e);
-      // \u5185\u7f6e\u5907\u7528\u89c4\u5219
-      sceneRules = getBuiltinSceneRules();
+      app.rules = getBuiltinRules();
     }
   }
 
-  function getBuiltinSceneRules() {
-    return {
-      scenes: [
-        {
-          id: 'tool_find',
-          name: '\u5de5\u5177\u67e5\u627e',
-          icon: '🛠️',
-          keywords: ['\u5de5\u5177', '\u62a0\u56fe', '\u538b\u7f29', '\u8f6c\u6362'],
-          sources: [
-            { name: 'GitHub', domain: 'github.com', icon: '🐙' },
-            { name: '\u5b98\u7f51', domain: '', icon: '🏠' }
-          ],
-          tips: ['\u4f18\u5148\u9009\u62e9\u5f00\u6e90\u514d\u8d39\u5de5\u5177'],
-          recommendations: [
-            { name: 'remove.bg', url: 'https://www.remove.bg', desc: '\u5728\u7ebf\u81ea\u52a8\u62a0\u56fe' }
-          ]
-        },
-        {
-          id: 'product_review',
-          name: '\u4ea7\u54c1\u6d4b\u8bc4',
-          icon: '🎧',
-          keywords: ['\u6d4b\u8bc4', '\u8bc4\u6d4b', '\u63a8\u8350', '\u5bf9\u6bd4', '\u8033\u673a', '\u624b\u673a'],
-          sources: [
-            { name: '\u4ec0\u4e48\u503c\u5f97\u4e70', domain: 'smzdm.com', icon: '💰' },
-            { name: '\u77e5\u4e4e', domain: 'zhihu.com', icon: '❓' },
-            { name: 'B\u7ad9', domain: 'bilibili.com', icon: '📺' }
-          ],
-          tips: ['\u5efa\u8bae\u4f18\u5148\u770b\u56fe\u6587\u6d4b\u8bc4\u4e86\u89e3\u53c2\u6570', '\u518d\u770b\u89c6\u9891\u4e86\u89e3\u5b9e\u9645\u4f53\u9a8c'],
-          recommendations: [
-            { name: '\u5148\u770b\u8bc4\u6d4b', url: 'https://space.bilibili.com/2871017', desc: 'B\u7ad9\u77e5\u540d\u79d1\u6280\u6d4b\u8bc4UP\u4e3b' }
-          ]
+  async function loadState() {
+    try {
+      const data = await chrome.storage.local.get([CONFIG.STORAGE_STATE]);
+      const s = data[CONFIG.STORAGE_STATE];
+      if (s) {
+        app.pinned = s.pinned !== false;  // 默认 true
+        app.collapsed = !!s.collapsed;
+        app.closed = !!s.closed;
+        // 位置在 showPanel 中恢复
+      }
+    } catch (e) {}
+  }
+
+  async function saveState() {
+    try {
+      const state = {
+        pinned: app.pinned,
+        collapsed: app.collapsed,
+        closed: app.closed,
+      };
+      if (!app.pinned && app.panel) {
+        const rect = app.panel.getBoundingClientRect();
+        state.x = rect.left;
+        state.y = rect.top;
+      }
+      await chrome.storage.local.set({ [CONFIG.STORAGE_STATE]: state });
+    } catch (e) {}
+  }
+
+  async function loadPrefs() {
+    try {
+      const data = await chrome.storage.sync.get([CONFIG.STORAGE_PREFS]);
+      const p = data[CONFIG.STORAGE_PREFS] || {};
+      app.guideCount = p.guideCount || 0;
+
+      // 恢复当前场景的勾选状态
+      if (p.sources && app.scene) {
+        const saved = p.sources[app.scene.id];
+        if (saved) {
+          app.scene.sources.forEach(src => {
+            const key = src.domain || src.name;
+            if (saved.includes(key)) {
+              src.checked = true;
+              src.fromMemory = true;
+            }
+          });
         }
-      ],
-      defaultScene: 'tool_find'
-    };
+      }
+    } catch (e) {}
+  }
+
+  async function savePrefs() {
+    try {
+      const data = await chrome.storage.sync.get([CONFIG.STORAGE_PREFS]);
+      const p = data[CONFIG.STORAGE_PREFS] || {};
+      if (!p.sources) p.sources = {};
+      if (app.scene) {
+        p.sources[app.scene.id] = app.scene.sources
+          .filter(s => s.checked)
+          .map(s => s.domain || s.name);
+      }
+      p.guideCount = app.guideCount;
+      await chrome.storage.sync.set({ [CONFIG.STORAGE_PREFS]: p });
+    } catch (e) {}
+  }
+
+  // ==================== 场景匹配 ====================
+
+  function restoreFilterState(isFilterRefresh, urlScene) {
+    // sessionStorage 恢复
+    const raw = sessionStorage.getItem('studyhub_filter_state');
+    let restoredSources = null;
+    let targetScene = urlScene;
+
+    if (raw) {
+      try {
+        const fs = JSON.parse(raw);
+        if (Date.now() - fs.timestamp < 5 * 60 * 1000) {
+          if (isFilterRefresh && fs.sceneId) targetScene = fs.sceneId;
+          restoredSources = fs.checkedSources || [];
+        } else {
+          sessionStorage.removeItem('studyhub_filter_state');
+        }
+      } catch (e) {}
+    }
+
+    // 确定场景
+    app.scene = targetScene
+      ? app.rules.scenes.find(s => s.id === targetScene)
+      : matchScene(app.query);
+    if (!app.scene) {
+      app.scene = app.rules.scenes.find(s => s.id === app.rules.defaultScene);
+    }
+
+    // 恢复勾选
+    if (restoredSources) {
+      app.scene.sources.forEach(src => {
+        const key = src.domain || src.name;
+        if (restoredSources.includes(key)) {
+          src.checked = true;
+          src.fromMemory = true;
+        }
+      });
+    }
   }
 
   function matchScene(query) {
     if (!query) return null;
-    const lowerQuery = query.toLowerCase();
-
-    for (const scene of sceneRules.scenes) {
-      for (const keyword of scene.keywords) {
-        if (lowerQuery.includes(keyword.toLowerCase())) {
-          return scene;
-        }
+    const q = query.toLowerCase();
+    for (const s of app.rules.scenes) {
+      for (const kw of s.keywords) {
+        if (q.includes(kw.toLowerCase())) return s;
       }
     }
     return null;
   }
 
-  // ===== \u7528\u6237\u504f\u597d =====
+  // ==================== 面板生命周期 ====================
 
-  async function loadPreferences() {
-    try {
-      const data = await chrome.storage.sync.get([CONFIG.STORAGE_KEY_PREFERENCES]);
-      const prefs = data[CONFIG.STORAGE_KEY_PREFERENCES] || {};
-      guideShownCount = prefs.guideShownCount || 0;
+  function showPanel() {
+    cleanupPanel();
+    cleanupDot();
 
-      // \u6062\u590d\u8be5\u573a\u666f\u7684\u6765\u6e90\u52fe\u9009
-      if (prefs.sceneSources && currentScene) {
-        const saved = prefs.sceneSources[currentScene.id];
-        if (saved) {
-          currentScene.sources.forEach(source => {
-            source.checked = saved.includes(source.domain || source.name);
-            source.fromMemory = source.checked;
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('[studyhub-assistant] \u52a0\u8f7d\u504f\u597d\u5931\u8d25:', e);
-    }
-  }
-
-  async function savePreferences() {
-    try {
-      const data = await chrome.storage.sync.get([CONFIG.STORAGE_KEY_PREFERENCES]);
-      const prefs = data[CONFIG.STORAGE_KEY_PREFERENCES] || {};
-
-      // \u4fdd\u5b58\u573a\u666f\u6765\u6e90\u52fe\u9009
-      if (!prefs.sceneSources) prefs.sceneSources = {};
-      if (currentScene) {
-        prefs.sceneSources[currentScene.id] = currentScene.sources
-          .filter(s => s.checked)
-          .map(s => s.domain || s.name);
-      }
-      prefs.guideShownCount = guideShownCount;
-
-      await chrome.storage.sync.set({ [CONFIG.STORAGE_KEY_PREFERENCES]: prefs });
-    } catch (e) {
-      console.warn('[studyhub-assistant] \u4fdd\u5b58\u504f\u597d\u5931\u8d25:', e);
-    }
-  }
-
-  // ===== \u6d6e\u7a97\u521b\u5efa =====
-
-  function createPanel() {
-    // \u68c0\u67e5\u662f\u5426\u5df2\u5b58\u5728\u4e14\u6709\u6709\u6548\u7684 shadow root
-    const existingHost = document.getElementById('studyhub-assistant-host');
-    if (existingHost) {
-      try {
-        const existingShadow = existingHost.shadowRoot;
-        if (existingShadow && existingShadow.querySelector('.studyhub-panel')) {
-          return; // \u771f\u6b63\u5df2\u5b58\u5728，\u76f4\u63a5\u8fd4\u56de
-        }
-        // host \u5b58\u5728\u4f46\u6ca1\u6709 shadow，\u79fb\u9664\u91cd\u65b0\u521b\u5efa
-        existingHost.remove();
-      } catch(e) {
-        existingHost.remove();
-      }
-    }
-
-    // \u521b\u5efa Shadow DOM host
     const host = document.createElement('div');
     host.id = 'studyhub-assistant-host';
     document.body.appendChild(host);
 
-    const shadow = host.attachShadow({ mode: 'open' });
+    app.shadow = host.attachShadow({ mode: 'open' });
 
-    // \u521b\u5efa\u9762\u677f
-    panelEl = document.createElement('div');
-    panelEl.className = 'studyhub-panel animating';
-    if (isDarkMode()) {
-      panelEl.classList.add('dark-mode');
+    // CSS
+    const style = document.createElement('style');
+    style.textContent = getCSS();
+    app.shadow.appendChild(style);
+
+    // 面板
+    app.panel = document.createElement('div');
+    app.panel.className = 'sh-panel' + (app.collapsed ? ' collapsed' : '') + (isDark() ? ' dark' : '');
+    app.panel.innerHTML = renderPanel();
+    app.shadow.appendChild(app.panel);
+
+    // 恢复位置
+    restorePosition();
+
+    // 事件
+    bindPanelEvents();
+
+    // 引导
+    if (app.guideCount < CONFIG.GUIDE_MAX) {
+      showGuide();
+      app.guideCount++;
+      savePrefs();
     }
 
-    panelEl.innerHTML = renderPanelHTML();
-    shadow.appendChild(panelEl);
+    adjustBing(true);
+    app.closed = false;
+    saveState();
+  }
 
-    // \u7ed1\u5b9a\u4e8b\u4ef6
-    bindPanelEvents(shadow);
-
-    // \u663e\u793a\u5f15\u5bfc（\u524d3\u6b21），\u4f46\u4ec5\u5728\u975e\u6062\u590d\u72b6\u6001\u65f6\u663e\u793a
-    const hasRestoredState = sessionStorage.getItem('studyhub_filter_state');
-    if (guideShownCount < CONFIG.GUIDE_DISMISS_COUNT && !hasRestoredState) {
-      showGuide(shadow);
-      guideShownCount++;
-      savePreferences();
+  function cleanupPanel() {
+    const host = document.getElementById('studyhub-assistant-host');
+    if (host) {
+      host.remove();
+      app.panel = null;
+      app.shadow = null;
     }
-
-    // \u79fb\u9664\u52a8\u753b\u7c7b
-    setTimeout(() => {
-      panelEl.classList.remove('animating');
-    }, 300);
   }
 
-  function renderPanelHTML() {
-    const scenes = sceneRules.scenes;
-    const sceneTabs = scenes.map(s => `
-      <button class="studyhub-tab ${s.id === currentScene.id ? 'active' : ''}" data-scene="${s.id}">
-        ${s.icon} ${s.name}
-      </button>
-    `).join('');
-
-    const recs = currentScene.recommendations && currentScene.recommendations.length > 0
-      ? currentScene.recommendations.map(r => `
-        <a class="studyhub-rec-item" href="${r.url}" target="_blank" rel="noopener noreferrer">
-          <span class="studyhub-rec-icon">🔗</span>
-          <div class="studyhub-rec-content">
-            <div class="studyhub-rec-name">${r.name}</div>
-            <div class="studyhub-rec-desc">${r.desc}</div>
-          </div>
-        </a>
-      `).join('')
-      : '<div style="font-size:12px;color:#9ca3af;padding:8px;">\u6682\u65e0\u63a8\u8350\uff0c\u5c1d\u8bd5\u5207\u6362\u573a\u666f</div>';
-
-    const tips = currentScene.tips.map(t => `
-      <div class="studyhub-tip">
-        <span class="studyhub-tip-icon">⚠️</span>
-        <span>${t}</span>
-      </div>
-    `).join('');
-
-    const sources = currentScene.sources.map(s => `
-      <div class="studyhub-filter-item" data-source="${s.domain || s.name}">
-        <div class="studyhub-filter-checkbox ${s.checked ? 'checked' : ''}"></div>
-        <span class="studyhub-filter-icon">${s.icon}</span>
-        <span class="studyhub-filter-name">${s.name}</span>
-        ${s.fromMemory ? '<div class="studyhub-filter-memory" title="\u6839\u636e\u4f60\u4e0a\u6b21\u7684\u9009\u62e9\u81ea\u52a8\u52fe\u9009"></div>' : ''}
-      </div>
-    `).join('');
-
-    // \u5173\u8054\u573a\u666f（\u6392\u9664\u5f53\u524d\u573a\u666f）
-    const relatedScenes = scenes
-      .filter(s => s.id !== currentScene.id)
-      .slice(0, 2);
-    const relatedHTML = relatedScenes.length > 0
-      ? `
-        <div class="studyhub-related">
-          <div class="studyhub-related-title">\u4f60\u53ef\u80fd\u4e5f\u60f3\u770b</div>
-          ${relatedScenes.map(s => `
-            <span class="studyhub-related-item" data-scene="${s.id}">
-              ${s.icon} ${s.name}
-            </span>
-          `).join('')}
-        </div>
-      `
-      : '';
-
-    return `
-      <div class="studyhub-header">
-        <div class="studyhub-header-left">
-          <span>\ud83e\udd16</span>
-          <span class="studyhub-header-text">Study Hub \u52a9\u624b</span>
-        </div>
-        <div class="studyhub-header-right">
-          <button class="studyhub-btn" id="sh-pin" title="\u56fa\u5b9a/\u62d6\u62fd">\ud83d\udccc</button>
-          <button class="studyhub-btn" id="sh-collapse" title="\u6536\u8d77">\u25c0</button>
-          <button class="studyhub-btn" id="sh-close" title="\u5173\u95ed">\u2715</button>
-        </div>
-      </div>
-      <div class="studyhub-tabs">
-        ${sceneTabs}
-      </div>
-      <div class="studyhub-body">
-        <div class="studyhub-scene-title">
-          <span>${currentScene.icon}</span>
-          <span>${currentScene.name}</span>
-        </div>
-        <div class="studyhub-scene-subtitle">\u641c\u7d22\uff1a${escapeHtml(searchQuery)}</div>
-
-        ${tips}
-
-        <div class="studyhub-section">
-          <div class="studyhub-section-title">⭐ \u63a8\u8350</div>
-          ${recs}
-        </div>
-
-        <div class="studyhub-filter-section">
-          <div class="studyhub-filter-header">
-            <div class="studyhub-filter-title">\u2699\ufe0f \u6765\u6e90\u7b5b\u9009</div>
-            <button class="studyhub-filter-reset" id="sh-reset-filter">\u6062\u590d\u9ed8\u8ba4</button>
-          </div>
-          <div class="studyhub-filter-list">
-            ${sources}
-          </div>
-          <button class="studyhub-apply-btn" id="sh-apply-filter">
-            \u5e94\u7528\u7b5b\u9009\u5e76\u641c\u7d22
-          </button>
-        </div>
-
-        <div class="studyhub-ai-section">
-          <div class="studyhub-ai-title">\ud83e\udd16 AI \u5206\u6790</div>
-          <div class="studyhub-ai-content" id="sh-ai-content">
-            \u70b9\u51fb"\u5e94\u7528\u7b5b\u9009"\u540e\u5c06\u6839\u636e\u641c\u7d22\u7ed3\u679c\u751f\u6210\u5206\u6790...
-          </div>
-        </div>
-
-        ${relatedHTML}
-      </div>
-    `;
+  function showDot() {
+    cleanupDot();
+    app.dot = document.createElement('div');
+    app.dot.className = 'sh-dot';
+    app.dot.innerHTML = '\u2728'; // ✨
+    app.dot.title = 'Study Hub';
+    app.dot.addEventListener('click', () => {
+      cleanupDot();
+      showPanel();
+    });
+    document.body.appendChild(app.dot);
+    adjustBing(false);
   }
 
-  function bindPanelEvents(shadow) {
-    const panel = shadow.querySelector('.studyhub-panel');
-    const header = shadow.querySelector('.studyhub-header');
-
-    // \u5173\u95ed\u6309\u94ae
-    shadow.getElementById('sh-close').addEventListener('click', () => {
-      closePanel();
-    });
-
-    // \u6536\u8d77\u6309\u94ae
-    shadow.getElementById('sh-collapse').addEventListener('click', () => {
-      toggleCollapse();
-    });
-
-    // \u56fa\u5b9a/\u62d6\u62fd\u5207\u6362
-    shadow.getElementById('sh-pin').addEventListener('click', () => {
-      togglePin();
-    });
-
-    // \u573a\u666f\u6807\u7b7e\u5207\u6362
-    shadow.querySelectorAll('.studyhub-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const sceneId = tab.dataset.scene;
-        switchScene(sceneId);
-      });
-    });
-
-    // \u5173\u8054\u573a\u666f\u70b9\u51fb
-    shadow.querySelectorAll('.studyhub-related-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const sceneId = item.dataset.scene;
-        switchScene(sceneId);
-      });
-    });
-
-    // \u6765\u6e90\u7b5b\u9009\u52fe\u9009
-    shadow.querySelectorAll('.studyhub-filter-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        if (e.target.closest('.studyhub-filter-item') === item) {
-          toggleSource(item);
-        }
-      });
-    });
-
-    // \u6062\u590d\u9ed8\u8ba4
-    shadow.getElementById('sh-reset-filter').addEventListener('click', () => {
-      resetSources();
-    });
-
-    // \u5e94\u7528\u7b5b\u9009
-    shadow.getElementById('sh-apply-filter').addEventListener('click', () => {
-      applyFilter();
-    });
-
-    // \u62d6\u62fd
-    header.addEventListener('mousedown', startDrag);
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('mouseup', endDrag);
-
-    // \u53cc\u51fb\u6807\u9898\u680f\u5207\u6362\u56fa\u5b9a/\u62d6\u62fd
-    header.addEventListener('dblclick', (e) => {
-      e.preventDefault();
-      togglePin();
-    });
+  function cleanupDot() {
+    if (app.dot) {
+      app.dot.remove();
+      app.dot = null;
+    }
   }
-
-  // ===== \u9762\u677f\u64cd\u4f5c =====
 
   function closePanel() {
-    if (panelEl) {
-      panelEl.style.transform = 'translateX(400px)';
-      panelEl.style.opacity = '0';
+    if (app.panel) {
+      app.panel.style.transform = 'translateX(120%)';
+      app.panel.style.opacity = '0';
       setTimeout(() => {
-        const host = document.getElementById('studyhub-assistant-host');
-        if (host) host.remove();
-        panelEl = null;
-      }, 300);
+        cleanupPanel();
+        showDot();
+      }, 250);
     }
-    // \u6062\u590d Bing \u5e03\u5c40
-    restoreBingLayout();
-    createDot();
+    app.closed = true;
+    app.collapsed = false;
+    saveState();
   }
 
-  function restoreBingLayout() {
-    const kp = document.querySelector('#b_context');
-    const results = document.querySelector('#b_results');
-    if (kp) kp.style.display = '';
-    if (results) results.style.marginRight = '';
-  }
+  // ==================== 位置与拖拽 ====================
 
-  function createDot() {
-    if (dotEl) return;
-
-    dotEl = document.createElement('div');
-    dotEl.className = 'studyhub-dot';
-    dotEl.innerHTML = '\ud83d\udca1';
-    dotEl.title = 'Study Hub \u641c\u7d22\u52a9\u624b';
-    dotEl.addEventListener('click', () => {
-      dotEl.remove();
-      dotEl = null;
-      createPanel();
-      adjustBingLayout();
-    });
-    document.body.appendChild(dotEl);
-  }
-
-  function toggleCollapse() {
-    isCollapsed = !isCollapsed;
-    if (panelEl) {
-      panelEl.classList.toggle('collapsed', isCollapsed);
-      // \u6536\u8d77\u65f6\u6062\u590d Bing \u5e03\u5c40\u7a7a\u95f4，\u5c55\u5f00\u65f6\u91cd\u65b0\u8c03\u6574
-      if (isCollapsed) {
-        const results = document.querySelector('#b_results');
-        if (results) results.style.marginRight = '80px';
-      } else {
-        const results = document.querySelector('#b_results');
-        if (results) results.style.marginRight = '376px';
+  function restorePosition() {
+    if (!app.panel) return;
+    if (app.pinned) {
+      app.panel.style.top = '72px';
+      app.panel.style.right = '16px';
+      app.panel.style.left = 'auto';
+    } else {
+      // 非固定模式：如果没有设置过位置，默认也在右上角
+      if (!app.panel.style.left || app.panel.style.left === 'auto') {
+        app.panel.style.top = '72px';
+        app.panel.style.right = '16px';
       }
     }
+  }
+
+  function bindPanelEvents() {
+    if (!app.shadow) return;
+
+    // 事件委托：所有点击走这一个处理器
+    app.shadow.addEventListener('click', handlePanelClick);
+
+    // 拖拽：只在 header 上触发
+    const header = app.shadow.querySelector('.sh-header');
+    if (header) {
+      header.addEventListener('mousedown', startDrag);
+    }
+  }
+
+  function handlePanelClick(e) {
+    const t = e.target;
+
+    // 关闭
+    if (t.closest('.sh-btn-close')) {
+      closePanel();
+      return;
+    }
+
+    // 收起/展开
+    if (t.closest('.sh-btn-collapse')) {
+      toggleCollapse();
+      return;
+    }
+
+    // 固定/取消固定
+    if (t.closest('.sh-btn-pin')) {
+      togglePin();
+      return;
+    }
+
+    // 场景切换
+    const tab = t.closest('.sh-tab');
+    if (tab) {
+      const sid = tab.dataset.scene;
+      if (sid && sid !== app.scene.id) switchScene(sid);
+      return;
+    }
+
+    // 关联场景
+    const rel = t.closest('.sh-related-item');
+    if (rel) {
+      const sid = rel.dataset.scene;
+      if (sid && sid !== app.scene.id) switchScene(sid);
+      return;
+    }
+
+    // 来源勾选
+    const filter = t.closest('.sh-filter-item');
+    if (filter) {
+      toggleSource(filter);
+      return;
+    }
+
+    // 恢复默认
+    if (t.closest('.sh-btn-reset')) {
+      resetSources();
+      return;
+    }
+
+    // 应用筛选
+    if (t.closest('.sh-btn-apply')) {
+      applyFilter();
+      return;
+    }
+
+    // AI 折叠
+    if (t.closest('.sh-ai-header')) {
+      const section = app.shadow.querySelector('.sh-ai-section');
+      if (section) section.classList.toggle('collapsed');
+    }
+  }
+
+  function startDrag(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+
+    app.dragging = true;
+    const rect = app.panel.getBoundingClientRect();
+    app.dragStart = {
+      x: e.clientX,
+      y: e.clientY,
+      panelX: rect.left,
+      panelY: rect.top,
+    };
+    app.panel.classList.add('dragging');
+  }
+
+  function onDragMove(e) {
+    if (!app.dragging || !app.panel) return;
+    e.preventDefault();
+
+    const dx = e.clientX - app.dragStart.x;
+    const dy = e.clientY - app.dragStart.y;
+
+    let nx = app.dragStart.panelX + dx;
+    let ny = app.dragStart.panelY + dy;
+
+    // 边界限制
+    const maxX = window.innerWidth - app.panel.offsetWidth;
+    const maxY = window.innerHeight - app.panel.offsetHeight;
+    nx = Math.max(0, Math.min(nx, maxX));
+    ny = Math.max(0, Math.min(ny, maxY));
+
+    app.panel.style.left = nx + 'px';
+    app.panel.style.top = ny + 'px';
+    app.panel.style.right = 'auto';
+  }
+
+  function onDragEnd() {
+    if (!app.dragging) return;
+    app.dragging = false;
+    if (app.panel) {
+      app.panel.classList.remove('dragging');
+      saveState();
+    }
+  }
+
+  // ==================== 面板操作 ====================
+
+  function toggleCollapse() {
+    app.collapsed = !app.collapsed;
+    if (app.panel) {
+      app.panel.classList.toggle('collapsed', app.collapsed);
+    }
+    // 收起后面板宽度变窄，展开后恢复宽度并调整Bing布局
+    if (app.collapsed) {
+      // 收起：只留窄边距，恢复Bing右侧栏
+      adjustBing(false);
+    } else {
+      // 展开：隐藏Bing右侧栏，给面板留空间
+      adjustBing(true);
+    }
+    saveState();
   }
 
   function togglePin() {
-    isPinned = !isPinned;
-    const shadow = document.getElementById('studyhub-assistant-host')?.shadowRoot;
-    if (shadow) {
-      updatePinButton(shadow);
-    }
-    // \u56fa\u5b9a\u65f6\u91cd\u7f6e\u5230\u9ed8\u8ba4\u4f4d\u7f6e
-    if (isPinned && panelEl) {
-      panelEl.style.top = '72px';
-      panelEl.style.left = 'auto';
-      panelEl.style.right = '16px';
-    }
+    app.pinned = !app.pinned;
+    updatePinUI();
+    saveState();
   }
 
-  function updatePinButton(shadow) {
-    const btn = shadow.getElementById('sh-pin');
+  function updatePinUI() {
+    if (!app.shadow) return;
+    const btn = app.shadow.querySelector('.sh-btn-pin');
     if (btn) {
-      btn.textContent = isPinned ? '\ud83d\udccc' : '\ud83d\udccd';
-      btn.title = isPinned ? '\u56fa\u5b9a\uff08\u70b9\u51fb\u89e3\u9664\uff09' : '\u62d6\u62fd\u6a21\u5f0f\uff08\u70b9\u51fb\u56fa\u5b9a\uff09';
+      btn.textContent = app.pinned ? '\ud83d\udccc' : '\ud83d\udccd';
+      btn.title = app.pinned ? '\u5df2\u56fa\u5b9a\uff08\u70b9\u51fb\u53d6\u6d88\u56fa\u5b9a\uff0c\u53ef\u62d6\u62fd\uff09' : '\u672a\u56fa\u5b9a\uff08\u70b9\u51fb\u56fa\u5b9a\uff09';
     }
-    if (panelEl) {
-      panelEl.style.cursor = isPinned ? 'default' : 'move';
+    if (app.panel) {
+      app.panel.style.cursor = app.pinned ? 'default' : 'move';
+      if (app.pinned) restorePosition();
     }
   }
-
-  // ===== \u573a\u666f\u5207\u6362 =====
 
   function switchScene(sceneId) {
-    const newScene = sceneRules.scenes.find(s => s.id === sceneId);
-    if (!newScene || newScene.id === currentScene.id) return;
+    const newScene = app.rules.scenes.find(s => s.id === sceneId);
+    if (!newScene || newScene.id === app.scene.id) return;
+    app.scene = newScene;
 
-    currentScene = newScene;
+    loadPrefs().then(() => {
+      if (!app.shadow || !app.panel) return;
 
-    // \u91cd\u65b0\u52a0\u8f7d\u8be5\u573a\u666f\u7684\u504f\u597d
-    loadPreferences().then(() => {
-      // \u91cd\u65b0\u6e32\u67d3\u9762\u677f\u5185\u5bb9
-      const shadow = document.getElementById('studyhub-assistant-host')?.shadowRoot;
-      if (shadow) {
-        const body = shadow.querySelector('.studyhub-body');
-        const tabs = shadow.querySelector('.studyhub-tabs');
+      // 局部更新：tabs + body
+      const tabs = app.shadow.querySelector('.sh-tabs');
+      const body = app.shadow.querySelector('.sh-body');
 
-        // \u66f4\u65b0\u6807\u7b7e\u9875
-        tabs.innerHTML = sceneRules.scenes.map(s => `
-          <button class="studyhub-tab ${s.id === currentScene.id ? 'active' : ''}" data-scene="${s.id}">
-            ${s.icon} ${s.name}
-          </button>
-        `).join('');
-
-        // \u91cd\u65b0\u7ed1\u5b9a\u6807\u7b7e\u4e8b\u4ef6
-        tabs.querySelectorAll('.studyhub-tab').forEach(tab => {
-          tab.addEventListener('click', () => {
-            switchScene(tab.dataset.scene);
-          });
-        });
-
-        // \u66f4\u65b0\u5185\u5bb9
-        body.innerHTML = renderBodyHTML();
-        bindBodyEvents(shadow);
+      if (tabs) {
+        tabs.innerHTML = renderTabs();
+      }
+      if (body) {
+        body.innerHTML = renderBody();
       }
 
-      // \u66f4\u65b0 URL scene \u53c2\u6570
-      updateUrlScene(sceneId);
+      // 更新 URL
+      const url = new URL(location.href);
+      url.searchParams.set('scene', sceneId);
+      history.replaceState({}, '', url);
+
+      savePrefs();
     });
   }
 
-  function renderBodyHTML() {
-    const recs = currentScene.recommendations && currentScene.recommendations.length > 0
-      ? currentScene.recommendations.map(r => `
-        <a class="studyhub-rec-item" href="${r.url}" target="_blank" rel="noopener noreferrer">
-          <span class="studyhub-rec-icon">🔗</span>
-          <div class="studyhub-rec-content">
-            <div class="studyhub-rec-name">${r.name}</div>
-            <div class="studyhub-rec-desc">${r.desc}</div>
-          </div>
-        </a>
-      `).join('')
-      : '<div style="font-size:12px;color:#9ca3af;padding:8px;">\u6682\u65e0\u63a8\u8350，\u5c1d\u8bd5\u5207\u6362\u573a\u666f</div>';
-
-    const tips = currentScene.tips.map(t => `
-      <div class="studyhub-tip">
-        <span class="studyhub-tip-icon">⚠️</span>
-        <span>${t}</span>
-      </div>
-    `).join('');
-
-    const sources = currentScene.sources.map(s => `
-      <div class="studyhub-filter-item" data-source="${s.domain || s.name}">
-        <div class="studyhub-filter-checkbox ${s.checked ? 'checked' : ''}"></div>
-        <span class="studyhub-filter-icon">${s.icon}</span>
-        <span class="studyhub-filter-name">${s.name}</span>
-        ${s.fromMemory ? '<div class="studyhub-filter-memory" title="\u6839\u636e\u4f60\u4e0a\u6b21\u7684\u9009\u62e9\u81ea\u52a8\u52fe\u9009"></div>' : ''}
-      </div>
-    `).join('');
-
-    const relatedScenes = sceneRules.scenes
-      .filter(s => s.id !== currentScene.id)
-      .slice(0, 2);
-    const relatedHTML = relatedScenes.length > 0
-      ? `
-        <div class="studyhub-related">
-          <div class="studyhub-related-title">\u4f60\u53ef\u80fd\u4e5f\u60f3\u770b</div>
-          ${relatedScenes.map(s => `
-            <span class="studyhub-related-item" data-scene="${s.id}">
-              ${s.icon} ${s.name}
-            </span>
-          `).join('')}
-        </div>
-      `
-      : '';
-
-    return `
-      <div class="studyhub-scene-title">
-        <span>${currentScene.icon}</span>
-        <span>${currentScene.name}</span>
-      </div>
-      <div class="studyhub-scene-subtitle">\u641c\u7d22：${escapeHtml(searchQuery)}</div>
-
-      ${tips}
-
-      <div class="studyhub-section">
-        <div class="studyhub-section-title">⭐ \u63a8\u8350</div>
-        ${recs}
-      </div>
-
-      <div class="studyhub-filter-section">
-        <div class="studyhub-filter-header">
-          <div class="studyhub-filter-title">\u2699\ufe0f \u6765\u6e90\u7b5b\u9009</div>
-          <button class="studyhub-filter-reset" id="sh-reset-filter">\u6062\u590d\u9ed8\u8ba4</button>
-        </div>
-        <div class="studyhub-filter-list">
-          ${sources}
-        </div>
-        <button class="studyhub-apply-btn" id="sh-apply-filter">
-          \u5e94\u7528\u7b5b\u9009\u5e76\u641c\u7d22
-        </button>
-      </div>
-
-      <div class="studyhub-ai-section">
-        <div class="studyhub-ai-title">\ud83e\udd16 AI \u5206\u6790</div>
-        <div class="studyhub-ai-content" id="sh-ai-content">
-          \u70b9\u51fb"\u5e94\u7528\u7b5b\u9009"\u540e\u5c06\u6839\u636e\u641c\u7d22\u7ed3\u679c\u751f\u6210\u5206\u6790...
-        </div>
-      </div>
-
-      ${relatedHTML}
-    `;
-  }
-
-  function bindBodyEvents(shadow) {
-    // \u5173\u8054\u573a\u666f
-    shadow.querySelectorAll('.studyhub-related-item').forEach(item => {
-      item.addEventListener('click', () => {
-        switchScene(item.dataset.scene);
-      });
-    });
-
-    // \u6765\u6e90\u7b5b\u9009
-    shadow.querySelectorAll('.studyhub-filter-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        if (e.target.closest('.studyhub-filter-item') === item) {
-          toggleSource(item);
-        }
-      });
-    });
-
-    // \u6062\u590d\u9ed8\u8ba4
-    const resetBtn = shadow.getElementById('sh-reset-filter');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        resetSources();
-      });
-    }
-
-    // \u5e94\u7528\u7b5b\u9009
-    const applyBtn = shadow.getElementById('sh-apply-filter');
-    if (applyBtn) {
-      applyBtn.addEventListener('click', () => {
-        applyFilter();
-      });
-    }
-  }
-
-  function updateUrlScene(sceneId) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('scene', sceneId);
-    window.history.replaceState({}, '', url.toString());
-  }
-
-  // ===== \u6765\u6e90\u7b5b\u9009 =====
+  // ==================== 来源筛选 ====================
 
   function toggleSource(item) {
-    const checkbox = item.querySelector('.studyhub-filter-checkbox');
-    const sourceName = item.dataset.source;
+    const cb = item.querySelector('.sh-checkbox');
+    const name = item.dataset.source;
+    if (!cb) return;
 
-    checkbox.classList.toggle('checked');
-    const isChecked = checkbox.classList.contains('checked');
+    cb.classList.toggle('checked');
+    const checked = cb.classList.contains('checked');
 
-    // \u66f4\u65b0\u573a\u666f\u6570\u636e
-    const source = currentScene.sources.find(s => (s.domain || s.name) === sourceName);
-    if (source) {
-      source.checked = isChecked;
-      source.fromMemory = false; // \u7528\u6237\u624b\u52a8\u64cd\u4f5c\u540e，\u4e0d\u518d\u6807\u8bb0\u4e3a\u8bb0\u5fc6
+    const src = app.scene.sources.find(s => (s.domain || s.name) === name);
+    if (src) {
+      src.checked = checked;
+      src.fromMemory = false;
     }
-
-    // \u4fdd\u5b58\u504f\u597d
-    savePreferences();
+    savePrefs();
+    updateAIHint();
   }
 
   function resetSources() {
-    currentScene.sources.forEach(s => {
-      s.checked = false;
-      s.fromMemory = false;
-    });
-
-    const shadow = document.getElementById('studyhub-assistant-host')?.shadowRoot;
-    if (shadow) {
-      shadow.querySelectorAll('.studyhub-filter-checkbox').forEach(cb => {
-        cb.classList.remove('checked');
-      });
-      shadow.querySelectorAll('.studyhub-filter-memory').forEach(m => m.remove());
+    app.scene.sources.forEach(s => { s.checked = false; s.fromMemory = false; });
+    if (app.shadow) {
+      app.shadow.querySelectorAll('.sh-checkbox').forEach(cb => cb.classList.remove('checked'));
+      app.shadow.querySelectorAll('.sh-memory').forEach(m => m.remove());
     }
+    savePrefs();
+    updateAIHint();
+  }
 
-    savePreferences();
+  function updateAIHint() {
+    if (!app.shadow) return;
+    const content = app.shadow.querySelector('.sh-ai-content');
+    const section = app.shadow.querySelector('.sh-ai-section');
+    if (!content || !section) return;
+
+    const checked = app.scene.sources.filter(s => s.checked).length;
+    if (checked === 0) {
+      content.innerHTML = '<div class="sh-ai-hint"><span>\u2728</span><span>\u52fe\u9009\u6765\u6e90\u5e76\u70b9\u51fb"\u5e94\u7528\u7b5b\u9009"\uff0cAI \u5c06\u5206\u6790\u641c\u7d22\u7ed3\u679c</span></div>';
+      section.classList.remove('collapsed');
+    } else {
+      content.innerHTML = `<div class="sh-ai-hint"><span>\u2705</span><span>\u5df2\u52fe\u9009 ${checked} \u4e2a\u6765\u6e90</span></div>`;
+      section.classList.add('collapsed');
+    }
   }
 
   function applyFilter() {
-    const checkedSources = currentScene.sources.filter(s => s.checked);
-
-    if (checkedSources.length === 0) {
-      // \u6ca1\u6709\u52fe\u9009，\u63d0\u793a\u7528\u6237
-      const shadow = document.getElementById('studyhub-assistant-host')?.shadowRoot;
-      const aiContent = shadow?.getElementById('sh-ai-content');
-      if (aiContent) {
-        aiContent.textContent = '\u8bf7\u5148\u52fe\u9009\u81f3\u5c11\u4e00\u4e2a\u6765\u6e90\uff0c\u6216\u70b9\u51fb"\u6062\u590d\u9ed8\u8ba4"\u6e05\u9664\u7b5b\u9009\u3002';
+    const checked = app.scene.sources.filter(s => s.checked);
+    if (checked.length === 0) {
+      if (app.shadow) {
+        const content = app.shadow.querySelector('.sh-ai-content');
+        const section = app.shadow.querySelector('.sh-ai-section');
+        if (content) content.innerHTML = '<div class="sh-ai-hint"><span>\u26a0\ufe0f</span><span>\u8bf7\u5148\u52fe\u9009\u81f3\u5c11\u4e00\u4e2a\u6765\u6e90</span></div>';
+        if (section) section.classList.remove('collapsed');
       }
       return;
     }
 
-    // \u6784\u5efa site: \u8fc7\u6ee4
-    const siteFilters = checkedSources
-      .filter(s => s.domain)
-      .map(s => `site:${s.domain}`)
-      .join(' OR ');
-
-    // \u6784\u5efa\u65b0 URL
-    const url = new URL(window.location.href);
-    let newQuery = searchQuery;
-
-    if (siteFilters) {
-      // \u68c0\u67e5\u662f\u5426\u5df2\u6709 site: \u8fc7\u6ee4，\u6709\u5219\u66ff\u6362
-      if (newQuery.includes('site:')) {
-        newQuery = newQuery.replace(/\s*site:\S+(\s+OR\s+site:\S+)*/g, '').trim();
-      }
-      newQuery = `${newQuery} ${siteFilters}`;
+    const filters = checked.filter(s => s.domain).map(s => 'site:' + s.domain).join(' OR ');
+    const url = new URL(location.href);
+    let q = app.query;
+    if (filters) {
+      if (q.includes('site:')) q = q.replace(/\s*site:\S+(\s+OR\s+site:\S+)*/g, '').trim();
+      q = q + ' ' + filters;
     }
+    url.searchParams.set('q', q);
+    url.searchParams.set('scene', app.scene.id);
 
-    url.searchParams.set('q', newQuery);
-    url.searchParams.set('scene', currentScene.id);
+    sessionStorage.setItem('studyhub_filter_state', JSON.stringify({
+      sceneId: app.scene.id,
+      checkedSources: checked.map(s => s.domain || s.name),
+      timestamp: Date.now(),
+    }));
 
-    // \u4fdd\u5b58\u72b6\u6001（\u7528\u4e8e\u5237\u65b0\u540e\u6062\u590d）
-    saveState({
-      scene: currentScene.id,
-      sources: checkedSources.map(s => s.domain || s.name),
-      position: isPinned ? null : { x: panelEl?.offsetLeft, y: panelEl?.offsetTop },
-      isPinned,
-      isCollapsed
-    });
-
-    // \u4fdd\u5b58\u7b5b\u9009\u72b6\u6001\u5230 session storage（\u7528\u4e8e\u9875\u9762\u5237\u65b0\u540e\u6062\u590d\u6d6e\u7a97\u72b6\u6001）
-    const filterState = {
-      sceneId: currentScene.id,
-      checkedSources: checkedSources.map(s => s.domain || s.name),
-      timestamp: Date.now()
-    };
-    sessionStorage.setItem('studyhub_filter_state', JSON.stringify(filterState));
-
-    // \u539f\u5730\u91cd\u8f7d
-    window.location.href = url.toString();
+    location.href = url.toString();
   }
 
-  async function saveState(state) {
-    try {
-      await chrome.storage.local.set({
-        [`${CONFIG.STORAGE_KEY_STATE}_${sessionId}`]: state
-      });
-    } catch (e) {
-      console.warn('[studyhub-assistant] \u4fdd\u5b58\u72b6\u6001\u5931\u8d25:', e);
-    }
-  }
+  // ==================== Bing 布局 ====================
 
-  // ===== \u62d6\u62fd =====
-
-  function startDrag(e) {
-    if (isPinned) return;
-    // \u53ea\u54cd\u5e94\u6807\u9898\u680f\u62d6\u62fd
-    if (!e.target.closest('.studyhub-header')) return;
-    isDragging = true;
-    const rect = panelEl.getBoundingClientRect();
-    dragOffset.x = e.clientX - rect.left;
-    dragOffset.y = e.clientY - rect.top;
-    panelEl.classList.add('dragging');
-    e.preventDefault();
-  }
-
-  function onDrag(e) {
-    if (!isDragging || !panelEl) return;
-    e.preventDefault();
-    const x = e.clientX - dragOffset.x;
-    const y = e.clientY - dragOffset.y;
-
-    // \u9650\u5236\u5728\u53ef\u89c6\u533a\u57df\u5185
-    const maxX = window.innerWidth - panelEl.offsetWidth;
-    const maxY = window.innerHeight - panelEl.offsetHeight;
-
-    panelEl.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
-    panelEl.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
-    panelEl.style.right = 'auto';
-  }
-
-  function endDrag() {
-    if (!isDragging) return;
-    isDragging = false;
-    if (panelEl) {
-      panelEl.classList.remove('dragging');
-      // \u4fdd\u5b58\u62d6\u62fd\u540e\u7684\u4f4d\u7f6e
-      saveState({
-        scene: currentScene?.id,
-        sources: currentScene?.sources?.filter(s => s.checked).map(s => s.domain || s.name) || [],
-        position: { x: panelEl.offsetLeft, y: panelEl.offsetTop },
-        isPinned: false,
-        isCollapsed
-      });
-    }
-  }
-
-  // ===== Bing \u5e03\u5c40\u8c03\u6574 =====
-
-  function adjustBingLayout() {
-    // \u68c0\u67e5\u662f\u5426\u6709 Knowledge Panel
+  function adjustBing(panelVisible) {
     const kp = document.querySelector('#b_context');
     const results = document.querySelector('#b_results');
 
-    if (kp) {
-      // \u9690\u85cf Knowledge Panel，\u7ed9\u6d6e\u7a97\u817e\u4f4d\u7f6e
-      kp.style.display = 'none';
+    if (panelVisible) {
+      // 面板展开：隐藏Bing右侧栏，给面板留空间
+      if (kp) kp.style.display = 'none';
+      if (results) results.style.marginRight = '376px';
+    } else {
+      // 面板收起或关闭：恢复Bing右侧栏
+      if (kp) kp.style.display = '';
+      if (results) results.style.marginRight = '';
     }
 
-    if (results) {
-      // \u7ed9\u641c\u7d22\u7ed3\u679c\u533a\u52a0\u53f3\u8fb9\u8ddd
-      results.style.marginRight = '376px';
-      results.style.transition = 'margin-right 0.3s ease';
-    }
+    if (results) results.style.transition = 'margin-right 0.25s ease';
   }
 
-  // ===== URL \u53d8\u5316\u76d1\u542c（Bing \u662f SPA）=====
+  // ==================== URL 监听 ====================
 
-  function observeUrlChanges() {
-    let lastUrl = window.location.href;
+  function watchUrl() {
+    let last = location.href;
 
-    const observer = new MutationObserver(() => {
-      const currentUrl = window.location.href;
-      if (currentUrl !== lastUrl) {
-        lastUrl = currentUrl;
-        // URL \u53d8\u4e86，\u68c0\u67e5\u662f\u5426\u8fd8\u662f\u6765\u81ea Study Hub
-        if (isFromStudyHub()) {
-          // \u91cd\u65b0\u521d\u59cb\u5316
-          const newQuery = new URLSearchParams(window.location.search).get('q') || '';
-          if (newQuery !== searchQuery) {
-            searchQuery = newQuery;
-            // \u6e05\u9664\u65e7\u7684\u7b5b\u9009\u72b6\u6001，\u907f\u514d\u6c61\u67d3\u65b0\u641c\u7d22
-            sessionStorage.removeItem('studyhub_filter_state');
-            currentScene = matchScene(searchQuery) || currentScene;
-            // \u91cd\u65b0\u6e32\u67d3
-            const shadow = document.getElementById('studyhub-assistant-host')?.shadowRoot;
-            if (shadow && panelEl) {
-              const body = shadow.querySelector('.studyhub-body');
-              if (body) {
-                body.innerHTML = renderBodyHTML();
-                bindBodyEvents(shadow);
-              }
+    const check = () => {
+      const current = location.href;
+      if (current === last) return;
+      last = current;
+
+      if (!isBingSearch()) {
+        cleanupAll();
+        return;
+      }
+
+      const newQuery = new URLSearchParams(location.search).get('q') || '';
+      if (newQuery !== app.query) {
+        app.query = newQuery;
+        sessionStorage.removeItem('studyhub_filter_state');
+
+        const matched = matchScene(app.query);
+        if (matched && matched.id !== app.scene.id) {
+          app.scene = matched;
+          loadPrefs().then(() => {
+            if (app.shadow && app.panel) {
+              const tabs = app.shadow.querySelector('.sh-tabs');
+              const body = app.shadow.querySelector('.sh-body');
+              if (tabs) tabs.innerHTML = renderTabs();
+              if (body) body.innerHTML = renderBody();
             }
-          }
-        } else {
-          // \u4e0d\u518d\u6765\u81ea Study Hub，\u6e05\u7406\u6d6e\u7a97
-          const host = document.getElementById('studyhub-assistant-host');
-          if (host) {
-            host.remove();
-            panelEl = null;
-          }
-          if (dotEl) {
-            dotEl.remove();
-            dotEl = null;
-          }
-          restoreBingLayout();
+          });
         }
       }
+    };
+
+    // 多种方式监听
+    window.addEventListener('popstate', check);
+    window.addEventListener('hashchange', check);
+
+    // Bing 用 history API  pushState，需要拦截
+    const originalPush = history.pushState;
+    const originalReplace = history.replaceState;
+    history.pushState = function(...args) {
+      originalPush.apply(this, args);
+      setTimeout(check, 50);
+    };
+    history.replaceState = function(...args) {
+      originalReplace.apply(this, args);
+      setTimeout(check, 50);
+    };
+  }
+
+  // ==================== 全局事件 ====================
+
+  function bindGlobalEvents() {
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && app.panel && !app.closed) {
+        closePanel();
+      }
     });
-
-    observer.observe(document, { subtree: true, childList: true });
   }
 
-  // ===== \u5de5\u5177\u51fd\u6570 =====
-
-  function isDarkMode() {
-    return document.documentElement.getAttribute('data-theme') === 'dark' ||
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function cleanupAll() {
+    cleanupPanel();
+    cleanupDot();
+    adjustBing(false);
   }
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+  // ==================== 渲染 ====================
+
+  function renderPanel() {
+    return `
+      <div class="sh-header">
+        <div class="sh-header-left">
+          <span>\ud83e\udd16</span>
+          <span class="sh-header-text">Study Hub</span>
+        </div>
+        <div class="sh-header-right">
+          <button class="sh-btn sh-btn-collapse" title="${app.collapsed ? '\u5c55\u5f00' : '\u6536\u8d77'}">${app.collapsed ? '\u25b6' : '\u25c0'}</button>
+          <button class="sh-btn sh-btn-pin" title="${app.pinned ? '\u5df2\u56fa\u5b9a' : '\u672a\u56fa\u5b9a'}">${app.pinned ? '\ud83d\udccc' : '\ud83d\udccd'}</button>
+          <button class="sh-btn sh-btn-close" title="\u5173\u95ed">\u2715</button>
+        </div>
+      </div>
+      <div class="sh-tabs">${renderTabs()}</div>
+      <div class="sh-body">${renderBody()}</div>
+    `;
   }
 
-  function showGuide(shadow) {
+  function renderTabs() {
+    return app.rules.scenes.map(s => `
+      <button class="sh-tab ${s.id === app.scene.id ? 'active' : ''}" data-scene="${s.id}">
+        ${s.icon} ${s.name}
+      </button>
+    `).join('');
+  }
+
+  function renderBody() {
+    const recs = app.scene.recommendations?.length
+      ? app.scene.recommendations.map(r => `
+        <a class="sh-rec" href="${r.url}" target="_blank" rel="noopener">
+          <span class="sh-rec-icon">\ud83d\udd17</span>
+          <div class="sh-rec-body">
+            <div class="sh-rec-name">${r.name}</div>
+            <div class="sh-rec-desc">${r.desc}</div>
+          </div>
+        </a>
+      `).join('')
+      : `<div class="sh-empty"><div class="sh-empty-icon">\ud83d\udd0d</div><div class="sh-empty-title">\u6682\u65e0\u63a8\u8350</div><div class="sh-empty-desc">\u5207\u6362\u573a\u666f\u6216\u7b5b\u9009\u6765\u6e90</div></div>`;
+
+    const tips = app.scene.tips.map(t => `
+      <div class="sh-tip"><span>\u26a0\ufe0f</span><span>${t}</span></div>
+    `).join('');
+
+    const sources = app.scene.sources.map(s => `
+      <div class="sh-filter-item" data-source="${s.domain || s.name}">
+        <div class="sh-checkbox ${s.checked ? 'checked' : ''}"></div>
+        <span class="sh-filter-icon">${s.icon}</span>
+        <span class="sh-filter-name">${s.name}</span>
+        ${s.fromMemory ? '<span class="sh-memory" title="\u8bb0\u5fc6\u4e2d"></span>' : ''}
+      </div>
+    `).join('');
+
+    const related = app.rules.scenes
+      .filter(s => s.id !== app.scene.id)
+      .slice(0, 2)
+      .map(s => `<span class="sh-related-item" data-scene="${s.id}">${s.icon} ${s.name}</span>`)
+      .join('');
+
+    const checkedCount = app.scene.sources.filter(s => s.checked).length;
+    const aiCollapsed = checkedCount > 0;
+
+    return `
+      <div class="sh-scene-title"><span>${app.scene.icon}</span><span>${app.scene.name}</span></div>
+      <div class="sh-scene-sub">\u641c\u7d22\uff1a${escape(app.query)}</div>
+      ${tips}
+      <div class="sh-section">
+        <div class="sh-section-title">\u2b50 \u63a8\u8350</div>
+        ${recs}
+      </div>
+      <div class="sh-filter-section">
+        <div class="sh-filter-header">
+          <div class="sh-filter-title">\u2699\ufe0f \u6765\u6e90\u7b5b\u9009</div>
+          <button class="sh-btn-reset">\u6062\u590d\u9ed8\u8ba4</button>
+        </div>
+        <div class="sh-filter-list">${sources}</div>
+        <button class="sh-btn-apply">\u5e94\u7528\u7b5b\u9009\u5e76\u641c\u7d22</button>
+      </div>
+      <div class="sh-ai-section ${aiCollapsed ? 'collapsed' : ''}">
+        <div class="sh-ai-header">
+          <span class="sh-ai-title">\ud83e\udd16 AI \u5206\u6790</span>
+          <span class="sh-ai-arrow">\u25bc</span>
+        </div>
+        <div class="sh-ai-content">
+          <div class="sh-ai-hint">
+            <span>${checkedCount > 0 ? '\u2705' : '\u2728'}</span>
+            <span>${checkedCount > 0 ? `\u5df2\u52fe\u9009 ${checkedCount} \u4e2a\u6765\u6e90` : '\u52fe\u9009\u6765\u6e90\u5e76\u70b9\u51fb"\u5e94\u7528\u7b5b\u9009"\uff0cAI \u5c06\u5206\u6790\u641c\u7d22\u7ed3\u679c'}</span>
+          </div>
+        </div>
+      </div>
+      ${related ? `<div class="sh-related"><div class="sh-related-title">\u4f60\u53ef\u80fd\u4e5f\u60f3\u770b</div>${related}</div>` : ''}
+    `;
+  }
+
+  function showGuide() {
+    if (!app.shadow) return;
     const guide = document.createElement('div');
-    guide.className = 'studyhub-guide';
-    guide.innerHTML = 'Study Hub \u641c\u7d22\u52a9\u624b \u00b7 \u53ef\u5207\u6362\u573a\u666f\u3001\u7b5b\u9009\u6765\u6e90';
-    shadow.querySelector('.studyhub-panel').appendChild(guide);
-
-    // 5\u79d2\u540e\u81ea\u52a8\u6d88\u5931
+    guide.className = 'sh-guide';
+    guide.textContent = 'Study Hub \u00b7 \u5207\u6362\u573a\u666f\u3001\u7b5b\u9009\u6765\u6e90\uff0cESC \u5173\u95ed';
+    app.shadow.querySelector('.sh-panel').appendChild(guide);
     setTimeout(() => {
       guide.style.opacity = '0';
       guide.style.transition = 'opacity 0.5s';
@@ -954,620 +754,220 @@
     }, 5000);
   }
 
-  // ===== \u542f\u52a8 =====
+  // ==================== CSS ====================
 
-  console.log('[studyhub-assistant] \u811a\u672c\u52a0\u8f7d，readyState:', document.readyState);
+  function getCSS() {
+    return `
+      .sh-panel {
+        position: fixed; top: 72px; right: 16px;
+        width: 360px; max-height: calc(100vh - 100px);
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+        overflow: hidden; display: flex; flex-direction: column;
+        z-index: 999999;
+        transition: transform 0.25s ease, opacity 0.25s ease, width 0.25s ease;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .sh-panel.collapsed { width: 60px; overflow: hidden; }
+      .sh-panel.collapsed .sh-body, .sh-panel.collapsed .sh-tabs { display: none; }
+      .sh-panel.collapsed .sh-header-text { display: none; }
+      .sh-panel.dragging { transition: none; }
+      .sh-panel.dark { background: #1a1a2e; }
 
-  function start() {
-    console.log('[studyhub-assistant] \u5f00\u59cb\u542f\u52a8...');
-    init().catch(err => {
-      console.error('[studyhub-assistant] \u521d\u59cb\u5316\u5931\u8d25:', err);
-    });
+      .sh-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 16px; flex-shrink: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; font-size: 14px; font-weight: 600;
+        user-select: none;
+      }
+      .sh-header-left { display: flex; align-items: center; gap: 8px; }
+      .sh-header-right { display: flex; align-items: center; gap: 4px; }
+      .sh-btn {
+        width: 28px; height: 28px; border-radius: 6px;
+        background: rgba(255,255,255,0.15); color: white;
+        border: none; cursor: pointer; font-size: 13px;
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+      }
+      .sh-btn:hover { background: rgba(255,255,255,0.3); }
+
+      .sh-tabs {
+        display: flex; gap: 4px; padding: 8px 12px 0;
+        border-bottom: 1px solid #e5e7eb; overflow-x: auto; flex-shrink: 0;
+        scrollbar-width: none;
+      }
+      .sh-tabs::-webkit-scrollbar { display: none; }
+      .sh-tab {
+        padding: 6px 12px; border-radius: 8px 8px 0 0;
+        font-size: 12px; font-weight: 500; color: #6b7280;
+        cursor: pointer; white-space: nowrap; border: none;
+        background: transparent; transition: all 0.2s;
+      }
+      .sh-tab:hover { color: #4b5563; background: #f3f4f6; }
+      .sh-tab.active { color: #667eea; background: #eef2ff; font-weight: 600; }
+
+      .sh-body { flex: 1; overflow-y: auto; padding: 16px; }
+      .sh-scene-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+      .sh-scene-sub { font-size: 12px; color: #6b7280; margin-bottom: 16px; }
+      .sh-tip { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: #fef3c7; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #92400e; }
+      .sh-section { margin-bottom: 16px; }
+      .sh-section-title { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+      .sh-rec { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: inherit; transition: all 0.2s; }
+      .sh-rec:hover { background: #f3f4f6; transform: translateX(2px); }
+      .sh-rec-name { font-size: 13px; font-weight: 600; color: #111; }
+      .sh-rec-desc { font-size: 11px; color: #6b7280; }
+      .sh-empty { text-align: center; padding: 20px 12px; color: #9ca3af; }
+      .sh-empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+      .sh-filter-section { border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px; }
+      .sh-filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .sh-filter-title { font-size: 13px; font-weight: 600; color: #374151; }
+      .sh-btn-reset { font-size: 11px; color: #667eea; background: none; border: none; cursor: pointer; }
+      .sh-filter-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+      .sh-filter-item:hover { background: #f3f4f6; }
+      .sh-checkbox { width: 16px; height: 16px; border: 2px solid #d1d5db; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+      .sh-checkbox.checked { background: #667eea; border-color: #667eea; }
+      .sh-checkbox.checked::after { content: '\\2713'; color: white; font-size: 11px; font-weight: bold; }
+      .sh-filter-name { font-size: 12px; color: #374151; flex: 1; }
+      .sh-memory { width: 6px; height: 6px; border-radius: 50%; background: #9ca3af; }
+      .sh-btn-apply { width: 100%; padding: 10px; margin-top: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+      .sh-btn-apply:hover { opacity: 0.9; }
+
+      .sh-ai-section { border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px; }
+      .sh-ai-section.collapsed .sh-ai-content { display: none; }
+      .sh-ai-section.collapsed .sh-ai-arrow { transform: rotate(-90deg); }
+      .sh-ai-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0; }
+      .sh-ai-title { font-size: 13px; font-weight: 600; color: #374151; }
+      .sh-ai-arrow { font-size: 11px; color: #9ca3af; transition: transform 0.2s; }
+      .sh-ai-content { font-size: 12px; color: #4b5563; padding: 10px 12px; background: #f3f4f6; border-radius: 8px; margin-top: 8px; }
+      .sh-ai-hint { display: flex; align-items: center; gap: 8px; color: #6b7280; }
+
+      .sh-related { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e5e7eb; }
+      .sh-related-title { font-size: 11px; color: #9ca3af; margin-bottom: 8px; }
+      .sh-related-item { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #f3f4f6; border-radius: 6px; font-size: 11px; color: #4b5563; cursor: pointer; margin-right: 6px; transition: background 0.2s; }
+      .sh-related-item:hover { background: #e5e7eb; }
+
+      .sh-dot {
+        position: fixed; bottom: 24px; right: 24px;
+        width: 48px; height: 48px; border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-size: 20px; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(102,126,234,0.4); z-index: 999999;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .sh-dot:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(102,126,234,0.5); }
+
+      .sh-guide { position: absolute; bottom: -36px; left: 0; right: 0; text-align: center; font-size: 11px; color: #9ca3af; padding: 8px; background: #f9fafb; border-radius: 0 0 12px 12px; }
+
+      @keyframes sh-slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      .sh-panel { animation: sh-slideIn 0.3s ease; }
+    `;
   }
+
+  // ==================== 工具函数 ====================
+
+  function isBingSearch() {
+    return location.hostname === 'www.bing.com' && location.pathname === '/search';
+  }
+
+  function isDark() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ||
+           window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function escape(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
+
+  function getBuiltinRules() {
+    return {
+      scenes: [
+        {
+          id: 'tool_find', name: '\u5de5\u5177\u67e5\u627e', icon: '\ud83d\udee0\ufe0f',
+          keywords: ['\u5de5\u5177', '\u6263\u56fe', '\u538b\u7f29', '\u8f6c\u6362', '\u751f\u6210\u5668', '\u7f16\u8f91\u5668', '\u8ba1\u7b97\u5668', '\u7ffb\u8bd1', '\u4e0b\u8f7d', '\u89e3\u6790', 'pdf', '\u56fe\u7247\u5904\u7406', '\u683c\u5f0f\u8f6c\u6362'],
+          sources: [
+            { name: 'GitHub', domain: 'github.com', icon: '\ud83d\udc19' },
+            { name: 'Product Hunt', domain: 'producthunt.com', icon: '\ud83d\ude80' },
+            { name: '\u5b98\u7f51', domain: '', icon: '\ud83c\udfe0' }
+          ],
+          tips: ['\u4f18\u5148\u9009\u62e9\u5f00\u6e90\u514d\u8d39\u5de5\u5177', '\u6ce8\u610f\u524d\u51e0\u6761\u641c\u7d22\u7ed3\u679c\u53ef\u80fd\u662f\u5e7f\u544a\u63a8\u5e7f'],
+          recommendations: [
+            { name: 'remove.bg', url: 'https://www.remove.bg', desc: '\u5728\u7ebf\u81ea\u52a8\u6263\u56fe\uff0c\u514d\u8d39\u7248\u591f\u7528' },
+            { name: 'TinyPNG', url: 'https://tinypng.com', desc: '\u56fe\u7247\u538b\u7f29\u5de5\u5177' }
+          ]
+        },
+        {
+          id: 'tech_doc', name: '\u6280\u672f\u6587\u6863', icon: '\ud83d\udcd8',
+          keywords: ['\u6587\u6863', 'API', '\u6559\u7a0b', 'UE5', 'Unity', 'React', 'Vue', 'Python', 'JavaScript', 'TypeScript', 'Node.js', 'Docker', 'Kubernetes', 'gpt', 'llm', 'ai', 'openai', 'claude', '\u6a21\u578b', '\u795e\u7ecf\u7f51\u7edc', '\u6df1\u5ea6\u5b66\u4e60', '\u673a\u5668\u5b66\u4e60'],
+          sources: [
+            { name: '\u5b98\u65b9\u6587\u6863', domain: '', icon: '\ud83d\udcd8' },
+            { name: 'StackOverflow', domain: 'stackoverflow.com', icon: '\ud83d\udcac' },
+            { name: 'GitHub Issues', domain: 'github.com', icon: '\ud83d\udc1b' },
+            { name: 'MDN', domain: 'developer.mozilla.org', icon: '\ud83e\udd8a' },
+            { name: 'HuggingFace', domain: 'huggingface.co', icon: '\ud83e\udd17' }
+          ],
+          tips: ['\u5b98\u65b9\u6587\u6863\u6700\u6743\u5a01\uff0c\u4f18\u5148\u67e5\u770b', 'AI \u9886\u57df\u66f4\u65b0\u5feb\uff0c\u6ce8\u610f\u6587\u6863\u7248\u672c\u65e5\u671f'],
+          recommendations: [
+            { name: 'OpenAI \u6587\u6863', url: 'https://platform.openai.com/docs', desc: 'GPT API \u5b98\u65b9\u6587\u6863' },
+            { name: 'HuggingFace', url: 'https://huggingface.co/docs', desc: '\u5f00\u6e90\u6a21\u578b\u6587\u6863' }
+          ]
+        },
+        {
+          id: 'find_official', name: '\u627e\u5b98\u7f51', icon: '\ud83c\udfaf',
+          keywords: ['\u5b98\u7f51', '\u5b98\u65b9\u7f51\u7ad9', '\u4e0b\u8f7d', '\u6b63\u7248', 'official'],
+          sources: [
+            { name: '\u5b98\u7f51', domain: '', icon: '\ud83c\udfe0' },
+            { name: 'GitHub', domain: 'github.com', icon: '\ud83d\udc19' },
+            { name: 'Product Hunt', domain: 'producthunt.com', icon: '\ud83d\ude80' }
+          ],
+          tips: ['\u8ba4\u51c6\u5b98\u65b9\u57df\u540d\uff0c\u8b66\u60d5\u5c71\u5be8\u7f51\u7ad9', '\u8f6f\u4ef6\u4e0b\u8f7d\u4f18\u5148\u9009\u62e9\u5b98\u7f51\u6216 GitHub'],
+          recommendations: [
+            { name: '\u5b98\u7f51\u67e5\u8be2\u6280\u5de7', url: '#', desc: '\u641c\u7d22\u8bcd\u540e\u52a0 official \u6216 github' }
+          ]
+        },
+        {
+          id: 'product_review', name: '\u4ea7\u54c1\u6d4b\u8bc4', icon: '\ud83c\udfa7',
+          keywords: ['\u6d4b\u8bc4', '\u8bc4\u6d4b', '\u63a8\u8350', '\u5bf9\u6bd4', '\u8033\u673a', '\u624b\u673a', '\u76f8\u673a', '\u7b14\u8bb0\u672c', '\u663e\u793a\u5668', '\u952e\u76d8', '\u9f20\u6807', '\u97f3\u7bb1', '\u5e73\u677f', '\u624b\u8868'],
+          sources: [
+            { name: '\u4ec0\u4e48\u503c\u5f97\u4e70', domain: 'smzdm.com', icon: '\ud83d\udcb0' },
+            { name: '\u77e5\u4e4e', domain: 'zhihu.com', icon: '\u2753' },
+            { name: 'B\u7ad9', domain: 'bilibili.com', icon: '\ud83d\udcfa' },
+            { name: '\u5c0f\u7ea2\u4e66', domain: 'xiaohongshu.com', icon: '\ud83d\udcd5' }
+          ],
+          tips: ['\u5efa\u8bae\u4f18\u5148\u770b\u56fe\u6587\u6d4b\u8bc4\u4e86\u89e3\u53c2\u6570', '\u518d\u770b\u89c6\u9891\u4e86\u89e3\u5b9e\u9645\u4f53\u9a8c', '\u6ce8\u610f\u533a\u5206\u771f\u5b9e\u6d4b\u8bc4\u548c\u8f6f\u6587\u5e26\u8d27'],
+          recommendations: [
+            { name: '\u5148\u770b\u8bc4\u6d4b', url: 'https://space.bilibili.com/2871017', desc: 'B\u7ad9\u77e5\u540d\u79d1\u6280\u6d4b\u8bc4UP\u4e3b' },
+            { name: '\u7231\u5426\u79d1\u6280', url: 'https://space.bilibili.com/356211451', desc: '\u72ec\u7acb\u7b2c\u4e09\u65b9\u6d4b\u8bc4' }
+          ]
+        },
+        {
+          id: 'tutorial', name: '\u6559\u7a0b\u5b66\u4e60', icon: '\ud83d\udcda',
+          keywords: ['\u6559\u7a0b', '\u5165\u95e8', '\u5b66\u4e60', '\u8bfe\u7a0b', '\u6307\u5357', 'how to', ' beginner', '\u65b0\u624b', '\u96f6\u57fa\u7840', '\u901f\u901a', '\u901f\u6210'],
+          sources: [
+            { name: 'B\u7ad9', domain: 'bilibili.com', icon: '\ud83d\udcfa' },
+            { name: 'YouTube', domain: 'youtube.com', icon: '\u25b6\ufe0f' },
+            { name: '\u77e5\u4e4e', domain: 'zhihu.com', icon: '\u2753' },
+            { name: '\u83dc\u9e1f\u6559\u7a0b', domain: 'runoob.com', icon: '\ud83d\udc26' }
+          ],
+          tips: ['\u89c6\u9891\u6559\u7a0b\u9002\u5408\u5165\u95e8\uff0c\u56fe\u6587\u9002\u5408\u67e5\u9605', '\u5b98\u65b9\u6559\u7a0b\u6700\u7cfb\u7edf\uff0c\u793e\u533a\u6559\u7a0b\u66f4\u5b9e\u6218'],
+          recommendations: [
+            { name: 'B\u7ad9\u641c\u7d22', url: 'https://search.bilibili.com', desc: '\u4e2d\u6587\u89c6\u9891\u6559\u7a0b\u6700\u4e30\u5bcc' }
+          ]
+        }
+      ],
+      defaultScene: 'tool_find'
+    };
+  }
+
+  // ==================== 启动 ====================
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
+    document.addEventListener('DOMContentLoaded', main);
   } else {
-    start();
+    main();
   }
-
-
-  // ===== Shadow DOM CSS =====
-
-  function getPanelCSS() {
-    return `/* Study Hub 搜索助手浮窗样式 */
-/* 完全自包含，不依赖 Bing 页面 CSS */
-
-#studyhub-assistant-host {
-  all: initial !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-}
-
-#studyhub-assistant-host * {
-  all: unset;
-  box-sizing: border-box !important;
-  font-family: inherit !important;
-}
-
-.studyhub-panel {
-  position: fixed !important;
-  top: 72px !important;
-  right: 16px !important;
-  width: 360px !important;
-  max-height: calc(100vh - 100px) !important;
-  background: #ffffff !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  z-index: 999999 !important;
-  transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease !important;
-}
-
-.studyhub-panel.dark-mode {
-  background: #1a1a2e !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
-}
-
-.studyhub-panel.collapsed {
-  width: 60px !important;
-  overflow: hidden !important;
-}
-
-.studyhub-panel.collapsed .studyhub-body,
-.studyhub-panel.collapsed .studyhub-tabs {
-  display: none !important;
-}
-
-.studyhub-panel.collapsed .studyhub-header-text {
-  display: none !important;
-}
-
-/* 标题栏 */
-.studyhub-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 12px 16px !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  cursor: move !important;
-  user-select: none !important;
-  flex-shrink: 0 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-header {
-  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
-}
-
-.studyhub-header-left {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-}
-
-.studyhub-header-right {
-  display: flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-}
-
-.studyhub-btn {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  background: rgba(255, 255, 255, 0.15) !important;
-  color: white !important;
-  font-size: 13px !important;
-  transition: background 0.2s !important;
-  border: none !important;
-}
-
-.studyhub-btn:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* 场景标签页 */
-.studyhub-tabs {
-  display: flex !important;
-  gap: 4px !important;
-  padding: 8px 12px 0 !important;
-  border-bottom: 1px solid #e5e7eb !important;
-  overflow-x: auto !important;
-  flex-shrink: 0 !important;
-  scrollbar-width: none !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-tabs {
-  border-bottom-color: #374151 !important;
-}
-
-.studyhub-tabs::-webkit-scrollbar {
-  display: none !important;
-}
-
-.studyhub-tab {
-  padding: 6px 12px !important;
-  border-radius: 8px 8px 0 0 !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  color: #6b7280 !important;
-  cursor: pointer !important;
-  white-space: nowrap !important;
-  transition: all 0.2s !important;
-  border: none !important;
-  background: transparent !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-tab {
-  color: #9ca3af !important;
-}
-
-.studyhub-tab:hover {
-  color: #4b5563 !important;
-  background: #f3f4f6 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-tab:hover {
-  color: #d1d5db !important;
-  background: #374151 !important;
-}
-
-.studyhub-tab.active {
-  color: #667eea !important;
-  background: #eef2ff !important;
-  font-weight: 600 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-tab.active {
-  color: #a78bfa !important;
-  background: #3730a3 !important;
-}
-
-/* 内容区 */
-.studyhub-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 16px !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: #d1d5db transparent !important;
-}
-
-.studyhub-body::-webkit-scrollbar {
-  width: 4px !important;
-}
-
-.studyhub-body::-webkit-scrollbar-thumb {
-  background: #d1d5db !important;
-  border-radius: 2px !important;
-}
-
-/* 场景标题 */
-.studyhub-scene-title {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  color: #111827 !important;
-  margin-bottom: 4px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-scene-title {
-  color: #f9fafb !important;
-}
-
-.studyhub-scene-subtitle {
-  font-size: 12px !important;
-  color: #6b7280 !important;
-  margin-bottom: 16px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-scene-subtitle {
-  color: #9ca3af !important;
-}
-
-/* 推荐列表 */
-.studyhub-section {
-  margin-bottom: 16px !important;
-}
-
-.studyhub-section-title {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #374151 !important;
-  margin-bottom: 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-section-title {
-  color: #d1d5db !important;
-}
-
-.studyhub-rec-item {
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 10px !important;
-  padding: 10px 12px !important;
-  background: #f9fafb !important;
-  border-radius: 8px !important;
-  margin-bottom: 8px !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-  text-decoration: none !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-rec-item {
-  background: #1f2937 !important;
-}
-
-.studyhub-rec-item:hover {
-  background: #f3f4f6 !important;
-  transform: translateX(2px) !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-rec-item:hover {
-  background: #374151 !important;
-}
-
-.studyhub-rec-icon {
-  font-size: 20px !important;
-  flex-shrink: 0 !important;
-}
-
-.studyhub-rec-content {
-  flex: 1 !important;
-  min-width: 0 !important;
-}
-
-.studyhub-rec-name {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #111827 !important;
-  margin-bottom: 2px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-rec-name {
-  color: #f9fafb !important;
-}
-
-.studyhub-rec-desc {
-  font-size: 11px !important;
-  color: #6b7280 !important;
-  line-height: 1.4 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-rec-desc {
-  color: #9ca3af !important;
-}
-
-/* 提示 */
-.studyhub-tip {
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 8px !important;
-  padding: 10px 12px !important;
-  background: #fef3c7 !important;
-  border-radius: 8px !important;
-  margin-bottom: 16px !important;
-  font-size: 12px !important;
-  color: #92400e !important;
-  line-height: 1.5 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-tip {
-  background: #451a03 !important;
-  color: #fcd34d !important;
-}
-
-.studyhub-tip-icon {
-  font-size: 14px !important;
-  flex-shrink: 0 !important;
-  margin-top: 1px !important;
-}
-
-/* 来源筛选 */
-.studyhub-filter-section {
-  border-top: 1px solid #e5e7eb !important;
-  padding-top: 16px !important;
-  margin-top: 16px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-filter-section {
-  border-top-color: #374151 !important;
-}
-
-.studyhub-filter-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  margin-bottom: 10px !important;
-}
-
-.studyhub-filter-title {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #374151 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-filter-title {
-  color: #d1d5db !important;
-}
-
-.studyhub-filter-reset {
-  font-size: 11px !important;
-  color: #667eea !important;
-  cursor: pointer !important;
-  background: none !important;
-  border: none !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-filter-reset {
-  color: #a78bfa !important;
-}
-
-.studyhub-filter-list {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
-}
-
-.studyhub-filter-item {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 6px 8px !important;
-  border-radius: 6px !important;
-  cursor: pointer !important;
-  transition: background 0.15s !important;
-}
-
-.studyhub-filter-item:hover {
-  background: #f3f4f6 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-filter-item:hover {
-  background: #374151 !important;
-}
-
-.studyhub-filter-checkbox {
-  width: 16px !important;
-  height: 16px !important;
-  border: 2px solid #d1d5db !important;
-  border-radius: 4px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-}
-
-.studyhub-filter-checkbox.checked {
-  background: #667eea !important;
-  border-color: #667eea !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-filter-checkbox.checked {
-  background: #8b5cf6 !important;
-  border-color: #8b5cf6 !important;
-}
-
-.studyhub-filter-checkbox.checked::after {
-  content: '✓' !important;
-  color: white !important;
-  font-size: 11px !important;
-  font-weight: bold !important;
-}
-
-.studyhub-filter-icon {
-  font-size: 14px !important;
-}
-
-.studyhub-filter-name {
-  font-size: 12px !important;
-  color: #374151 !important;
-  flex: 1 !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-filter-name {
-  color: #d1d5db !important;
-}
-
-.studyhub-filter-memory {
-  width: 6px !important;
-  height: 6px !important;
-  border-radius: 50% !important;
-  background: #9ca3af !important;
-  flex-shrink: 0 !important;
-}
-
-/* 记忆标记 tooltip */
-.studyhub-filter-item[data-memory="true"] .studyhub-filter-memory {
-  background: #667eea !important;
-}
-
-/* 应用筛选按钮 */
-.studyhub-apply-btn {
-  width: 100% !important;
-  padding: 10px !important;
-  margin-top: 12px !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: opacity 0.2s !important;
-}
-
-.studyhub-apply-btn:hover {
-  opacity: 0.9 !important;
-}
-
-/* AI 分析区域 */
-.studyhub-ai-section {
-  border-top: 1px solid #e5e7eb !important;
-  padding-top: 16px !important;
-  margin-top: 16px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-ai-section {
-  border-top-color: #374151 !important;
-}
-
-.studyhub-ai-title {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #374151 !important;
-  margin-bottom: 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-ai-title {
-  color: #d1d5db !important;
-}
-
-.studyhub-ai-content {
-  font-size: 12px !important;
-  color: #4b5563 !important;
-  line-height: 1.6 !important;
-  padding: 10px 12px !important;
-  background: #f3f4f6 !important;
-  border-radius: 8px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-ai-content {
-  color: #d1d5db !important;
-  background: #1f2937 !important;
-}
-
-/* 关联场景 */
-.studyhub-related {
-  margin-top: 12px !important;
-  padding-top: 12px !important;
-  border-top: 1px dashed #e5e7eb !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-related {
-  border-top-color: #374151 !important;
-}
-
-.studyhub-related-title {
-  font-size: 11px !important;
-  color: #9ca3af !important;
-  margin-bottom: 8px !important;
-}
-
-.studyhub-related-item {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  padding: 4px 10px !important;
-  background: #f3f4f6 !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
-  color: #4b5563 !important;
-  cursor: pointer !important;
-  margin-right: 6px !important;
-  margin-bottom: 6px !important;
-  transition: background 0.2s !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-related-item {
-  background: #374151 !important;
-  color: #d1d5db !important;
-}
-
-.studyhub-related-item:hover {
-  background: #e5e7eb !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-related-item:hover {
-  background: #4b5563 !important;
-}
-
-/* 小圆点（关闭后恢复） */
-.studyhub-dot {
-  position: fixed !important;
-  bottom: 24px !important;
-  right: 24px !important;
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 50% !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 20px !important;
-  cursor: pointer !important;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
-  z-index: 999999 !important;
-  transition: transform 0.2s, box-shadow 0.2s !important;
-}
-
-.studyhub-dot:hover {
-  transform: scale(1.1) !important;
-  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5) !important;
-}
-
-/* 首次引导 */
-.studyhub-guide {
-  position: absolute !important;
-  bottom: -36px !important;
-  left: 0 !important;
-  right: 0 !important;
-  text-align: center !important;
-  font-size: 11px !important;
-  color: #9ca3af !important;
-  padding: 8px !important;
-  background: #f9fafb !important;
-  border-radius: 0 0 12px 12px !important;
-}
-
-.studyhub-panel.dark-mode .studyhub-guide {
-  background: #1f2937 !important;
-  color: #6b7280 !important;
-}
-
-/* 动画 */
-@keyframes studyhub-slideIn {
-  from {
-    transform: translateX(100px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.studyhub-panel.animating {
-  animation: studyhub-slideIn 0.3s ease !important;
-}
-
-/* 拖拽中 */
-.studyhub-panel.dragging {
-  transition: none !important;
-  cursor: move !important;
-}
-`;
-  }
-
 })();

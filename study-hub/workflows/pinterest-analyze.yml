@@ -1,0 +1,36 @@
+# Pinterest 搜索 + AI 分析
+name: Pinterest 图片分析
+desc: 在 Pinterest 搜索图片，截图后用 AI 分析
+version: "1.0"
+
+params:
+  - name: keyword
+    type: string
+    ask: "要在 Pinterest 搜什么？"
+
+steps:
+  - id: search
+    type: tool
+    tool: browser
+    input:
+      action: navigate
+      url: "https://www.pinterest.com/search/pins/?q={{.params.keyword}}"
+    output:
+      label: "Pinterest 搜索结果"
+
+  - id: screenshot
+    type: tool
+    tool: browser
+    input:
+      action: screenshot
+    output:
+      label: "搜索结果截图"
+
+  - id: analyze
+    type: tool
+    tool: ai
+    input:
+      prompt: "分析 Pinterest 上关于「{{.params.keyword}}」的搜索结果：1. 归纳主要的设计风格和趋势 2. 列出 3-5 个值得参考的配色方案 3. 总结构图特点"
+      format: report
+    output:
+      label: "设计分析报告"

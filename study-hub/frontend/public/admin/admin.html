@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎛️ 学习中枢 — 管理控制台</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="container">
+  <h1>🎛️ 学习中枢管理控制台</h1>
+  <div class="subtitle">不用写代码，也能看懂系统在干嘛</div>
+
+  <!-- 状态看板 -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-label">📚 知识库文档</div><div class="stat-value">—</div></div>
+    <div class="stat-card"><div class="stat-label">📁 分类数量</div><div class="stat-value">—</div></div>
+    <div class="stat-card"><div class="stat-label">📝 每日复盘</div><div class="stat-value">—</div></div>
+    <div class="stat-card"><div class="stat-label">📖 Wiki 页面</div><div class="stat-value">—</div></div>
+    <div class="stat-card"><div class="stat-label">🔧 技能补丁</div><div class="stat-value">—</div></div>
+    <div class="stat-card"><div class="stat-label">💾 数据大小</div><div class="stat-value">—</div><div class="stat-desc">—</div></div>
+  </div>
+
+  <!-- 系统状态 -->
+  <div class="panel">
+    <div class="panel-title">🚦 系统状态 <span id="healthDot" class="status-dot status-yellow"></span></div>
+    <div id="systemStatus">正在检查…</div>
+    <div class="refresh-hint">数据每 10 秒自动刷新</div>
+  </div>
+
+  <!-- 快捷操作 -->
+  <div class="panel">
+    <div class="panel-title">⚡ 常用操作</div>
+    <div class="btn-group">
+      <a class="btn btn-primary" href="/" target="_blank">🏠 主页面</a>
+      <a class="btn btn-primary" href="/kb.html" target="_blank">📚 知识库</a>
+      <a class="btn btn-primary" href="/wiki.html" target="_blank">📖 Wiki</a>
+      <a class="btn" href="/docs" target="_blank">📋 API 文档</a>
+      <button class="btn btn-success" onclick="openInbox()">📂 收件箱</button>
+      <button class="btn" onclick="loadLogs()">📜 刷新日志</button>
+      <button class="btn" onclick="exportAll()">💾 导出全部</button>
+    </div>
+  </div>
+
+  <!-- 实时日志 -->
+  <div class="panel">
+    <div class="panel-title">📜 后端日志（最近 100 行）</div>
+    <div class="log-box" id="logBox">点击「刷新日志」加载…</div>
+  </div>
+
+  <!-- 最近文档 -->
+  <div class="panel">
+    <div class="panel-title">📄 最近上传的文档</div>
+    <div id="recentDocs">加载中…</div>
+  </div>
+
+  <!-- 黑箱破除手册 -->
+  <div class="panel handbook">
+    <div class="panel-title">📖 黑箱破除手册</div>
+
+    <details open>
+      <summary>🧠 这个项目到底在干嘛？</summary>
+      <div class="content">
+        <p><strong>一句话：</strong>把浏览器新标签页变成「学习操作系统」。</p>
+        <p>5 个核心模块：</p>
+        <ul>
+          <li><strong>搜索框</strong> —— 搜自己的知识库，或让 AI 基于你的资料回答</li>
+          <li><strong>常用网站</strong> —— 一键打开 Claude、ChatGPT、DeepSeek 等</li>
+          <li><strong>AI 启动器</strong> —— Chrome 扩展自动采集你在这些网站的对话</li>
+          <li><strong>知识库</strong> —— 上传 txt/md/pdf，AI 读懂内容，以后回答时引用</li>
+          <li><strong>每日复盘</strong> —— 写学习笔记，AI 润色、关联知识库、生成周报</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>⚙️ 各模块是做什么的？出问题时看这里</summary>
+      <div class="content">
+        <table>
+          <tr><th>模块</th><th>作用</th><th>坏了的症状</th></tr>
+          <tr><td>Frontend（前端）</td><td>你看到的网页界面</td><td>页面打不开、按钮没反应</td></tr>
+          <tr><td>Backend（后端）</td><td>处理所有请求的「大脑」</td><td>上传失败、搜索没结果</td></tr>
+          <tr><td>SQLite（数据库）</td><td>存文档、分类、复盘内容</td><td>数据丢失、记录找不到</td></tr>
+          <tr><td>ChromaDB（向量库）</td><td>存 AI 能读懂的「语义」</td><td>搜索不准、答非所问</td></tr>
+          <tr><td>Chrome 扩展</td><td>自动采集 AI 对话</td><td>对话没有回流到知识库</td></tr>
+          <tr><td>Inbox Watcher</td><td>监听文件夹，自动导入新文件</td><td>拖进 inbox 的文件没反应</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details>
+      <summary>🩺 遇到问题怎么自查？</summary>
+      <div class="content">
+        <p><strong>症状 1：页面打不开</strong></p>
+        <ul>
+          <li>看这个页面顶部的「系统状态」是不是绿灯</li>
+          <li>如果不是，说明后端没启动，去命令行按 <code>Ctrl + C</code> 再重新启动</li>
+        </ul>
+        <p><strong>症状 2：上传文件失败</strong></p>
+        <ul>
+          <li>看「知识库文档」数字有没有增加</li>
+          <li>看日志区域有没有红色报错</li>
+          <li>常见原因：文件名有特殊符号、文件太大（&gt;50MB）</li>
+        </ul>
+        <p><strong>症状 3：AI 搜索答非所问</strong></p>
+        <ul>
+          <li>看「数据大小」是不是 0 —— 如果是，说明向量库空了</li>
+          <li>或者 embedding 模型加载失败（看日志）</li>
+        </ul>
+        <p><strong>症状 4：Chrome 扩展不采集</strong></p>
+        <ul>
+          <li>打开 <code>chrome://extensions</code>，看扩展图标有没有变红</li>
+          <li>点扩展图标，确认后端地址是 <code>http://localhost:8741</code></li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>🗂️ 数据都存在哪里？怎么备份？</summary>
+      <div class="content">
+        <p>所有数据都在 <code>study-hub/backend/data/</code> 文件夹：</p>
+        <ul>
+          <li><code>study_hub.db</code> —— SQLite 数据库</li>
+          <li><code>chroma/</code> —— 向量库（AI 语义搜索用）</li>
+          <li><code>inbox/</code> —— 拖进去自动导入的文件</li>
+        </ul>
+        <p><strong>备份：</strong>直接复制整个 <code>data/</code> 文件夹。恢复时复制回来即可。</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>🚀 怎么重启服务？</summary>
+      <div class="content">
+        <p>方法 1（推荐）：</p>
+        <ul>
+          <li>找到运行后端的黑色命令行窗口</li>
+          <li>按 <code>Ctrl + C</code> 停止</li>
+          <li>再运行启动命令</li>
+        </ul>
+        <p>方法 2（如果找不到窗口）：</p>
+        <ul>
+          <li>任务管理器 → 找到 <code>python.exe</code> → 结束任务</li>
+          <li>重新运行启动命令</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+const API_BASE = '';
+
+// 安全格式化数字
+function fmt(n) {
+  if (n === undefined || n === null || Number.isNaN(n)) return '—';
+  if (typeof n === 'number') return n.toLocaleString();
+  return String(n);
+}
+
+// 安全访问嵌套属性
+function get(obj, path, fallback) {
+  if (!obj || typeof obj !== 'object') return fallback;
+  const keys = path.split('.');
+  let cur = obj;
+  for (const k of keys) {
+    if (cur == null || !(k in cur)) return fallback;
+    cur = cur[k];
+  }
+  return cur === undefined ? fallback : cur;
+}
+
+// 加载统计数据
+async function loadStats() {
+  try {
+    const res = await fetch(API_BASE + '/admin/stats');
+    const d = await res.json();
+    const cards = document.querySelectorAll('.stat-card');
+    if (cards.length >= 6) {
+      cards[0].querySelector('.stat-value').textContent = fmt(d.documents);
+      cards[1].querySelector('.stat-value').textContent = fmt(d.categories);
+      cards[2].querySelector('.stat-value').textContent = fmt(d.reviews);
+      cards[3].querySelector('.stat-value').textContent = fmt(d.wiki_pages);
+      cards[4].querySelector('.stat-value').textContent = fmt(d.patches);
+      cards[5].querySelector('.stat-value').textContent = fmt(get(d, 'data_size_mb', 0)) + ' MB';
+      cards[5].querySelector('.stat-desc').textContent = fmt(get(d, 'data_files', 0)) + ' 个文件';
+    }
+
+    let statusHtml = '';
+    const latestDoc = get(d, 'latest_doc', null);
+    const latestReview = get(d, 'latest_review', null);
+    if (latestDoc) {
+      statusHtml += `<p>🆕 最新文档：<strong>${escapeHtml(get(latestDoc, 'title', '无标题'))}</strong> <span style="color:#64748b">(${get(latestDoc, 'created_at', '')})</span></p>`;
+    }
+    if (latestReview) {
+      statusHtml += `<p>📝 最新复盘：<strong>${escapeHtml(get(latestReview, 'date', ''))}</strong> <span style="color:#64748b">(${get(latestReview, 'created_at', '')})</span></p>`;
+    }
+    statusHtml += `<p style="color:#64748b;font-size:0.85rem">服务器时间：${escapeHtml(get(d, 'server_time', ''))}</p>`;
+    document.getElementById('systemStatus').innerHTML = statusHtml;
+  } catch (e) {
+    document.getElementById('systemStatus').innerHTML = '<span style="color:#ef4444">无法获取状态：' + escapeHtml(e.message) + '</span>';
+  }
+}
+
+// 健康检查
+async function checkHealth() {
+  const dot = document.getElementById('healthDot');
+  try {
+    const res = await fetch(API_BASE + '/health');
+    const d = await res.json();
+    dot.className = 'status-dot status-' + (get(d, 'status') === 'ok' ? 'green' : 'yellow');
+  } catch (e) {
+    dot.className = 'status-dot status-red';
+  }
+}
+
+// 改进的日志染色（正则匹配，避免误伤）
+const LOG_PATTERNS = [
+  { re: /^\s*\[?ERROR\]?|^\s*Traceback|Exception\s*in|raise\s+\w+Error/, cls: 'err' },
+  { re: /^\s*\[?WARNING\]?|^\s*\[?WARN\]?/, cls: 'warn' },
+  { re: /\b200\s+OK\b|\bstarted\b|\bready\b|\bsuccess\b|\bdone\b/i, cls: 'ok' },
+  { re: /\bINFO\b|\bloading\b|\bcomplete\b/i, cls: 'info' }
+];
+
+async function loadLogs() {
+  const box = document.getElementById('logBox');
+  box.textContent = '加载中…';
+  try {
+    const res = await fetch(API_BASE + '/admin/logs?lines=100');
+    const d = await res.json();
+    const lines = get(d, 'lines', []);
+    if (!lines || !lines.length) {
+      box.textContent = '暂无日志（服务可能刚刚启动，或日志文件尚未写入）';
+      return;
+    }
+    box.innerHTML = lines.map(line => {
+      let cls = 'line';
+      for (const p of LOG_PATTERNS) {
+        if (p.re.test(line)) { cls += ' ' + p.cls; break; }
+      }
+      return `<div class="${cls}">${escapeHtml(line)}</div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch (e) {
+    box.textContent = '加载日志失败：' + escapeHtml(e.message);
+  }
+}
+
+// 加载最近文档
+async function loadRecentDocs() {
+  const el = document.getElementById('recentDocs');
+  try {
+    const res = await fetch(API_BASE + '/admin/documents/recent?limit=15');
+    const docs = await res.json();
+    if (!Array.isArray(docs) || !docs.length) {
+      el.innerHTML = '<p class="empty-tip">还没有文档，去主页面传一个吧</p>';
+      return;
+    }
+    let html = '<table><tr><th>ID</th><th>标题</th><th>类型</th><th>分类</th><th>时间</th></tr>';
+    for (const doc of docs) {
+      html += `<tr>
+        <td>${fmt(get(doc, 'id'))}</td>
+        <td>${escapeHtml(get(doc, 'title', '无标题'))}</td>
+        <td><span class="badge">${escapeHtml(get(doc, 'content_type', 'text'))}</span></td>
+        <td>${escapeHtml(get(doc, 'category_name', '未分类'))}</td>
+        <td style="color:#64748b;font-size:0.78rem">${escapeHtml(get(doc, 'created_at', ''))}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<span style="color:#ef4444">加载失败：' + escapeHtml(e.message) + '</span>';
+  }
+}
+
+// 打开收件箱
+async function openInbox() {
+  try {
+    await fetch(API_BASE + '/inbox/open');
+    alert('已打开收件箱文件夹');
+  } catch (e) {
+    alert('打开失败：' + escapeHtml(e.message));
+  }
+}
+
+// 导出全部
+function exportAll() {
+  window.open(API_BASE + '/export/all', '_blank');
+}
+
+// HTML 转义，防止 XSS
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// 初始化
+loadStats();
+checkHealth();
+loadRecentDocs();
+setInterval(() => { loadStats(); checkHealth(); }, 10000);
+</script>
+</body>
+</html>

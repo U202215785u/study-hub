@@ -15,6 +15,8 @@ const map = {
   extracting:{ label: '提取中', cls: 'bg-accent/10 border-accent/30 text-accent' },
   summarizing:{ label: '总结中', cls: 'bg-accent/10 border-accent/30 text-accent' },
   importing: { label: '入库中', cls: 'bg-accent/10 border-accent/30 text-accent' },
+  running:   { label: '运行中', cls: 'bg-accent/10 border-accent/30 text-accent' },
+  paused:    { label: '已暂停', cls: 'bg-warning/10 border-warning/30 text-warning' },
   done:      { label: '完成',   cls: 'bg-success/10 border-success/30 text-success' },
   error:     { label: '失败',   cls: 'bg-danger/10 border-danger/30 text-danger' },
 }

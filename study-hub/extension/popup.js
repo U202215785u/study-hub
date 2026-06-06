@@ -1,9 +1,10 @@
-// Popup 控制逻辑 — 五层记忆系统 + 自定义网站配置
+// Popup 控制逻辑 — 五层记忆系统 + 自定义网站配置 + 抖音收藏导入
 // 所有请求通过 background.js 代理，绕过 CORS
 
 const STORAGE_KEY = 'study_hub_api_base';
 const AUTO_EXTRACT_KEY = 'study_hub_auto_extract';
 const CUSTOM_ADAPTERS_KEY = 'study_hub_custom_adapters';
+const CUSTOM_SELECTORS_KEY = 'study_hub_custom_selectors';
 
 document.addEventListener('DOMContentLoaded', () => {
   const apiBaseInput = document.getElementById('apiBase');
@@ -13,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const autoToggle = document.getElementById('autoToggle');
   const statusEl = document.getElementById('status');
   const layerStats = document.getElementById('layerStats');
+
+  // 抖音收藏相关
+  const douyinSection = document.getElementById('douyinSection');
+  const douyinFavBtn = document.getElementById('douyinFavBtn');
+  const douyinStatus = document.getElementById('douyinStatus');
+  const douyinLinkList = document.getElementById('douyinLinkList');
+
+  // 检测当前页面是否为抖音，显示/隐藏导入按钮
+  checkDouyinPage();
 
   // 标签页切换
   document.querySelectorAll('.tab').forEach(tab => {
@@ -33,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadMemoryStats();
   loadSiteList();
+  loadCustomSelectors();
 
   // 保存配置
   saveBtn.addEventListener('click', () => {
@@ -93,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 采集到知识库
+  // 采集到知识库（AI 对话）
   captureBtn.addEventListener('click', async () => {
     statusEl.textContent = '正在采集…';
     try {
@@ -127,6 +138,46 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       statusEl.textContent = '采集失败: ' + err.message;
+    }
+  });
+
+  // 剪藏当前网页（文章模式）
+  const clipPageBtn = document.getElementById('clipPageBtn');
+  clipPageBtn.addEventListener('click', async () => {
+    statusEl.textContent = '正在提取网页内容…';
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) {
+        statusEl.textContent = '未找到活跃标签页';
+        return;
+      }
+
+      // 向 content script 发送剪藏请求
+      const response = await chrome.tabs.sendMessage(tab.id, { type: 'CLIP_PAGE' });
+      if (!response || !response.success) {
+        statusEl.textContent = '❌ ' + (response?.error || '提取失败');
+        return;
+      }
+
+      statusEl.textContent = '正在保存…';
+      const data = await apiRequest('/upload/text', 'POST', {
+        title: response.title || `网页剪藏 ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
+        content: response.content,
+        source: 'web_clipper',
+        source_url: response.url,
+      });
+
+      if (data.id) {
+        statusEl.textContent = `✅ 已剪藏 (${data.char_count} 字)`;
+      } else {
+        statusEl.textContent = '保存失败: ' + (data.error || '未知错误');
+      }
+    } catch (err) {
+      if (err.message && err.message.includes('Receiving end does not exist')) {
+        statusEl.textContent = '⚠️ 请刷新页面后再试';
+      } else {
+        statusEl.textContent = '❌ ' + err.message;
+      }
     }
   });
 
@@ -180,6 +231,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function loadCustomSelectors() {
+    const selectorList = document.getElementById('selectorList');
+    if (!selectorList) return;
+    
+    chrome.storage.sync.get([CUSTOM_SELECTORS_KEY], (data) => {
+      const selectors = data[CUSTOM_SELECTORS_KEY] || {};
+      const items = Object.entries(selectors);
+      
+      if (items.length === 0) {
+        selectorList.innerHTML = '<div style="color: #888; font-size: 13px;">暂无自定义选择器，在网页上点击"配置此网站"添加</div>';
+        return;
+      }
+      
+      selectorList.innerHTML = items.map(([host, selector]) => `
+        <div class="site-item">
+          <div>
+            <div class="name">${host}</div>
+            <div class="host" style="font-size: 11px; color: #888;">${selector}</div>
+          </div>
+          <span class="delete" data-host="${host}" data-type="selector">×</span>
+        </div>
+      `).join('');
+      
+      selectorList.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const host = btn.dataset.host;
+          chrome.storage.sync.get([CUSTOM_SELECTORS_KEY], (data) => {
+            const selectors = data[CUSTOM_SELECTORS_KEY] || {};
+            delete selectors[host];
+            chrome.storage.sync.set({ [CUSTOM_SELECTORS_KEY]: selectors }, () => {
+              loadCustomSelectors();
+              statusEl.textContent = '已删除';
+              setTimeout(() => { statusEl.textContent = ''; }, 1500);
+            });
+          });
+        });
+      });
+    });
+  }
+
   function loadSiteList() {
     const siteList = document.getElementById('siteList');
     const builtinSites = [
@@ -200,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
 
       const allSites = [...builtinSites, ...customSites];
-      
+
       siteList.innerHTML = allSites.map(site => `
         <div class="site-item">
           <div>
@@ -230,6 +321,185 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  // ========== 抖音收藏导入 ==========
+
+  async function checkDouyinPage() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url && tab.url.includes('douyin.com')) {
+        douyinSection.style.display = 'block';
+      }
+    } catch {
+      // 静默失败
+    }
+  }
+
+  // 自包含的抖音链接采集函数 — 通过 chrome.scripting.executeScript 注入页面
+  // 注意：此函数被序列化后注入到目标页面运行，不能引用外部变量
+  function collectDouyinLinks(maxScrolls, maxNoNew) {
+    function extractLinks() {
+      const links = new Set();
+      const host = 'https://www.douyin.com';
+
+      // 策略1：<a> 标签
+      document.querySelectorAll('a[href*="/video/"], a[href*="/note/"]').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href) return;
+        const m = href.match(/\/(video|note)\/(\d+)/);
+        if (m) links.add(href.startsWith('http') ? href : host + href);
+      });
+
+      // 策略2：data-e2e 卡片
+      document.querySelectorAll('[data-e2e="feed-active-item"], [data-e2e="user-like-item"], [data-e2e*="video"], [data-e2e*="item"]').forEach(card => {
+        card.querySelectorAll('a[href]').forEach(a => {
+          const href = a.getAttribute('href');
+          if (!href) return;
+          const m = href.match(/\/(video|note)\/(\d+)/);
+          if (m) links.add(href.startsWith('http') ? href : host + href);
+        });
+      });
+
+      // 策略3：全页扫描
+      if (links.size === 0) {
+        document.querySelectorAll('a[href]').forEach(a => {
+          const href = a.getAttribute('href');
+          if (href && /douyin\.com\/(video|note)\/\d+/.test(href)) {
+            links.add(href.startsWith('http') ? href : host + href);
+          }
+        });
+      }
+
+      // 策略4：HTML 正则兜底
+      if (links.size === 0) {
+        const html = document.documentElement.innerHTML;
+        const regex = /(?:https?:)?\/\/(?:www\.)?douyin\.com\/(video|note)\/(\d+)/g;
+        let m;
+        while ((m = regex.exec(html)) !== null) {
+          links.add(m[0].startsWith('http') ? m[0] : 'https:' + m[0]);
+        }
+      }
+
+      return Array.from(links);
+    }
+
+    async function scrollAndCollect() {
+      let prevCount = 0;
+      let noNewCount = 0;
+
+      for (let i = 0; i < maxScrolls; i++) {
+        window.scrollTo(0, document.body.scrollHeight);
+        await new Promise(r => setTimeout(r, 1500));
+
+        const current = extractLinks();
+        if (current.length === prevCount) {
+          noNewCount++;
+          if (noNewCount >= maxNoNew) break;
+        } else {
+          noNewCount = 0;
+          prevCount = current.length;
+        }
+      }
+
+      window.scrollTo(0, 0);
+      const allLinks = extractLinks();
+      return { links: allLinks, scrolled: Math.min(maxScrolls, prevCount > 0 ? Math.floor(prevCount / 10) + 1 : 0), total: allLinks.length };
+    }
+
+    return scrollAndCollect();
+  }
+
+  function handleDouyinResult(data) {
+    if (data.error) {
+      douyinStatus.textContent = '❌ 采集失败：' + data.error;
+      douyinFavBtn.disabled = false;
+      douyinFavBtn.textContent = '🔄 采集当前页收藏';
+      return;
+    }
+
+    const { links, total } = data;
+    if (total === 0) {
+      douyinStatus.textContent = '⚠️ 未检测到视频链接，请确认你在抖音收藏页面';
+      douyinFavBtn.disabled = false;
+      douyinFavBtn.textContent = '🔄 采集当前页收藏';
+      return;
+    }
+
+    // 显示链接列表
+    douyinLinkList.style.display = 'block';
+    douyinLinkList.innerHTML = links.slice(0, 20).map((url, i) =>
+      `<div style="padding: 2px 0; border-bottom: 1px solid #2a2a3a;">${i + 1}. <a href="${url}" target="_blank" style="color: #7c8aff;">${url.split('/').pop()}</a></div>`
+    ).join('') + (links.length > 20 ? `<div style="color: #888; padding: 4px 0;">...还有 ${links.length - 20} 条</div>` : '');
+
+    douyinStatus.textContent = `✅ 采集到 ${total} 条链接，正在提交解析队列…`;
+
+    // 提交到后端队列
+    submitDouyinLinks(links);
+  }
+
+  async function submitDouyinLinks(links) {
+    try {
+      const data = await apiRequest('/automation/queue', 'POST', {
+        module_id: 'douyin-summary',
+        inputs: links,
+      });
+      if (data.status === 'queued') {
+        douyinStatus.textContent = `✅ 成功！${data.count} 个视频已加入解析队列，去前端页面查看进度`;
+      } else if (data.error) {
+        douyinStatus.textContent = '❌ ' + data.error;
+      } else {
+        douyinStatus.textContent = '✅ 已提交';
+      }
+    } catch (err) {
+      douyinStatus.textContent = '❌ 提交失败：' + err.message;
+    } finally {
+      douyinFavBtn.disabled = false;
+      douyinFavBtn.textContent = '🔄 采集当前页收藏';
+    }
+  }
+
+  // 抖音采集按钮 — 使用 scripting.executeScript 注入采集脚本，不依赖 content script 版本
+  douyinFavBtn.addEventListener('click', async () => {
+    douyinFavBtn.disabled = true;
+    douyinFavBtn.textContent = '⏳ 采集中…';
+    douyinStatus.textContent = '正在捕获链接…';
+    douyinLinkList.style.display = 'none';
+    douyinLinkList.innerHTML = '';
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) {
+        douyinStatus.textContent = '❌ 找不到当前标签页';
+        douyinFavBtn.disabled = false;
+        douyinFavBtn.textContent = '🔄 采集当前页收藏';
+        return;
+      }
+
+      // 注入采集脚本（直接在页面 isolated world 中运行，不依赖 content script）
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        world: 'ISOLATED',
+        func: collectDouyinLinks,
+        args: [30, 5], // maxScrolls=30, maxNoNew=5
+      });
+
+      if (results && results[0] && results[0].result) {
+        handleDouyinResult(results[0].result);
+      } else {
+        douyinStatus.textContent = '⚠️ 采集完成但无结果，请确认你在抖音收藏页面';
+        douyinFavBtn.disabled = false;
+        douyinFavBtn.textContent = '🔄 采集当前页收藏';
+      }
+    } catch (err) {
+      if (err.message && (err.message.includes('Extension context') || err.message.includes('Cannot access'))) {
+        douyinStatus.textContent = '⚠️ 请刷新抖音页面后再试（扩展刚更新过，页面需要刷新）';
+      } else {
+        douyinStatus.textContent = '❌ ' + (err.message || '未知错误');
+      }
+      douyinFavBtn.disabled = false;
+      douyinFavBtn.textContent = '🔄 采集当前页收藏';
+    }
+  });
 });
 
 // 通过 background.js 代理请求

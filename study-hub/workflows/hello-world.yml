@@ -1,0 +1,18 @@
+# Hello World —— 最简单的 workflow 模板，验证框架可用
+name: Hello World
+desc: 验证 workflow 框架的示例模板
+version: "1.0"
+
+params:
+  - name: message
+    type: string
+    ask: "要说什么？"
+
+steps:
+  - id: greet
+    type: ask
+    ask: "收到消息：{{.params.message}}。要回复什么？"
+
+  - id: confirm
+    type: ask
+    ask: "你回复了「{{.greet.reply}}」。确认吗？（回复 ok 继续）"

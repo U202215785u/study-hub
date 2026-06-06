@@ -1,9 +1,25 @@
+# ===== 核心依赖 =====
 python-dotenv>=1.0.0
 fastapi>=0.110.0
 uvicorn[standard]>=0.27.0
-chromadb>=0.4.0
-sentence-transformers>=2.2.0
-PyMuPDF>=1.23.0
 python-multipart>=0.0.6
 httpx>=0.25.0
+
+# ===== 数据层 =====
+chromadb>=0.4.0
 watchdog>=4.0.0
+
+# ===== AI / Embedding =====
+sentence-transformers>=2.2.0
+dashscope>=1.20.0
+
+# ===== 文档处理 =====
+PyMuPDF>=1.23.0
+jieba>=0.42.0
+
+# ===== 流程编排 =====
+pyyaml>=6.0
+
+# ===== 社交解析 =====
+douyin-mcp-server>=1.2.0
+ffmpeg-python>=0.2.0

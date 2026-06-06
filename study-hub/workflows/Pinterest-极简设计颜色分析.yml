@@ -1,0 +1,22 @@
+name: Pinterest 极简设计颜色分析
+desc: 打开 Pinterest 搜索 minimal design，截图并用 AI 分析颜色
+version: "1.0"
+
+steps:
+  - id: open_pinterest_search
+    type: tool
+    tool: browser
+    action: "打开 Pinterest 并搜索 minimal design"
+    output: page
+
+  - id: take_screenshot
+    type: tool
+    tool: browser
+    action: "对当前页面截图"
+    output: screenshot
+
+  - id: analyze_colors
+    type: tool
+    tool: ai
+    action: "分析 screenshot 中的主要颜色"
+    output: colors

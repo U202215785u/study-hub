@@ -28,16 +28,17 @@ def create_category(payload: dict):
     icon = payload.get("icon", "📁")
     color = payload.get("color", "#7c8aff")
     sort_order = payload.get("sort_order", 0)
+    tag_rules = json.dumps(payload.get("tag_rules", []), ensure_ascii=False)
 
     conn = get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO categories (name, icon, color, sort_order) VALUES (?, ?, ?, ?)",
-            (name, icon, color, sort_order),
+            "INSERT INTO categories (name, icon, color, sort_order, tag_rules) VALUES (?, ?, ?, ?, ?)",
+            (name, icon, color, sort_order, tag_rules),
         )
         conn.commit()
         cat_id = cur.lastrowid
-        return {"id": cat_id, "name": name, "icon": icon, "color": color, "sort_order": sort_order, "doc_count": 0}
+        return {"id": cat_id, "name": name, "icon": icon, "color": color, "sort_order": sort_order, "tag_rules": json.loads(tag_rules), "doc_count": 0}
     except Exception as e:
         return {"error": f"创建失败: {e}"}
     finally:
@@ -56,14 +57,15 @@ def update_category(cat_id: int, payload: dict):
     icon = payload.get("icon", existing["icon"])
     color = payload.get("color", existing["color"])
     sort_order = payload.get("sort_order", existing["sort_order"])
+    tag_rules = json.dumps(payload.get("tag_rules", json.loads(existing["tag_rules"] or "[]")), ensure_ascii=False)
 
     conn.execute(
-        "UPDATE categories SET name = ?, icon = ?, color = ?, sort_order = ? WHERE id = ?",
-        (name, icon, color, sort_order, cat_id),
+        "UPDATE categories SET name = ?, icon = ?, color = ?, sort_order = ?, tag_rules = ? WHERE id = ?",
+        (name, icon, color, sort_order, tag_rules, cat_id),
     )
     conn.commit()
     conn.close()
-    return {"id": cat_id, "name": name, "icon": icon, "color": color, "sort_order": sort_order}
+    return {"id": cat_id, "name": name, "icon": icon, "color": color, "sort_order": sort_order, "tag_rules": json.loads(tag_rules)}
 
 
 @router.delete("/categories/{cat_id}")
@@ -194,3 +196,51 @@ def update_document_tags(doc_id: int, payload: dict):
         pass
 
     return {"status": "ok", "doc_id": doc_id, "tags": tags}
+
+
+@router.post("/documents/{doc_id}/auto-tags")
+async def auto_tag_document(doc_id: int):
+    """AI 自动识别文档标签"""
+    conn = get_db()
+    doc = conn.execute("SELECT * FROM documents WHERE id = ?", (doc_id,)).fetchone()
+    if not doc:
+        conn.close()
+        return {"error": "文档不存在"}
+
+    content = doc["content"] or ""
+    title = doc["title"] or ""
+    conn.close()
+
+    # 取前 2000 字作为分析内容
+    analysis_text = content[:2000]
+
+    from ai_client import ai_client
+    prompt = f"""请分析以下文档，提取 3-8 个精准标签。
+要求：
+1. 标签应概括文档的核心主题、技术栈、领域
+2. 每个标签 2-6 个中文字符，或 1-3 个英文单词
+3. 输出格式必须是 JSON 数组，不要其他内容
+4. 不要输出解释，只输出 JSON
+
+文档标题：{title}
+
+文档内容（前 2000 字）：
+{analysis_text}
+
+请输出标签数组："""
+
+    try:
+        raw = await ai_client.chat([{"role": "user", "content": prompt}], temperature=0.3, max_tokens=256)
+        # 尝试提取 JSON 数组
+        import re
+        match = re.search(r'\[[\s\S]*?\]', raw)
+        if match:
+            tags = json.loads(match.group())
+            if isinstance(tags, list):
+                # 过滤非字符串项，去重，限制最多 8 个
+                tags = [str(t).strip() for t in tags if t][:8]
+                tags = list(dict.fromkeys(tags))  # 去重保持顺序
+                return {"tags": tags}
+        return {"error": "AI 返回格式不正确", "raw": raw[:200]}
+    except Exception as e:
+        return {"error": f"识别失败: {e}"}

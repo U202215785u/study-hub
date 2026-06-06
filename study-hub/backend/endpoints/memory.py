@@ -98,6 +98,8 @@ def _row_to_dict(row) -> dict:
         "project_name": row["project_name"] if "project_name" in row.keys() else "",
         "workflow_name": row["workflow_name"] if "workflow_name" in row.keys() else "",
         "memory_type": row["memory_type"] if "memory_type" in row.keys() else "fact",
+        "access_count": row["access_count"] if "access_count" in row.keys() else 0,
+        "last_accessed": row["last_accessed"] if "last_accessed" in row.keys() else None,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -293,6 +295,172 @@ async def memory_embedding_status():
     """返回各 collection 的 embedding 状态"""
     vs = get_vector_store()
     return vs.get_embedding_status()
+
+
+# ─── 智能上下文注入（必须在 /memory/{memory_id} 之前定义）────────────────
+
+@router.get("/memory/context_inject")
+async def memory_context_inject(q: str = "", tool: str = "", session_id: str = ""):
+    """根据当前查询，生成要注入 AI 上下文的记忆摘要（行为指令式）"""
+    if not q.strip():
+        q = "当前对话"
+
+    conn = get_db()
+
+    # 1. 角色记忆：混合加权排序取 top 3
+    from core.memory_ranker import rank_memories
+    role_rows_all = conn.execute(
+        """SELECT * FROM memories
+           WHERE memory_layer = 'role' AND status = 'active'
+           ORDER BY updated_at DESC"""
+    ).fetchall()
+    role_rows = rank_memories(role_rows_all, top_k=3)
+
+    # 2. 活跃项目：最近 30 天有更新的项目
+    project_rows = conn.execute(
+        """SELECT p.name, p.description, p.progress_note, p.tech_stack,
+                  COUNT(m.id) as mem_count
+           FROM projects p
+           LEFT JOIN memories m ON m.project_name = p.name AND m.status = 'active'
+           WHERE p.status = 'active' AND p.last_active > datetime('now', '-30 days')
+           GROUP BY p.id
+           ORDER BY p.last_active DESC LIMIT 3"""
+    ).fetchall()
+
+    # 3. 相关工作流：根据 query 关键词匹配
+    workflow_rows = conn.execute(
+        """SELECT name, trigger_keywords, preferences FROM workflows
+           ORDER BY updated_at DESC LIMIT 10"""
+    ).fetchall()
+
+    # 4. 语义搜索相关记忆（所有层）
+    vs = get_vector_store()
+    relevant_memories = []
+    if vs.memory_collection.count() > 0:
+        q_embedding = vs._get_embeddings([q])
+        results = vs.memory_collection.query(
+            query_embeddings=q_embedding,
+            n_results=5,
+            where={"status": "active"},
+        )
+        if results and results["ids"] and results["ids"][0]:
+            for i, embed_id in enumerate(results["ids"][0]):
+                meta = results["metadatas"][0][i] if results["metadatas"] else {}
+                memory_id = meta.get("memory_id") if meta else None
+                if memory_id:
+                    row = conn.execute(
+                        "SELECT * FROM memories WHERE id = ?",
+                        (memory_id,),
+                    ).fetchone()
+                    if row:
+                        relevant_memories.append(dict(row))
+                        # 更新访问计数
+                        conn.execute(
+                            "UPDATE memories SET access_count = access_count + 1, last_accessed = ? WHERE id = ?",
+                            (datetime.now().isoformat(), memory_id),
+                        )
+            conn.commit()
+
+    # 5. 世界记忆：检索 documents + wiki_pages
+    world_memories = []
+    # documents
+    doc_rows = conn.execute(
+        """SELECT id, title, content, tags, created_at, 'document' as source
+           FROM documents
+           ORDER BY created_at DESC LIMIT 2"""
+    ).fetchall()
+    # wiki_pages
+    wiki_rows = conn.execute(
+        """SELECT id, title, content, summary, created_at, 'wiki' as source
+           FROM wiki_pages
+           ORDER BY updated_at DESC LIMIT 2"""
+    ).fetchall()
+    world_memories = [dict(r) for r in list(doc_rows) + list(wiki_rows)]
+
+    conn.close()
+
+    # 构建行为指令式注入内容
+    parts = []
+
+    # 角色行为指令
+    if role_rows:
+        role_lines = []
+        for i, r in enumerate(role_rows, 1):
+            content = r["content"]
+            mem_type = r.get("memory_type", "preference")
+            if mem_type == "habit":
+                role_lines.append(f"{i}. 用户习惯：{content}。请在协助时尊重这一习惯。")
+            elif mem_type == "preference":
+                role_lines.append(f"{i}. 用户偏好：{content}。请在相关场景中默认采用此偏好。")
+            elif mem_type == "skill":
+                role_lines.append(f"{i}. 用户能力：{content}。请基于此能力水平调整解释深度。")
+            else:
+                role_lines.append(f"{i}. {content}")
+        parts.append("【角色行为指令】\n" + "\n".join(role_lines))
+
+    # 项目行为指令
+    if project_rows:
+        proj_lines = []
+        for i, r in enumerate(project_rows, 1):
+            tech = json.loads(r["tech_stack"] or "[]")
+            tech_str = f"（技术栈：{', '.join(tech)}）" if tech else ""
+            progress = f" 当前进度：{r['progress_note']}" if r["progress_note"] else ""
+            proj_lines.append(
+                f"{i}. 用户正在做项目「{r['name']}」{tech_str}。{progress} "
+                f"请在涉及此项目时基于现有技术栈和进度给出建议。"
+            )
+        parts.append("【项目行为指令】\n" + "\n".join(proj_lines))
+
+    # 工作流行为指令
+    matched_workflows = []
+    for r in workflow_rows:
+        keywords = json.loads(r["trigger_keywords"] or "[]")
+        if any(kw in q.lower() for kw in keywords):
+            prefs = json.loads(r["preferences"] or "{}")
+            pref_str = "；".join(f"{k}={v}" for k, v in prefs.items()) if prefs else ""
+            matched_workflows.append(
+                f"- 用户的工作流「{r['name']}」偏好：{pref_str}。请在协作时遵循此工作流习惯。"
+            )
+    if matched_workflows:
+        parts.append("【工作流行为指令】\n" + "\n".join(matched_workflows))
+
+    # 相关记忆
+    if relevant_memories:
+        mem_lines = []
+        for m in relevant_memories:
+            layer_label = {"role": "[角色]", "project": "[项目]", "workflow": "[工作流]", "session": "[会话]", "world": "[知识]"}.get(m.get("memory_layer", ""), "")
+            mem_lines.append(f"- {layer_label} {m['content']}")
+        parts.append("【相关记忆】\n" + "\n".join(mem_lines))
+
+    # 世界记忆（参考上下文）
+    if world_memories:
+        world_lines = []
+        for m in world_memories:
+            source = m.get("source", "")
+            title = m.get("title", "")
+            content = m.get("content", "") or m.get("summary", "")
+            if len(content) > 200:
+                content = content[:200] + "..."
+            source_label = "文档" if source == "document" else "Wiki"
+            world_lines.append(f"- 【{source_label}】{title}：{content}")
+        parts.append("【参考上下文】（按需使用）\n" + "\n".join(world_lines))
+
+    full_prompt = "\n\n".join(parts)
+
+    return {
+        "injection": {
+            "role_profile": "\n".join([f"- {r['content']}" for r in role_rows]) if role_rows else "",
+            "active_projects": [
+                {"name": r["name"], "progress": r["progress_note"], "tech_stack": json.loads(r["tech_stack"] or "[]")}
+                for r in project_rows
+            ],
+            "relevant_workflows": [{"name": r["name"], "preferences": json.loads(r["preferences"] or "{}")} for r in workflow_rows],
+            "relevant_memories": relevant_memories,
+            "world_memories": [{"title": m.get("title"), "source": m.get("source")} for m in world_memories],
+        },
+        "full_prompt": full_prompt,
+        "query": q,
+    }
 
 
 @router.get("/memory/{memory_id}", response_model=MemoryOut)
@@ -1027,124 +1195,6 @@ def _ensure_workflow_exists(name: str):
         )
         conn.commit()
     conn.close()
-
-
-# ─── 智能上下文注入 ─────────────────────────────────────────────
-
-@router.get("/memory/context_inject")
-async def memory_context_inject(q: str = "", tool: str = "", session_id: str = ""):
-    """根据当前查询，生成要注入 AI 上下文的记忆摘要"""
-    if not q.strip():
-        q = "当前对话"
-
-    conn = get_db()
-
-    # 1. 角色记忆：取最近 10 条高置信度偏好/习惯
-    role_rows = conn.execute(
-        """SELECT content, category, confidence FROM memories
-           WHERE memory_layer = 'role' AND status = 'active'
-           ORDER BY confidence DESC, updated_at DESC LIMIT 10"""
-    ).fetchall()
-
-    # 2. 活跃项目：最近 30 天有更新的项目
-    project_rows = conn.execute(
-        """SELECT p.name, p.description, p.progress_note, p.tech_stack,
-                  COUNT(m.id) as mem_count
-           FROM projects p
-           LEFT JOIN memories m ON m.project_name = p.name AND m.status = 'active'
-           WHERE p.status = 'active' AND p.last_active > datetime('now', '-30 days')
-           GROUP BY p.id
-           ORDER BY p.last_active DESC LIMIT 5"""
-    ).fetchall()
-
-    # 3. 相关工作流：根据 query 关键词匹配
-    workflow_rows = conn.execute(
-        """SELECT name, trigger_keywords, preferences FROM workflows
-           ORDER BY updated_at DESC LIMIT 10"""
-    ).fetchall()
-
-    # 4. 语义搜索相关记忆（所有层）
-    vs = get_vector_store()
-    relevant_memories = []
-    if vs.memory_collection.count() > 0:
-        q_embedding = vs._get_embeddings([q])
-        results = vs.memory_collection.query(
-            query_embeddings=q_embedding,
-            n_results=5,
-            where={"status": "active"},
-        )
-        if results and results["ids"] and results["ids"][0]:
-            for i, embed_id in enumerate(results["ids"][0]):
-                meta = results["metadatas"][0][i] if results["metadatas"] else {}
-                memory_id = meta.get("memory_id") if meta else None
-                if memory_id:
-                    row = conn.execute(
-                        "SELECT content, memory_layer, project_name, workflow_name FROM memories WHERE id = ?",
-                        (memory_id,),
-                    ).fetchone()
-                    if row:
-                        relevant_memories.append(dict(row))
-                        # 更新访问计数
-                        conn.execute(
-                            "UPDATE memories SET access_count = access_count + 1, last_accessed = ? WHERE id = ?",
-                            (datetime.now().isoformat(), memory_id),
-                        )
-            conn.commit()
-
-    conn.close()
-
-    # 构建注入内容
-    parts = []
-
-    # 角色画像
-    if role_rows:
-        role_lines = [f"- {r['content']} ({r['category']})" for r in role_rows]
-        parts.append(f"【用户画像】\n" + "\n".join(role_lines))
-
-    # 活跃项目
-    if project_rows:
-        proj_lines = []
-        for r in project_rows:
-            tech = json.loads(r["tech_stack"] or "[]")
-            tech_str = f" 技术栈: {', '.join(tech)}" if tech else ""
-            progress = f" 进度: {r['progress_note']}" if r["progress_note"] else ""
-            proj_lines.append(f"- {r['name']}{tech_str}{progress}")
-        parts.append(f"【活跃项目】\n" + "\n".join(proj_lines))
-
-    # 相关工作流
-    matched_workflows = []
-    for r in workflow_rows:
-        keywords = json.loads(r["trigger_keywords"] or "[]")
-        if any(kw in q.lower() for kw in keywords):
-            prefs = json.loads(r["preferences"] or "{}")
-            pref_str = " ".join(f"{k}={v}" for k, v in prefs.items()) if prefs else ""
-            matched_workflows.append(f"- {r['name']}: {pref_str}")
-    if matched_workflows:
-        parts.append(f"【工作流偏好】\n" + "\n".join(matched_workflows))
-
-    # 相关记忆
-    if relevant_memories:
-        mem_lines = []
-        for m in relevant_memories:
-            layer_label = {"role": "[角色]", "project": "[项目]", "workflow": "[工作流]", "session": "[会话]", "world": "[知识]"}.get(m.get("memory_layer", ""), "")
-            mem_lines.append(f"- {layer_label} {m['content']}")
-        parts.append(f"【相关记忆】\n" + "\n".join(mem_lines))
-
-    full_prompt = "\n\n".join(parts)
-
-    return {
-        "injection": {
-            "role_profile": "\n".join([f"- {r['content']}" for r in role_rows]) if role_rows else "",
-            "active_projects": [
-                {"name": r["name"], "progress": r["progress_note"], "tech_stack": json.loads(r["tech_stack"] or "[]")}
-                for r in project_rows
-            ],
-            "relevant_workflows": [{"name": r["name"], "preferences": json.loads(r["preferences"] or "{}")} for r in workflow_rows],
-            "relevant_memories": relevant_memories,
-        },
-        "full_prompt": full_prompt,
-        "query": q,
-    }
 
 
 # ─── Projects CRUD ──────────────────────────────────────────────

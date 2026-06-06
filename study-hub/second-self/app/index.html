@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Self</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #888; margin-bottom: 40px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; width: 100%; max-width: 600px; margin-bottom: 40px; }
+        .stat-card { background: #151520; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #667eea; }
+        .stat-label { font-size: 0.875rem; color: #888; margin-top: 4px; }
+        .search-box { width: 100%; max-width: 600px; margin-bottom: 40px; }
+        .search-box input {
+            width: 100%; padding: 16px 20px; font-size: 1rem;
+            background: #151520; border: 1px solid #2a2a3a; border-radius: 12px;
+            color: #e0e0e0; outline: none; transition: border-color 0.2s;
+        }
+        .search-box input:focus { border-color: #667eea; }
+        .api-links { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .api-links a {
+            color: #667eea; text-decoration: none; padding: 8px 16px;
+            background: #151520; border: 1px solid #2a2a3a; border-radius: 8px;
+            font-size: 0.875rem; transition: all 0.2s;
+        }
+        .api-links a:hover { background: #667eea; color: #fff; }
+    </style>
+</head>
+<body>
+    <h1>Second Self</h1>
+    <p class="subtitle">个人记忆网关 v2.1</p>
+    
+    <div class="stats" id="stats">
+        <div class="stat-card"><div class="stat-value" id="total">-</div><div class="stat-label">记忆总数</div></div>
+        <div class="stat-card"><div class="stat-value" id="active">-</div><div class="stat-label">活跃记忆</div></div>
+        <div class="stat-card"><div class="stat-value" id="dormant">-</div><div class="stat-label">休眠记忆</div></div>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" id="search" placeholder="搜索记忆..." onkeydown="if(event.key==='Enter')doSearch()">
+    </div>
+    
+    <div class="api-links">
+        <a href="/docs">API 文档</a>
+        <a href="/api/stats">统计数据</a>
+        <a href="/api/memory?q=AI">记忆搜索</a>
+        <a href="/api/causal?q=AI">因果检索</a>
+    </div>
+    
+    <script>
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                document.getElementById('total').textContent = data.total || 0;
+                document.getElementById('active').textContent = data.active || 0;
+                document.getElementById('dormant').textContent = data.dormant || 0;
+            } catch (e) { console.error(e); }
+        }
+        function doSearch() {
+            const q = document.getElementById('search').value;
+            if (q) window.open('/api/memory?q=' + encodeURIComponent(q), '_blank');
+        }
+        loadStats();
+    </script>
+</body>
+</html>

@@ -45,11 +45,20 @@ const DEFAULT_ADAPTERS = {
   'kimi.com': {
     name: 'Kimi',
     selectors: {
-      container: '[class*="message"], [class*="chat-item"], [class*="bubble"]',
-      fallback: 'div[class*="md"]',
+      // 主选择器：Kimi 对话消息的主容器
+      container: '[class*="conversation"], [class*="message-list"] > div, [class*="chat-message"]',
+      // 精确选择器：用户和 AI 的消息
+      fallback: '[data-testid="user-message"], [data-testid="assistant-message"], .message-item, [class*="message-content"]',
     },
     extract(element) {
-      return element.textContent.trim();
+      // 过滤掉推荐内容、广告等非对话元素
+      const text = element.textContent.trim();
+      // 排除过短的内容（可能是按钮、标签）
+      if (text.length < 5) return '';
+      // 排除包含特定广告/推荐文本的内容
+      if (text.includes('一键接入') && text.includes('platform.kimi.com')) return '';
+      if (text.includes('API 走起')) return '';
+      return text;
     },
   },
   'www.doubao.com': {

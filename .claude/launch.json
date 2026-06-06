@@ -19,6 +19,13 @@
         "up"
       ],
       "port": 8741
+    },
+    {
+      "name": "suit-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "cwd": "F:/360MoveData/Users/Administrator/Desktop/study web/mods/suit"
     }
   ]
 }

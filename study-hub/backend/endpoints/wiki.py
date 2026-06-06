@@ -140,8 +140,9 @@ COMPILE_SYSTEM = """你是一个知识库编译引擎。你的任务是把原始
 5. **外部链接完整**：文档中出现的每个 URL 都要提取到 external_links，同时在 content 的 "## 📎 相关资源" 小节中列出
 6. **中文为主**，专业术语保留英文
 7. content 中使用 Markdown 格式：标题用 ##/###，代码用代码块，重要概念用 **加粗**
-8. 每个页面 content 末尾必须有 "## 📎 相关资源" 小节（即使只有一个链接）
-9. 页面标题使用中文，slug 使用英文或拼音
+8. 每个页面 content 必须以 `# {title}` 一级标题开头，然后再按内容类型的结构写
+9. 每个页面 content 末尾必须有 "## 📎 相关资源" 小节（即使只有一个链接）
+10. 页面标题使用中文，slug 使用英文或拼音
 """
 
 COMPILE_USER_TEMPLATE = """## 已有 Wiki 页面列表
@@ -277,32 +278,19 @@ async def compile_wiki(payload: dict):
     conn.close()
     _save_compiled_hashes(compiled_hashes)
 
-    # --- 进化系统钩子 ---
+    # --- SOP 进化系统钩子 ---
     evolution_info = None
     try:
-        from evolution_pipeline import analyze_evolution
-        evolution_info = await analyze_evolution(
-            new_pages=new_page_summaries,
-            updated_pages=updated_page_summaries,
-            contradictions=all_contradictions,
-            review_summary="",
-            source_event_type="wiki_compile",
-            source_event_id=0,
-        )
-        print(f"[Evolution] Wiki compile: {evolution_info.get('low_risk_applied', 0)} low-risk applied, "
-              f"{evolution_info.get('medium_risk_pending', 0)} medium pending, "
-              f"{evolution_info.get('high_risk_logged', 0)} high logged")
+        from sop_evolution import analyze_wiki_for_sop
+        evolution_info = await analyze_wiki_for_sop()
+        print(f"[SOP-Evolution] Wiki compile: {evolution_info.get('suggestions_created', 0)} suggestions created, "
+              f"types: {evolution_info.get('types', {})}")
     except Exception as e:
-        print(f"[Evolution] Wiki hook failed (non-fatal): {e}")
+        print(f"[SOP-Evolution] Wiki hook failed (non-fatal): {e}")
 
     response = {"status": "done", "results": results, "skipped": skipped}
     if evolution_info:
-        response["evolution"] = {
-            "low_risk_applied": evolution_info["low_risk_applied"],
-            "medium_risk_pending": evolution_info["medium_risk_pending"],
-            "high_risk_logged": evolution_info["high_risk_logged"],
-            "snapshot_id": evolution_info["snapshot_id"],
-        }
+        response["evolution"] = evolution_info
     return response
 
 
@@ -312,7 +300,7 @@ def list_wiki_pages(category: str = None, search: str = None):
     if search:
         rows = conn.execute(
             "SELECT id, title, slug, summary, tags, category, content_type, difficulty, "
-            "external_links, prerequisites, next_steps, version, char_count, "
+            "external_links, prerequisites, next_steps, version, char_count, cover_image, "
             "created_at, updated_at FROM wiki_pages "
             "WHERE title LIKE ? OR content LIKE ? OR summary LIKE ? OR tags LIKE ? "
             "ORDER BY updated_at DESC",
@@ -321,14 +309,14 @@ def list_wiki_pages(category: str = None, search: str = None):
     elif category:
         rows = conn.execute(
             "SELECT id, title, slug, summary, tags, category, content_type, difficulty, "
-            "external_links, prerequisites, next_steps, version, char_count, "
+            "external_links, prerequisites, next_steps, version, char_count, cover_image, "
             "created_at, updated_at FROM wiki_pages WHERE category = ? ORDER BY updated_at DESC",
             (category,),
         ).fetchall()
     else:
         rows = conn.execute(
             "SELECT id, title, slug, summary, tags, category, content_type, difficulty, "
-            "external_links, prerequisites, next_steps, version, char_count, "
+            "external_links, prerequisites, next_steps, version, char_count, cover_image, "
             "created_at, updated_at FROM wiki_pages ORDER BY updated_at DESC"
         ).fetchall()
     conn.close()
@@ -453,20 +441,23 @@ def update_wiki_page(page_id: int, payload: dict):
     prereqs = json.dumps(payload.get("prerequisites", []), ensure_ascii=False)
     nexts = json.dumps(payload.get("next_steps", []), ensure_ascii=False)
 
-    # Update slug if title changed
-    slug = slugify(title)
-    if slug != page["slug"]:
-        existing = conn.execute("SELECT id FROM wiki_pages WHERE slug = ? AND id != ?", (slug, page_id)).fetchone()
-        if existing:
-            slug = f"{slug}-{page_id}"
+    # Update slug only if title changed
+    new_slug = slugify(title)
+    if new_slug != page["slug"]:
+        existing = conn.execute("SELECT id FROM wiki_pages WHERE slug = ? AND id != ?", (new_slug, page_id)).fetchone()
+        slug = f"{new_slug}-{page_id}" if existing else new_slug
+    else:
+        slug = page["slug"]
+
+    cover_image = payload.get("cover_image", page["cover_image"] if isinstance(page, dict) else "")
 
     conn.execute(
         "UPDATE wiki_pages SET title = ?, slug = ?, content = ?, summary = ?, category = ?, tags = ?, "
         "content_type = ?, difficulty = ?, external_links = ?, prerequisites = ?, next_steps = ?, "
-        "char_count = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP "
+        "cover_image = ?, char_count = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP "
         "WHERE id = ?",
         (title, slug, content, payload.get("summary", page["summary"] or ""),
-         category, tags_json, content_type, difficulty, ext_links, prereqs, nexts, len(content), page_id),
+         category, tags_json, content_type, difficulty, ext_links, prereqs, nexts, cover_image, len(content), page_id),
     )
 
     # Re-extract wikilinks from updated content

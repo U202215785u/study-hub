@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Markdown 样式测试</title>
+  <link rel="stylesheet" href="src/assets/markdown-typography.css">
+  <style>
+    /* 模拟暗色背景 */
+    body {
+      background: #0f0f14;
+      color: #e0e0e8;
+      padding: 40px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="color: #8888a0; margin-bottom: 30px;">🔬 Markdown 样式对比测试</h2>
+
+  <div class="markdown-content">
+    <h1>这是一级标题 (h1)</h1>
+    <p>这是一段正文。如果样式生效，这段文字应该有 1.6 的行高，段落之间有 1em 的间距。Kami 的排版理念是让内容有呼吸感。</p>
+    <h2>这是二级标题 (h2)</h2>
+    <p>这是另一段正文。注意看标题和段落之间的间距——h1/h2 后面应该有更宽松的间距（1.8em），而 h3 后面间距更紧凑。</p>
+    <h3>这是三级标题 (h3)</h3>
+    <p>三级标题通常用于小节。如果生效，它的字号应该比 h2 小，但比正文大。</p>
+    <ul>
+      <li>列表项一</li>
+      <li>列表项二
+        <ul>
+          <li>嵌套列表项</li>
+        </ul>
+      </li>
+      <li>列表项三</li>
+    </ul>
+    <blockquote>
+      <p>这是一个引用块。如果生效，左边应该有 3px 的 accent 色边框，背景有淡淡的紫色渐变。</p>
+    </blockquote>
+    <pre><code>// 代码块
+function hello() {
+  return "world";
+}</code></pre>
+    <p>正文中的 <code>inline code</code> 应该有不同的背景色。</p>
+    <table>
+      <thead>
+        <tr><th>表头一</th><th>表头二</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>单元格 1</td><td>单元格 2</td></tr>
+        <tr><td>单元格 3</td><td>单元格 4</td></tr>
+      </tbody>
+    </table>
+    <hr>
+    <p>上面是一条分割线。</p>
+  </div>
+
+  <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #2a2a3a;">
+    <h3 style="color: #ff5c7a;">✅ 如果生效，你应该看到：</h3>
+    <ul style="color: #8888a0;">
+      <li>h1 标题是<strong style="color: #ff5c7a;">粉红色</strong>，字号很大，底部有粉红边框</li>
+      <li>段落之间有清晰的间距，不拥挤</li>
+      <li>列表项之间有 0.6em 的间距</li>
+      <li>引用块左边有紫色竖线</li>
+      <li>代码块有圆角和边框</li>
+      <li>表格表头是小字大写</li>
+    </ul>
+
+    <h3 style="color: #ff5c7a;">❌ 如果没生效，你会看到：</h3>
+    <ul style="color: #8888a0;">
+      <li>h1 标题和普通文字一样，没有粉红色</li>
+      <li>所有元素挤在一起，没有间距</li>
+      <li>基本就是浏览器默认样式</li>
+    </ul>
+  </div>
+</body>
+</html>
