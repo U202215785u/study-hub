@@ -108,50 +108,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 📹 抖音收藏导入
   douyinFavBtn.addEventListener('click', async () => {
-    douyinStatus.textContent = '正在采集收藏列表…';
+    douyinFavBtn.disabled = true;
+    douyinFavBtn.textContent = '⏳ 采集中…';
+    douyinStatus.textContent = '正在采集已显示的收藏视频…';
     douyinLinkList.style.display = 'none';
+    douyinLinkList.innerHTML = '';
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab) {
         douyinStatus.textContent = '未找到活跃标签页';
         return;
       }
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => {
-          const links = [];
-          document.querySelectorAll('a[href*="/video/"]').forEach(a => {
-            const match = a.href.match(/\/video\/(\d+)/);
-            if (match) links.push(match[1]);
-          });
-          return [...new Set(links)];
-        },
-      });
-      const videoIds = results[0]?.result || [];
-      if (videoIds.length === 0) {
-        douyinStatus.textContent = '未找到收藏视频，请确认在抖音收藏页面';
+      if (!DouyinFavorites.isDouyinFavoritesUrl(tab.url)) {
+        douyinStatus.textContent = '当前不是抖音收藏页，请先打开个人中心的收藏页';
         return;
       }
-      douyinStatus.textContent = `找到 ${videoIds.length} 个视频，正在提交…`;
 
-      const apiBase = await getApiBase();
-      const resp = await fetch(`${apiBase}/automation/douyin_fav`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ video_ids: videoIds }),
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        world: 'ISOLATED',
+        func: DouyinFavorites.collectDouyinFavorites,
+        args: [30, 5, 1200],
       });
-      const data = await resp.json();
-      if (data.task_id) {
-        douyinStatus.textContent = `✅ 已提交 ${videoIds.length} 个视频，任务ID: ${data.task_id}`;
-        douyinLinkList.innerHTML = videoIds.map(id => `<div>• ${id}</div>`).join('');
-        douyinLinkList.style.display = 'block';
-      } else {
-        douyinStatus.textContent = '提交失败: ' + (data.error || '未知错误');
+
+      const collection = results[0]?.result;
+      const links = collection?.links || [];
+      if (links.length === 0) {
+        douyinStatus.textContent = '未找到可导入的抖音视频，请确认收藏列表已加载';
+        return;
       }
+
+      douyinStatus.textContent = `找到 ${links.length} 个视频，正在提交解析队列…`;
+      const data = await sendRuntimeMessage(DouyinFavorites.buildDouyinQueueMessage(links));
+      const skippedText = data.skipped ? `，跳过 ${data.skipped} 个已存在链接` : '';
+      douyinStatus.textContent = `已加入 ${data.count || 0} 个解析任务${skippedText}`;
+      douyinLinkList.innerHTML = links.slice(0, 20).map((url, index) =>
+        `<div>${index + 1}. ${url}</div>`
+      ).join('') + (links.length > 20 ? `<div>还有 ${links.length - 20} 条…</div>` : '');
+      douyinLinkList.style.display = 'block';
     } catch (err) {
-      douyinStatus.textContent = '采集失败: ' + err.message;
+      douyinStatus.textContent = '后端不可用或提交失败：' + (err.message || '未知错误');
+    } finally {
+      douyinFavBtn.disabled = false;
+      douyinFavBtn.textContent = '🔄 采集当前页收藏';
     }
   });
+
+  function sendRuntimeMessage(message) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (!response) {
+          reject(new Error('未收到后端响应'));
+          return;
+        }
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+        resolve(response.data || {});
+      });
+    });
+  }
 
   async function getApiBase() {
     const data = await chrome.storage.sync.get([STORAGE_KEY]);
@@ -163,6 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab && tab.url && tab.url.includes('douyin.com')) {
         douyinSection.style.display = 'block';
+        if (!DouyinFavorites.isDouyinFavoritesUrl(tab.url)) {
+          douyinStatus.textContent = '当前不是抖音收藏页，请先打开个人中心的收藏页';
+        }
       }
     } catch (e) {
       // ignore
