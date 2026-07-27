@@ -7,7 +7,7 @@
       if (!url.pathname.startsWith('/user/')) return false;
 
       const tab = (url.searchParams.get('showTab') || '').toLowerCase();
-      return ['favorite_collection', 'favorite', 'collection', 'like'].includes(tab);
+      return ['favorite_collection', 'favorite', 'collection'].includes(tab);
     } catch {
       return false;
     }
@@ -34,7 +34,7 @@
         const isDouyin = hostname === 'douyin.com' || hostname.endsWith('.douyin.com');
         if (url.protocol !== 'https:' || !isDouyin) return null;
 
-        const match = url.pathname.match(/\/video\/(\d+)(?:\/|$)/);
+        const match = url.pathname.match(/^\/video\/(\d+)\/?$/);
         if (!match) return null;
         return `https://www.douyin.com/video/${match[1]}`;
       } catch {

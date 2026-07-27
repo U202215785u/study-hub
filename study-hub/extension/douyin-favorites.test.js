@@ -113,9 +113,26 @@ test('favorite-page detection rejects ordinary Douyin and non-Douyin pages', () 
   const isDouyinFavoritesUrl = requireFunction('isDouyinFavoritesUrl');
 
   assert.equal(isDouyinFavoritesUrl('https://www.douyin.com/user/self?showTab=favorite_collection'), true);
-  assert.equal(isDouyinFavoritesUrl('https://www.douyin.com/user/abc?showTab=like'), true);
+  assert.equal(isDouyinFavoritesUrl('https://www.douyin.com/user/abc?showTab=collection'), true);
   assert.equal(isDouyinFavoritesUrl('https://www.douyin.com/video/123456'), false);
   assert.equal(isDouyinFavoritesUrl('https://example.com/user/self?showTab=favorite_collection'), false);
+});
+
+test('favorite-page detection rejects the Douyin likes tab', () => {
+  const isDouyinFavoritesUrl = requireFunction('isDouyinFavoritesUrl');
+
+  assert.equal(isDouyinFavoritesUrl('https://www.douyin.com/user/self?showTab=like'), false);
+});
+
+test('collect rejects video-like paths that are not canonical video pages', async () => {
+  const collect = requireFunction('collectDouyinFavorites');
+  const { runtime } = createPageRuntime([[
+    'https://www.douyin.com/foo/video/345678/bar',
+  ]]);
+
+  const result = await collect(0, 2, 0, runtime);
+
+  assert.deepEqual(result.links, []);
 });
 
 test('queue message matches the existing backend contract', () => {
