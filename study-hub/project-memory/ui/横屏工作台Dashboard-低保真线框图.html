@@ -1,0 +1,2749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Hub Dashboard - 4×8 网格系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f0f0;
+            color: #333;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ========== 顶部导航栏 ========== */
+        .top-nav-bar {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            height: 56px;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+        .nav-logo {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .nav-logo-icon {
+            width: 28px;
+            height: 28px;
+            background: #e85d2e;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            justify-content: center;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            white-space: nowrap;
+        }
+        .nav-link:hover { color: #fff; background: #333; }
+        .nav-link.active {
+            color: #fff;
+            background: #333;
+            font-weight: 500;
+        }
+        .nav-search {
+            width: 240px;
+            height: 36px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            color: #888;
+            flex-shrink: 0;
+        }
+        .nav-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .nav-action-btn {
+            width: 36px;
+            height: 36px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #aaa;
+            cursor: pointer;
+            border: none;
+        }
+        .nav-action-btn:hover { background: #333; }
+        .nav-avatar {
+            width: 36px;
+            height: 36px;
+            background: #e85d2e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* ========== 页面容器 ========== */
+        .page { display: none; height: 100vh; flex-direction: column; }
+        .page.active { display: flex; }
+        .page-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 20px 24px;
+        }
+
+        /* ========== 8×4 网格系统 (Home) ========== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
+            height: 100%;
+            position: relative;
+        }
+        /* 网格背景虚线框 */
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .grid-bg-cell {
+            border: 1.5px dashed rgba(128,128,128,0.45);
+            border-radius: 16px;
+        }
+        .dashboard-grid > .grid-card {
+            position: relative;
+            z-index: 1;
+        }
+        .grid-card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 16px;
+            padding: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+        }
+        .grid-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .grid-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            z-index: 100;
+        }
+        .grid-card.drag-over {
+            border-color: #e85d2e;
+            background: #fff8f5;
+        }
+        .card-1x1 { grid-column: span 1; grid-row: span 1; }
+        .card-1x2 { grid-column: span 1; grid-row: span 2; }
+        .card-2x1 { grid-column: span 2; grid-row: span 1; }
+        .card-2x2 { grid-column: span 2; grid-row: span 2; }
+        .card-4x2 { grid-column: span 4; grid-row: span 2; }
+        .card-1x4 { grid-column: span 1; grid-row: span 4; }
+        .card-2x3 { grid-column: span 2; grid-row: span 3; }
+        .card-1x3 { grid-column: span 1; grid-row: span 3; }
+        .drag-handle {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            background: #eee;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .grid-card:hover .drag-handle { opacity: 1; }
+
+        /* ========== 通用组件 ========== */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card-icon {
+            width: 20px; height: 20px;
+            background: #ddd;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .card-badge {
+            background: #e85d2e;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .list-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .item-dot {
+            width: 6px; height: 6px;
+            background: #bbb;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .item-dot.green { background: #2ecc71; }
+        .item-dot.red { background: #e74c3c; }
+        .item-dot.yellow { background: #f39c12; }
+        .item-dot.orange { background: #e85d2e; }
+
+        /* 分段进度条 */
+        .platform-segments {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 8px;
+        }
+        .platform-segment {
+            width: 28px;
+            height: 4px;
+            border-radius: 2px;
+            background: #eee;
+        }
+        .platform-segment.fill { background: #e85d2e; }
+        .platform-segment.fill-done { background: #2ecc71; }
+        .platform-segment.fill-warn { background: #f39c12; }
+        .platform-segment.fill-error { background: #e74c3c; }
+
+        /* 深色卡片 */
+        .dark-card {
+            background: #1a1a1a;
+            border-color: #2a2a2a;
+            color: #fff;
+        }
+        .dark-card .card-title { color: #fff; }
+        .dark-card .list-item { color: #ccc; border-color: #2a2a2a; }
+
+        /* 统计数字 */
+        .stat-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .stat-box {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            background: #f8f8f8;
+            border-radius: 8px;
+        }
+        .stat-box .stat-num {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-box .stat-label {
+            font-size: 9px;
+            color: #888;
+        }
+        .dark-card .stat-box { background: #2a2a2a; }
+        .dark-card .stat-box .stat-num { color: #fff; }
+
+        /* 时间线 */
+        .timeline-track {
+            position: relative;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-bottom: 6px;
+        }
+        .timeline-fill {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            display: flex;
+            width: 100%;
+        }
+        .timeline-segment {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .timeline-segment.morning { background: #e85d2e; flex: 4; }
+        .timeline-segment.afternoon { background: #f4a261; flex: 4; }
+        .timeline-segment.evening { background: #f4d0a4; flex: 2; }
+        .timeline-segment.night { background: #fae1c8; flex: 2; }
+        .timeline-now-marker {
+            position: absolute;
+            top: -8px;
+            left: 55%;
+            transform: translateX(-50%);
+        }
+        .timeline-now-label {
+            font-size: 9px;
+            font-weight: 600;
+            color: #333;
+            background: #fff;
+            padding: 1px 4px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+        .timeline-now-line {
+            width: 2px;
+            height: 10px;
+            background: #333;
+            margin: 0 auto;
+        }
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        /* 进度条 */
+        .progress-bars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .progress-bar {
+            height: 20px;
+            border-radius: 6px;
+            flex: 1;
+            position: relative;
+        }
+        .progress-bar .bar-label {
+            position: absolute;
+            top: -14px;
+            left: 0;
+            font-size: 9px;
+            font-weight: 600;
+            color: #666;
+        }
+        .progress-bar.bar-1 { background: #e85d2e; }
+        .progress-bar.bar-2 { background: #f4a261; }
+        .progress-bar.bar-3 { background: #f4d0a4; }
+        .progress-bar.bar-done { background: #2ecc71; }
+        .progress-bar.bar-warn { background: #f39c12; }
+
+        /* 任务状态 */
+        .task-status {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+        }
+        .task-status.done { background: #e85d2e; color: #fff; }
+        .task-status.pending { background: #444; }
+        .task-status.urgent { background: #e74c3c; }
+
+        /* 底部标签 */
+        .card-tabs {
+            display: flex;
+            gap: 4px;
+            margin-top: auto;
+            padding-top: 8px;
+        }
+        .card-tab {
+            flex: 1;
+            padding: 4px 6px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+        }
+        .card-tab.active {
+            background: #333;
+            color: #fff;
+        }
+        .dark-card .card-tab {
+            background: #2a2a2a;
+            color: #888;
+        }
+        .dark-card .card-tab.active {
+            background: #e85d2e;
+            color: #fff;
+        }
+
+        /* ========== 热力图组件 (Work Activity) ========== */
+        .heatmap-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+        .heatmap-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+        .heatmap-dropdown {
+            padding: 3px 10px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #555;
+            cursor: pointer;
+        }
+        .heatmap-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-label {
+            width: 32px;
+            font-size: 10px;
+            color: #888;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .heatmap-cells {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 3px;
+            flex: 1;
+            height: 100%;
+        }
+        .heatmap-cell {
+            border-radius: 4px;
+            min-height: 0;
+        }
+        .heatmap-cell.empty { background: #e8e8e8; }
+        .heatmap-cell.light { background: #f4a4a4; }
+        .heatmap-cell.medium { background: #f4a261; }
+        .heatmap-cell.dark { background: #e86a33; }
+
+        /* 4×2 热力图专用布局 */
+        .heatmap-4x2 .heatmap-body {
+            flex-direction: row;
+            gap: 6px;
+        }
+        .heatmap-4x2 .heatmap-col {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 3px;
+            min-width: 0;
+        }
+        .heatmap-4x2 .heatmap-col-label {
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+        .heatmap-4x2 .heatmap-col-cells {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-4x2 .heatmap-col-cell {
+            flex: 1;
+            border-radius: 4px;
+            min-height: 0;
+        }
+        .heatmap-4x2 .heatmap-col-cell.empty { background: #e8e8e8; }
+        .heatmap-4x2 .heatmap-col-cell.light { background: #f4a4a4; }
+        .heatmap-4x2 .heatmap-col-cell.dark { background: #e86a33; }
+        .heatmap-4x2 .heatmap-row-labels {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        .heatmap-4x2 .heatmap-row-label {
+            flex: 1;
+            font-size: 10px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-height: 0;
+        }
+
+        /* 2×2 热力图专用布局 */
+        .heatmap-2x2 {
+            padding: 12px !important;
+        }
+        .heatmap-2x2 .heatmap-2x2-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 4px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-2x2 .heatmap-2x2-cell {
+            border-radius: 6px;
+            min-height: 0;
+        }
+        .heatmap-2x2 .heatmap-2x2-cell.empty { background: #e8e8e8; }
+        .heatmap-2x2 .heatmap-2x2-cell.light { background: #f4a4a4; }
+        .heatmap-2x2 .heatmap-2x2-cell.dark { background: #e86a33; }
+
+        .placeholder-solid {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        /* ========== 其他页面通用布局 ========== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .page-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .page-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            border: none;
+            cursor: pointer;
+        }
+        .page-btn.primary {
+            background: #333;
+            color: #fff;
+        }
+
+        /* 三栏布局 */
+        .three-col-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 280px;
+            gap: 16px;
+            height: 100%;
+        }
+        .two-col-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 16px;
+            height: 100%;
+        }
+        .sidebar {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .sidebar-item {
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .sidebar-item:hover { background: #f0f0f0; }
+        .sidebar-item.active { background: #e8e8e8; font-weight: 500; }
+        .tag-chip {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #666;
+            margin: 4px 4px 0 0;
+        }
+        .main-panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .dock-panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .dock-section {
+            margin-bottom: 20px;
+        }
+        .dock-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .dock-item {
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        /* 平台列表 */
+        .platform-list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .platform-list-item:last-child { border-bottom: none; }
+        .platform-name {
+            font-size: 13px;
+            color: #fff;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        .platform-progress {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .platform-value {
+            font-size: 12px;
+            color: #aaa;
+            min-width: 60px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .platform-list-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #2a2a2a;
+        }
+        .platform-more {
+            font-size: 12px;
+            color: #888;
+        }
+        .platform-viewall {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .platform-viewall:hover { background: #333; }
+
+        /* 日历 */
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        .cal-day {
+            aspect-ratio: 1;
+            background: #f8f8f8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            position: relative;
+        }
+        .cal-day.today {
+            background: #333;
+            color: #fff;
+        }
+
+        /* 流程节点 */
+        .flow-canvas {
+            position: relative;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 16px;
+            padding: 24px;
+            overflow: hidden;
+        }
+        .flow-node {
+            position: absolute;
+            padding: 12px 20px;
+            background: #f5f5f5;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* 响应式标注 */
+        .breakpoint-note {
+            position: fixed;
+            bottom: 16px; right: 16px;
+            background: #333;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 100;
+        }
+        /* ========== Module Info Panel (click feedback) ========== */
+        .module-info-panel {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: #fff; border: 2px solid #333; border-radius: 16px;
+            padding: 24px; min-width: 320px; max-width: 480px; z-index: 1000;
+            box-shadow: 0 12px 40px rgba(0,0,0,.15); display:none;
+            font-size: 13px; line-height: 1.6;
+        }
+        .module-info-panel.show { display: block; }
+        .module-info-panel .mi-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: #333; }
+        .module-info-panel .mi-subtitle { font-size: 11px; color: #888; margin-bottom: 12px; }
+        .module-info-panel .mi-desc { font-size: 13px; color: #555; margin-bottom: 12px; }
+        .module-info-panel .mi-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .module-info-panel .mi-close {
+            position: absolute; top: 12px; right: 14px;
+            width: 28px; height: 28px; background: #f0f0f0; border: 1px solid #ddd;
+            border-radius: 8px; cursor: pointer; font-size: 14px; display: flex;
+            align-items: center; justify-content: center; color: #666;
+        }
+        .module-info-overlay {
+            position: fixed; inset:0; background: rgba(0,0,0,.2); z-index: 999; display:none;
+        }
+        .module-info-overlay.show { display: block; }
+        .clickable { cursor: pointer; position: relative; }
+        .clickable:active { transform: scale(.98); }
+        .clickable-highlight { outline: 2px dashed #e85d2e; outline-offset: 2px; border-radius: 8px; }
+
+        /* ========== Brainstorm Page ========== */
+        .brainstorm-mode-card {
+            padding: 16px; background: #f8f8f8; border: 2px solid #ddd;
+            border-radius: 12px; cursor: pointer; transition: all .2s;
+        }
+        .brainstorm-mode-card:hover { border-color: #e85d2e; background: #fff8f5; }
+        .brainstorm-mode-card.selected { border-color: #e85d2e; background: #fff0eb; }
+        .chat-bubble {
+            padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.6;
+        }
+        .chat-bubble.user { background: #f0f0f0; color: #333; margin-left: 40px; }
+        .chat-bubble.ai { background: #fff; border: 1px solid #eee; color: #555; margin-right: 40px; }
+
+        /* ========== Skill Market ========== */
+        .skill-card-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .skill-item {
+            padding: 16px; background: #fff; border: 2px solid #ddd;
+            border-radius: 12px; cursor: pointer; transition: all .2s;
+        }
+        .skill-item:hover { border-color: #e85d2e; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+        .skill-item .skill-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #333; }
+        .skill-item .skill-desc { font-size: 11px; color: #888; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .skill-item .skill-meta { display: flex; gap: 12px; margin-top: 8px; font-size: 10px; color: #aaa; }
+
+        /* ========== Second Self ========== */
+        .chat-container { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .chat-input-row { display: flex; gap: 8px; margin-top: 12px; }
+        .memory-stat { flex: 1; text-align: center; padding: 12px; background: #f8f8f8; border-radius: 10px; }
+
+        /* ========== Settings ========== */
+        .settings-section { margin-bottom: 20px; }
+        .settings-label { font-size: 11px; color: #888; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: .5px; }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; color: #555; }
+        .toggle-switch { width: 44px; height: 24px; background: #ddd; border-radius: 12px; cursor: pointer; position: relative; transition: background .2s; }
+        .toggle-switch.on { background: #e85d2e; }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: left .2s; }
+        .toggle-switch.on::after { left: 22px; }
+
+        /* ========== States Demo ========== */
+        .state-card { padding: 20px; text-align: center; }
+        .state-card .state-icon { font-size: 40px; margin-bottom: 8px; opacity: .6; }
+        .state-card .state-label { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 4px; }
+        .state-card .state-hint { font-size: 11px; color: #888; }
+
+        /* ========== Page Header ========== */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-shrink: 0; }
+        .page-title { font-size: 20px; font-weight: bold; }
+        .page-actions { display: flex; gap: 8px; }
+        .page-btn { padding: 8px 16px; background: #f0f0f0; border-radius: 8px; font-size: 13px; color: #555; border: none; cursor: pointer; }
+        .page-btn.primary { background: #333; color: #fff; }
+        .page-btn.primary:hover { background: #555; }
+        .page-btn:hover { background: #e0e0e0; }
+
+        /* ========== Segmented Control ========== */
+        .segmented-tabs {
+            display: flex; background: #f0f0f0; border-radius: 8px; padding: 2px; gap: 1px;
+        }
+        .segmented-tab {
+            padding: 6px 14px; border-radius: 7px; font-size: 12px; color: #666;
+            cursor: pointer; border: none; background: none; transition: all .2s;
+        }
+        .segmented-tab.active { background: #fff; color: #333; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+        /* ========== Learning specific ========== */
+        .checklist-group { margin-bottom: 14px; }
+        .checklist-group-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+        .checklist-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; color: #555; }
+        .check-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ccc; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        .check-circle.done { background: #e85d2e; border-color: #e85d2e; color: #fff; }
+
+        /* ========== SOP specific ========== */
+        .block-chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+            background: #f8f8f8; border: 1px solid #ddd; border-radius: 10px;
+            font-size: 12px; cursor: grab; transition: all .2s;
+        }
+        .block-chip:hover { border-color: #999; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+        .block-chip.dragging { opacity: .5; }
+        .chain-step {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            background: #f8f8f8; border-radius: 10px; margin-bottom: 6px;
+            border-left: 4px solid #ddd; cursor: pointer; transition: all .2s;
+        }
+        .chain-step:hover { background: #f0f0f0; }
+        .chain-step.input { border-left-color: #2ecc71; }
+        .chain-step.process { border-left-color: #3498db; }
+        .chain-step.validate { border-left-color: #f39c12; }
+        .chain-step.output { border-left-color: #8b5cf6; }
+
+        /* ========== 扩展页通用 ========== */
+        .section-header {
+            font-size: 12px; font-weight: 600; color: #666; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+        .info-tag {
+            display: inline-block; padding: 3px 8px; background: #f0f0f0;
+            border-radius: 6px; font-size: 10px; color: #666; margin-right: 4px; margin-bottom: 4px;
+        }
+        .info-tag.accent { background: #e85d2e; color: #fff; }
+    </style>
+</head>
+<body>
+
+<!-- ==================== HOME 页面 (4×8 网格) ==================== -->
+<div id="home" class="page active">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link active" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search all knowledge / actions...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="dashboard-grid" id="dashboard-grid">
+            <div class="grid-bg" id="grid-bg"></div>
+            <!-- 卡片1: Queue (2×2) -->
+            <div class="grid-card dark-card card-2x2" draggable="true" data-card="queue">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title">⚡ Queue / Progress</div>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #3</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 2/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">B站同步</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 1/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">小红书导入</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-warn"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">等待中</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #2</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">已完成</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #1</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-error"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">失败</span>
+                </div>
+                <div class="platform-list-footer">
+                    <span class="platform-more">+2 more</span>
+                    <button class="platform-viewall">View all</button>
+                </div>
+            </div>
+
+            <!-- 卡片2: Today Focus / DDL (2×2) -->
+            <div class="grid-card card-2x2" draggable="true" data-card="focus">
+                <div class="drag-handle">⋮⋮</div>
+                <div style="margin-bottom:8px;">
+                    <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">📅 TODAY TIMELINE · 06-07</div>
+                    <div class="timeline-track">
+                        <div class="timeline-fill">
+                            <div class="timeline-segment morning"></div>
+                            <div class="timeline-segment afternoon"></div>
+                            <div class="timeline-segment evening"></div>
+                            <div class="timeline-segment night"></div>
+                        </div>
+                        <div class="timeline-now-marker">
+                            <div class="timeline-now-label">14:30</div>
+                            <div class="timeline-now-line"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-labels">
+                        <span>06:00</span>
+                        <span>12:00</span>
+                        <span>18:00</span>
+                        <span>24:00</span>
+                    </div>
+                </div>
+                <div id="focus-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                    <div class="card-header" style="margin-bottom:6px;">
+                        <div class="card-title">📌 Today Focus</div>
+                        <div style="font-size:16px;font-weight:bold;">60%</div>
+                    </div>
+                    <div class="progress-bars">
+                        <div class="progress-bar bar-1" style="flex:3;"><span class="bar-label">30%</span></div>
+                        <div class="progress-bar bar-2" style="flex:2;"><span class="bar-label">25%</span></div>
+                        <div class="progress-bar bar-3" style="flex:1;"><span class="bar-label">5%</span></div>
+                    </div>
+                </div>
+                <div class="card-tabs">
+                    <button class="card-tab active" onclick="switchFocusView('today')">Today Focus</button>
+                    <button class="card-tab" onclick="switchFocusView('ddl')">DDL</button>
+                </div>
+            </div>
+
+            <!-- 卡片3: Queue Mini (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="queue-mini">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>⚡ Queue</div>
+                </div>
+                <div class="platform-segments">
+                    <div class="platform-segment fill-done"></div>
+                    <div class="platform-segment fill"></div>
+                    <div class="platform-segment"></div>
+                </div>
+                <div class="list-item"><div class="item-dot green"></div>抖音 #3 · 步骤 2/3</div>
+                <div class="list-item"><div class="item-dot yellow"></div>B站同步 · 步骤 1/3</div>
+                <div class="list-item"><div class="item-dot"></div>小红书 · 等待中</div>
+            </div>
+
+            <!-- 卡片3: DDL Mini (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="ddl-mini">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>📅 DDL</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-box">
+                        <div class="stat-num" style="color:#e74c3c;">2</div>
+                        <div class="stat-label">超期</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" style="color:#f39c12;">5</div>
+                        <div class="stat-label">今日</div>
+                    </div>
+                </div>
+                <div class="list-item"><div class="item-dot red"></div>14:00 项目评审</div>
+                <div class="list-item"><div class="item-dot yellow"></div>18:00 提交周报</div>
+            </div>
+
+            <!-- 卡片4: Wiki Recent (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="wiki">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>Wiki Recent</div>
+                </div>
+                <div class="list-item"><div class="item-dot green"></div>Docker 网络模式</div>
+                <div class="list-item"><div class="item-dot"></div>Python 并发编程</div>
+                <div class="list-item"><div class="item-dot"></div>React 性能优化</div>
+                <div class="list-item"><div class="item-dot"></div>机器学习基础</div>
+            </div>
+
+            <!-- 卡片5: KB Stats (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="kb-stats">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>📚 KB Stats</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-box">
+                        <div class="stat-num">128</div>
+                        <div class="stat-label">文档</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num">24</div>
+                        <div class="stat-label">标签</div>
+                    </div>
+                </div>
+                <div class="list-item"><div class="item-dot green"></div>本周新增 12 篇</div>
+            </div>
+
+            <!-- 卡片7: Creator / Workflow (2×2) -->
+            <div class="grid-card card-2x2" draggable="true" data-card="creator">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>Creator / Workflow</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;">
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">📄 文章模板</div>
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">📊 数据报告</div>
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">🔄 自动化流</div>
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">📝 快速笔记</div>
+                </div>
+            </div>
+
+            <!-- 卡片8: Journal / Review (2×2) -->
+            <div class="grid-card card-2x2" draggable="true" data-card="journal">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>Journal / Review</div>
+                </div>
+                <div style="display:flex;gap:12px;flex:1;">
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">今日手账</div>
+                        <div class="placeholder-solid" style="flex:1;padding:8px;font-size:11px;color:#888;display:flex;align-items:center;">早晨完成了 Wiki 编译优化...</div>
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">随机回顾</div>
+                        <div class="placeholder-solid" style="flex:1;padding:8px;font-size:11px;color:#888;display:flex;align-items:center;">2024-03-15: 学习了 Docker...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 卡片9: Work Activity 热力图 (4×2) -->
+            <div class="grid-card card-4x2 heatmap-card heatmap-4x2" draggable="true" data-card="work-activity">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header" style="margin-bottom:6px;">
+                    <div class="card-title">📊 Work Activity</div>
+                    <div style="font-size:10px;padding:2px 8px;background:#f0f0f0;border-radius:4px;color:#666;cursor:pointer;">Weekly ▼</div>
+                </div>
+                <div class="heatmap-body" style="flex-direction:row;gap:6px;flex:1;">
+                    <div class="heatmap-row-labels" style="display:flex;flex-direction:column;gap:3px;margin-right:4px;flex-shrink:0;">
+                        <div style="flex:1;font-size:10px;color:#888;display:flex;align-items:center;justify-content:flex-end;">Mon-Fri</div>
+                        <div style="flex:1;font-size:10px;color:#888;display:flex;align-items:center;justify-content:flex-end;">Sat-Sun</div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">11pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell dark" style="flex:1;border-radius:4px;min-height:0;"></div>
+                            <div class="heatmap-col-cell light" style="flex:1;border-radius:4px;min-height:0;"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">12pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell dark" style="flex:1;border-radius:4px;min-height:0;"></div>
+                            <div class="heatmap-col-cell empty" style="flex:1;border-radius:4px;min-height:0;background:#e8e8e8;"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">1pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell light" style="flex:1;border-radius:4px;min-height:0;background:#f4a4a4;"></div>
+                            <div class="heatmap-col-cell dark" style="flex:1;border-radius:4px;min-height:0;"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">2pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell empty" style="flex:1;border-radius:4px;min-height:0;background:#e8e8e8;"></div>
+                            <div class="heatmap-col-cell empty" style="flex:1;border-radius:4px;min-height:0;background:#e8e8e8;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== WIKI 页面 ==================== -->
+<div id="wiki" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link active" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search pages...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Wiki Knowledge</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ New Page</button>
+                <button class="page-btn">Compile</button>
+                <button class="page-btn">Theme</button>
+            </div>
+        </div>
+        <div class="three-col-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">Categories</div>
+                <div class="sidebar-item">📁 技术笔记</div>
+                <div class="sidebar-item active">📁 Docker & K8s</div>
+                <div class="sidebar-item">📁 Python</div>
+                <div class="sidebar-item">📁 前端开发</div>
+                <div class="sidebar-item">📁 机器学习</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Recent</div>
+                <div class="sidebar-item">📄 Docker 网络模式</div>
+                <div class="sidebar-item">📄 Compose 进阶</div>
+                <div class="sidebar-item">📄 容器安全</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Tags</div>
+                <div>
+                    <span class="tag-chip">docker</span>
+                    <span class="tag-chip">network</span>
+                    <span class="tag-chip">devops</span>
+                    <span class="tag-chip">container</span>
+                </div>
+            </div>
+            <div class="main-panel">
+                <div style="font-size:24px;font-weight:bold;margin-bottom:12px;">Docker 网络模式详解</div>
+                <div style="display:flex;gap:8px;margin-bottom:20px;">
+                    <span class="tag-chip">📅 2024-06-07</span>
+                    <span class="tag-chip">🏷️ docker</span>
+                    <span class="tag-chip">🏷️ network</span>
+                    <span class="tag-chip">✏️ 编辑中</span>
+                </div>
+                <div style="font-size:14px;line-height:1.8;color:#444;">
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## 概述</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">Docker 网络是容器化应用的核心基础设施之一...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## bridge 模式（默认）</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">bridge 是 Docker 默认的网络模式，创建一个虚拟网桥...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## host 模式</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">host 模式下容器直接使用宿主机的网络栈...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## overlay 模式</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">overlay 网络用于跨主机的容器通信...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## 实际应用场景</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">在生产环境中，我们通常需要结合多种网络模式...</p>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">🔗 Wikilink Preview</div>
+                    <div class="dock-item">bridge 模式 → 虚拟网桥</div>
+                    <div class="dock-item">overlay → Swarm 集群</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">↩️ Backlinks</div>
+                    <div class="dock-item">Docker 入门指南</div>
+                    <div class="dock-item">容器网络最佳实践</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📎 Related</div>
+                    <div class="dock-item">Kubernetes CNI</div>
+                    <div class="dock-item">Calico 网络方案</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">⚡ Actions</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <span class="tag-chip">编辑</span>
+                        <span class="tag-chip">分享</span>
+                        <span class="tag-chip">导出</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== KNOWLEDGE BASE 页面 ==================== -->
+<div id="kb" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link active" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search documents...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Knowledge Base</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ Import</button>
+                <button class="page-btn">Filter</button>
+                <button class="page-btn">Sort</button>
+            </div>
+        </div>
+        <div class="three-col-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">Sources</div>
+                <div class="sidebar-item active">📁 All Documents</div>
+                <div class="sidebar-item">📁 Imported</div>
+                <div class="sidebar-item">📁 Automation</div>
+                <div class="sidebar-item">📁 Manual</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Categories</div>
+                <div class="sidebar-item">📁 技术</div>
+                <div class="sidebar-item">📁 产品</div>
+                <div class="sidebar-item">📁 设计</div>
+                <div class="sidebar-item">📁 运营</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Tags</div>
+                <div>
+                    <span class="tag-chip">docker</span>
+                    <span class="tag-chip">python</span>
+                    <span class="tag-chip">react</span>
+                    <span class="tag-chip">ml</span>
+                </div>
+            </div>
+            <div class="sidebar" style="overflow-y:auto;">
+                <div class="sidebar-header">Documents (128)</div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#e8e8e8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">Docker 网络模式详解</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 2.3k words · 06-07</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f8f8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">Python 并发编程笔记</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 1.8k words · 06-06</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f8f8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">React 性能优化清单</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 1.2k words · 06-05</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f8f8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">机器学习基础概念</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 3.1k words · 06-04</div>
+                    </div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <div style="font-size:14px;font-weight:600;">Document Preview</div>
+                        <div style="display:flex;gap:6px;">
+                            <span class="tag-chip">Open</span>
+                            <span class="tag-chip">Edit</span>
+                        </div>
+                    </div>
+                    <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">Docker 网络模式详解</div>
+                    <div style="display:flex;gap:8px;margin-bottom:16px;">
+                        <span class="tag-chip">📄 Markdown</span>
+                        <span class="tag-chip">2.3k words</span>
+                        <span class="tag-chip">🏷️ docker</span>
+                    </div>
+                    <div style="font-size:13px;line-height:1.8;color:#555;">
+                        <p style="margin-bottom:10px;">本文详细介绍了 Docker 的四种网络模式：bridge、host、none 和 overlay...</p>
+                        <p style="margin-bottom:10px;">bridge 模式是默认模式，创建一个虚拟网桥 docker0...</p>
+                    </div>
+                    <div class="dock-section" style="margin-top:20px;">
+                        <div class="dock-title">📎 Related Documents</div>
+                        <div class="dock-item">Docker Compose 网络配置</div>
+                        <div class="dock-item">Kubernetes CNI 插件</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== AUTOMATION 页面 ==================== -->
+<div id="auto" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link active" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search tasks...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Automation</div>
+            <div class="page-actions">
+                <button class="page-btn primary">Queue (5)</button>
+                <button class="page-btn">History</button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:16px;height:calc(100% - 60px);">
+            <div style="background:#fff;border:2px solid #ddd;border-radius:16px;padding:24px;">
+                <h3 style="margin-bottom:16px;font-size:14px;color:#666;">Submit Task</h3>
+                <div style="height:100px;background:#f5f5f5;border:2px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;margin-bottom:16px;">
+                    📋 Paste URL / Batch Input<br><span style="font-size:11px;">支持抖音、B站、小红书链接</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <div style="padding:8px 16px;background:#333;color:#fff;border-radius:8px;font-size:12px;">抖音</div>
+                    <div style="padding:8px 16px;background:#f0f0f0;border-radius:8px;font-size:12px;color:#555;">B站</div>
+                    <div style="padding:8px 16px;background:#f0f0f0;border-radius:8px;font-size:12px;color:#555;">小红书</div>
+                    <div style="padding:8px 16px;background:#f0f0f0;border-radius:8px;font-size:12px;color:#555;">批量</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <div class="placeholder-solid" style="flex:1;padding:10px;font-size:12px;text-align:center;">解析视频</div>
+                    <div class="placeholder-solid" style="flex:1;padding:10px;font-size:12px;text-align:center;">提取文本</div>
+                    <div class="placeholder-solid" style="flex:1;padding:10px;font-size:12px;text-align:center;">生成笔记</div>
+                </div>
+                <button style="padding:10px 24px;background:#333;color:#fff;border-radius:8px;font-size:13px;border:none;cursor:pointer;width:100%;">Submit Task →</button>
+            </div>
+            <div class="dark-card" style="border-radius:16px;padding:20px;">
+                <div class="sidebar-header" style="color:#888;">Queue / Progress</div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #3</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 2/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">B站同步</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 1/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">小红书导入</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-warn"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">等待中</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #2</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">已完成</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #1</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-error"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">失败</span>
+                </div>
+                <div class="platform-list-footer">
+                    <span class="platform-more">+2 more</span>
+                    <button class="platform-viewall">View all</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DDL 页面 ==================== -->
+<div id="ddl" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link active" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search tasks...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">DDL Timeline</div>
+            <div class="page-actions">
+                <button class="page-btn">Today</button>
+                <button class="page-btn">Day</button>
+                <button class="page-btn">Week</button>
+                <button class="page-btn">Month</button>
+                <button class="page-btn primary">+ New Task</button>
+            </div>
+        </div>
+        <div class="two-col-layout">
+            <div style="background:#fff;border:2px solid #ddd;border-radius:16px;padding:24px;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div style="font-size:18px;font-weight:bold;">2024年 6月</div>
+                    <div style="display:flex;gap:8px;">
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;">←</div>
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;">Today</div>
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;">→</div>
+                    </div>
+                </div>
+                <div class="cal-grid">
+                    <div class="cal-day" style="color:#888;">26</div>
+                    <div class="cal-day" style="color:#888;">27</div>
+                    <div class="cal-day" style="color:#888;">28</div>
+                    <div class="cal-day" style="color:#888;">29</div>
+                    <div class="cal-day" style="color:#888;">30</div>
+                    <div class="cal-day" style="color:#888;">31</div>
+                    <div class="cal-day">1</div>
+                    <div class="cal-day">2</div>
+                    <div class="cal-day">3</div>
+                    <div class="cal-day">4</div>
+                    <div class="cal-day">5</div>
+                    <div class="cal-day">6</div>
+                    <div class="cal-day today">7</div>
+                    <div class="cal-day">8</div>
+                    <div class="cal-day">9</div>
+                    <div class="cal-day">10</div>
+                    <div class="cal-day">11</div>
+                    <div class="cal-day">12</div>
+                    <div class="cal-day">13</div>
+                    <div class="cal-day">14</div>
+                    <div class="cal-day">15</div>
+                    <div class="cal-day">16</div>
+                    <div class="cal-day">17</div>
+                    <div class="cal-day">18</div>
+                    <div class="cal-day">19</div>
+                    <div class="cal-day">20</div>
+                    <div class="cal-day">21</div>
+                    <div class="cal-day">22</div>
+                    <div class="cal-day">23</div>
+                    <div class="cal-day">24</div>
+                    <div class="cal-day">25</div>
+                    <div class="cal-day">26</div>
+                    <div class="cal-day">27</div>
+                    <div class="cal-day">28</div>
+                    <div class="cal-day">29</div>
+                    <div class="cal-day">30</div>
+                </div>
+                <div style="margin-top:20px;">
+                    <div class="sidebar-header">今日任务</div>
+                    <div class="list-item"><div class="item-dot red"></div>14:00 项目评审会议 <span style="margin-left:auto;color:#e74c3c;font-size:11px;">超期 2h</span></div>
+                    <div class="list-item"><div class="item-dot yellow"></div>18:00 提交周报</div>
+                    <div class="list-item"><div class="item-dot green"></div>20:00 学习 Docker 网络</div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📋 Selected Task</div>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:8px;">项目评审会议</div>
+                    <div style="font-size:12px;color:#888;margin-bottom:12px;">14:00 · 会议室 A · 高优先级</div>
+                    <div class="dock-item">状态: <span style="color:#e74c3c;">已超期</span></div>
+                    <div class="dock-item">关联: 项目文档 v2</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📊 本周概览</div>
+                    <div style="display:flex;gap:8px;margin-bottom:10px;">
+                        <div style="flex:1;text-align:center;padding:8px;background:#2ecc7122;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#2ecc71;">8</div>
+                            <div style="font-size:10px;">已完成</div>
+                        </div>
+                        <div style="flex:1;text-align:center;padding:8px;background:#f39c1222;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#d4a017;">5</div>
+                            <div style="font-size:10px;">进行中</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <div style="flex:1;text-align:center;padding:8px;background:#e74c3c22;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#e74c3c;">2</div>
+                            <div style="font-size:10px;">超期</div>
+                        </div>
+                        <div style="flex:1;text-align:center;padding:8px;background:#f0f0f0;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;">3</div>
+                            <div style="font-size:10px;">待开始</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== JOURNAL 页面 ==================== -->
+<div id="journal" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link active" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search entries...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Journal</div>
+            <div class="page-actions">
+                <button class="page-btn">📅 2024-06-07</button>
+                <button class="page-btn">🎲 Random Review</button>
+                <button class="page-btn primary">Save</button>
+            </div>
+        </div>
+        <div class="three-col-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">June 2024</div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;font-size:11px;text-align:center;">
+                    <div style="color:#888;">S</div><div style="color:#888;">M</div><div style="color:#888;">T</div><div style="color:#888;">W</div><div style="color:#888;">T</div><div style="color:#888;">F</div><div style="color:#888;">S</div>
+                    <div></div><div></div><div></div><div></div><div></div><div></div><div style="padding:4px;">1</div>
+                    <div style="padding:4px;">2</div><div style="padding:4px;">3</div><div style="padding:4px;">4</div><div style="padding:4px;">5</div><div style="padding:4px;background:#e0e0e0;border-radius:4px;">6</div><div style="padding:4px;background:#333;color:#fff;border-radius:4px;">7</div>
+                </div>
+                <div class="sidebar-header">Past Entries</div>
+                <div class="sidebar-item">06-06 周四 · 完成了 Wiki...</div>
+                <div class="sidebar-item">06-05 周三 · 学习了 Docker...</div>
+                <div class="sidebar-item">06-04 周二 · 整理了自动化...</div>
+                <div class="sidebar-item">06-03 周一 · 制定了本周...</div>
+            </div>
+            <div class="main-panel">
+                <div style="font-size:20px;font-weight:bold;margin-bottom:8px;">2024年6月7日 星期五</div>
+                <div style="display:flex;gap:8px;margin-bottom:24px;">
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😊</div>
+                    <div style="width:32px;height:32px;background:#e0e0e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😐</div>
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😔</div>
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😤</div>
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">🤩</div>
+                </div>
+                <div style="height:300px;background:#fafafa;border:1px solid #eee;border-radius:12px;padding:16px;font-size:14px;line-height:1.8;color:#666;">
+                    今天早晨完成了 Wiki 编译优化的文档整理，感觉很有成就感。<br><br>
+                    下午处理了 3 个自动化队列任务，其中 1 个失败了需要重试。<br><br>
+                    晚上计划学习 Docker 的网络模式，为下周的项目做准备...
+                </div>
+                <div style="margin-top:16px;">
+                    <span class="tag-chip">#学习</span>
+                    <span class="tag-chip">#Docker</span>
+                    <span class="tag-chip">#Wiki</span>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📊 Mood Stats</div>
+                    <div style="height:80px;background:#f0f0f0;border-radius:8px;margin-bottom:10px;display:flex;align-items:flex-end;justify-content:space-around;padding:8px;">
+                        <div style="width:20px;height:40px;background:#ddd;border-radius:4px;"></div>
+                        <div style="width:20px;height:60px;background:#ddd;border-radius:4px;"></div>
+                        <div style="width:20px;height:30px;background:#333;border-radius:4px;"></div>
+                        <div style="width:20px;height:50px;background:#ddd;border-radius:4px;"></div>
+                        <div style="width:20px;height:20px;background:#ddd;border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:11px;color:#888;text-align:center;">本周心情分布</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🏷️ Tags</div>
+                    <div>
+                        <span class="tag-chip">学习 (12)</span>
+                        <span class="tag-chip">Docker (5)</span>
+                        <span class="tag-chip">Wiki (8)</span>
+                        <span class="tag-chip">自动化 (3)</span>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🎲 Random Memory</div>
+                    <div class="dock-item" style="font-size:11px;">
+                        <div style="font-weight:500;margin-bottom:4px;">2024-03-15</div>
+                        <div style="color:#888;">第一次配置成功 Docker Compose，激动了一整天...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== WORKFLOW 页面 ==================== -->
+<div id="flow" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link active" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search flows...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Workflow / SOP</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ Create</button>
+                <button class="page-btn">Templates</button>
+                <button class="page-btn">Run</button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;height:calc(100% - 60px);">
+            <div class="sidebar">
+                <div class="sidebar-header">Templates</div>
+                <div class="sidebar-item active">📄 文章发布流程</div>
+                <div class="sidebar-item">📊 数据报告生成</div>
+                <div class="sidebar-item">🔄 定时备份</div>
+                <div class="sidebar-item">📝 日报生成</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">SOP Blocks</div>
+                <div class="sidebar-item">▶️ 开始节点</div>
+                <div class="sidebar-item">⏸️ 等待节点</div>
+                <div class="sidebar-item">✅ 判断节点</div>
+                <div class="sidebar-item">📧 通知节点</div>
+                <div class="sidebar-item">🔄 循环节点</div>
+            </div>
+            <div class="flow-canvas">
+                <div class="flow-node" style="top:40px;left:200px;">▶️ 开始</div>
+                <div class="flow-node" style="top:120px;left:200px;">📝 获取素材</div>
+                <div class="flow-node" style="top:200px;left:120px;">✅ 内容审核?</div>
+                <div class="flow-node" style="top:280px;left:80px;">❌ 退回修改</div>
+                <div class="flow-node" style="top:280px;left:280px;">✅ 生成文档</div>
+                <div class="flow-node" style="top:360px;left:280px;">📧 发布通知</div>
+                <div class="flow-node" style="top:440px;left:280px;">🏁 结束</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CREATOR HUB 页面 ==================== -->
+<div id="creator" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link active" onclick="showPage('creator')">Creator Hub</button>
+        </div>
+        <div class="nav-search">🔍 Search templates...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Creator Hub</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ New Project</button>
+                <button class="page-btn">Import</button>
+                <button class="page-btn">Export</button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:240px 1fr 280px;gap:16px;height:calc(100% - 60px);">
+            <div class="sidebar">
+                <div class="sidebar-header">Templates</div>
+                <div style="padding:14px;background:#e8e8e8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;border:2px solid #333;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">📄 技术文章</div>
+                    <div style="font-size:11px;color:#888;">结构化技术写作模板</div>
+                </div>
+                <div style="padding:14px;background:#f8f8f8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">📊 数据报告</div>
+                    <div style="font-size:11px;color:#888;">自动图表 + 分析结论</div>
+                </div>
+                <div style="padding:14px;background:#f8f8f8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">🎬 视频脚本</div>
+                    <div style="font-size:11px;color:#888;">分镜 + 台词 + 素材清单</div>
+                </div>
+                <div style="padding:14px;background:#f8f8f8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">📝 学习笔记</div>
+                    <div style="font-size:11px;color:#888;">知识卡片 + 思维导图</div>
+                </div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Materials</div>
+                <div class="sidebar-item">📁 素材库</div>
+                <div class="sidebar-item">📁 引用文献</div>
+                <div class="sidebar-item">📁 代码片段</div>
+                <div class="sidebar-item">📁 图片资源</div>
+            </div>
+            <div style="background:#fff;border:2px solid #ddd;border-radius:16px;padding:24px;position:relative;">
+                <div style="display:flex;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee;">
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">📝 Text</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">📊 Chart</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">🖼 Image</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">📎 Link</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">🤖 AI Assist</div>
+                    <div style="margin-left:auto;display:flex;gap:6px;">
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">Preview</div>
+                        <div style="padding:6px 12px;background:#333;color:#fff;border-radius:6px;font-size:12px;">Publish</div>
+                    </div>
+                </div>
+                <div style="min-height:300px;background:#fafafa;border:2px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px;">
+                    <div style="text-align:center;">
+                        <div style="font-size:16px;font-weight:bold;margin-bottom:8px;">🎨 Creator Workspace</div>
+                        <div style="font-size:13px;color:#aaa;">拖拽组件开始创作 · 支持 Markdown / 图表 / 多媒体</div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div class="placeholder-solid" style="padding:12px;font-size:12px;text-align:center;">📄 大纲视图</div>
+                    <div class="placeholder-solid" style="padding:12px;font-size:12px;text-align:center;">📊 数据面板</div>
+                    <div class="placeholder-solid" style="padding:12px;font-size:12px;text-align:center;">🤖 AI 建议</div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📋 Project Info</div>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:8px;">Docker 网络模式详解</div>
+                    <div style="font-size:12px;color:#888;margin-bottom:12px;">技术文章 · 草稿 · 30%</div>
+                    <div style="height:6px;background:#eee;border-radius:3px;margin-bottom:12px;overflow:hidden;">
+                        <div style="height:100%;width:30%;background:#333;border-radius:3px;"></div>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🏷️ Properties</div>
+                    <div class="dock-item">类型: 技术文章</div>
+                    <div class="dock-item">目标: Wiki + KB</div>
+                    <div class="dock-item">字数: 1,200 / 3,000</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🤖 AI Assistant</div>
+                    <div class="dock-item" style="font-size:11px;">建议补充 overlay 模式的实际案例...</div>
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <span class="tag-chip">续写</span>
+                        <span class="tag-chip">润色</span>
+                        <span class="tag-chip">查错</span>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📎 References</div>
+                    <div class="dock-item">Docker 官方文档</div>
+                    <div class="dock-item">Kubernetes 网络</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== BRAINSTORM 页面 ==================== -->
+<div id="brainstorm" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link active" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search ideas...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Brainstorm</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ New Session</button>
+                <button class="page-btn">History</button>
+            </div>
+        </div>
+        <div class="three-col-layout" style="grid-template-columns:280px 1fr 0;gap:16px;">
+            <div class="sidebar clickable" onclick="showModuleInfo(this,'🧭 Define Topic','Step 1 of 3','Enter your brainstorming topic and choose between Idea Diverge (broad exploration) or Prompt Optimize (focused refinement). The AI will guide you through iterative rounds.')">
+                <div class="sidebar-header">🧭 Step 1: Define Topic</div>
+                <div style="min-height:80px;background:#f5f5f5;border:2px dashed #ccc;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px;margin-bottom:12px;padding:12px;text-align:center;">How to design a scalable microservice architecture</div>
+                <div class="sidebar-header">🎯 Step 2: Choose Mode</div>
+                <div class="brainstorm-mode-card selected" style="margin-bottom:8px;" onclick="event.stopPropagation();showModuleInfo(this,'🌊 Idea Diverge','Divergent Thinking','Explore multiple angles, generate diverse ideas, and discover unexpected connections. Best for early-stage exploration and creative problem-solving.')">
+                    <div style="font-weight:600;font-size:13px;margin-bottom:2px;">🌊 Idea Diverge</div>
+                    <div style="font-size:11px;color:#888;">发散思维 · 多角度探索</div>
+                </div>
+                <div class="brainstorm-mode-card" style="margin-bottom:12px;" onclick="event.stopPropagation();showModuleInfo(this,'🎯 Prompt Optimize','Focused Refinement','Iteratively refine prompts to get precise, high-quality outputs. Best when you know what you want but need to optimize the approach.')">
+                    <div style="font-weight:600;font-size:13px;margin-bottom:2px;">🎯 Prompt Optimize</div>
+                    <div style="font-size:11px;color:#888;">优化提示词 · 精准输出</div>
+                </div>
+                <button class="page-btn primary" style="width:100%;" onclick="showModuleInfo(this,'🚀 Start Brainstorm','Launch Session','Begins the AI brainstorming session with your topic. The system will ask questions, challenge assumptions, and help you explore the problem space.')">🚀 Start →</button>
+            </div>
+            <div class="main-panel clickable" style="display:flex;flex-direction:column;" onclick="showModuleInfo(this,'💬 Conversation','Step 3: Iterative Rounds','The AI engages in multi-turn conversation: asking clarifying questions, proposing alternatives, challenging assumptions, and building on your ideas. Each round deepens the exploration.')">
+                <div style="font-weight:600;font-size:14px;margin-bottom:12px;color:#333;">💬 Step 3: Conversation Rounds</div>
+                <div style="flex:1;overflow-y:auto;">
+                    <div class="chat-bubble user clickable" onclick="event.stopPropagation();showModuleInfo(this,'User Message','Your Input','Your question or topic. The AI will analyze and respond with structured thinking.')"><strong>You:</strong> What are key architecture patterns for scalable microservices?</div>
+                    <div class="chat-bubble ai clickable" onclick="event.stopPropagation();showModuleInfo(this,'AI Response','Structured Analysis','AI breaks down complex topics into digestible patterns: API Gateway, Service Discovery, Circuit Breaker, Event-Driven, CQRS, Saga.')"><strong>AI:</strong> 6 key patterns: 1. API Gateway 2. Service Discovery 3. Circuit Breaker 4. Event-Driven 5. CQRS 6. Saga. Which to explore?</div>
+                    <div class="chat-bubble user clickable" onclick="event.stopPropagation();showModuleInfo(this,'User Follow-up','Deep Dive','Narrow the focus. The AI goes deeper into a specific pattern, providing implementation guidance.')"><strong>You:</strong> Tell me more about Event-Driven</div>
+                    <div class="chat-bubble ai clickable" onclick="event.stopPropagation();showModuleInfo(this,'AI Deep Dive','Detailed Analysis','Provides concrete recommendations: benefits (loose coupling, scalability), challenges (eventual consistency), and practical stack suggestions (Redis Streams, NATS for startups).')"><strong>AI:</strong> EDA decouples services via message brokers (Kafka, RabbitMQ). Benefits: loose coupling, scalability. For startups: start with Redis Streams or NATS.</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <input class="inp" placeholder="Ask a follow-up question..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+                    <button class="page-btn primary" onclick="showModuleInfo(this,'Send Message','Continue Conversation','Sends your follow-up question to the AI for the next round of brainstorming.')">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== LEARNING 页面 ==================== -->
+<div id="learning" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link active" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search plans...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Learning</div>
+            <div class="page-actions">
+                <div class="segmented-tabs">
+                    <button class="segmented-tab active" onclick="switchLearningTab('checklist',this)">Checklist</button>
+                    <button class="segmented-tab" onclick="switchLearningTab('plan',this)">Plan</button>
+                    <button class="segmented-tab" onclick="switchLearningTab('overview',this)">Overview</button>
+                </div>
+                <button class="page-btn primary">+ New Plan</button>
+            </div>
+        </div>
+        <div id="learning-checklist-view" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;height:calc(100% - 60px);">
+            <div class="sidebar clickable" style="grid-row:span 2;" onclick="showModuleInfo(this,'📋 Learning Checklist','FSRS Spaced Repetition','Track learning progress with FSRS (Free Spaced Repetition Scheduler). Items marked Done will be scheduled for review at optimal intervals.')">
+                <div class="sidebar-header">📋 Learning Checklist <span style="background:#e85d2e;color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;margin-left:6px;">FSRS</span></div>
+                <div class="checklist-group">
+                    <div class="checklist-group-title">Docker & Containerization</div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this);showModuleInfo(this,'Docker Basics','Done ✓','Container concepts, images vs containers, Docker CLI basics. Completed successfully.')"><div class="check-circle done">✓</div><span style="text-decoration:line-through;color:#aaa;">Docker 基础概念</span><span style="margin-left:auto;font-size:10px;color:#2ecc71;">Done</span></div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this);showModuleInfo(this,'Dockerfile','Done ✓','Writing Dockerfiles, multi-stage builds, layer caching optimization.')"><div class="check-circle done">✓</div><span style="text-decoration:line-through;color:#aaa;">Dockerfile 编写</span><span style="margin-left:auto;font-size:10px;color:#2ecc71;">Done</span></div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this);showModuleInfo(this,'Docker Compose','In Progress','Multi-container orchestration, service definitions, volumes, and networks in docker-compose.yml.')"><div class="check-circle">○</div>Docker Compose 编排<span style="margin-left:auto;font-size:10px;color:#888;">Learning</span></div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this);showModuleInfo(this,'Docker Networks','In Progress','Bridge, host, overlay, and macvlan network drivers. Container-to-container communication patterns.')"><div class="check-circle">○</div>Docker 网络模式<span style="margin-left:auto;font-size:10px;color:#888;">Next</span></div>
+                </div>
+                <div class="checklist-group">
+                    <div class="checklist-group-title">Python Advanced</div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this)"><div class="check-circle done">✓</div><span style="text-decoration:line-through;color:#aaa;">装饰器与闭包</span><span style="margin-left:auto;font-size:10px;color:#2ecc71;">Done</span></div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this)"><div class="check-circle done">✓</div><span style="text-decoration:line-through;color:#aaa;">生成器与迭代器</span><span style="margin-left:auto;font-size:10px;color:#2ecc71;">Done</span></div>
+                    <div class="checklist-row clickable" onclick="event.stopPropagation();toggleCheck(this)"><div class="check-circle">○</div>异步编程 asyncio<span style="margin-left:auto;font-size:10px;color:#f39c12;">Review Due</span></div>
+                </div>
+            </div>
+            <div class="main-panel clickable" onclick="showModuleInfo(this,'📊 Progress Overview','Learning Stats','Done: 7 items completed. Learning: 3 in progress. Review: 2 due today (FSRS scheduling). New: 4 items not yet started.')">
+                <div style="font-size:14px;font-weight:600;margin-bottom:12px;">📊 Progress</div>
+                <div class="stat-row" style="margin-bottom:16px;">
+                    <div class="stat-box"><div class="stat-num" style="color:#2ecc71;">7</div><div class="stat-label">Done</div></div>
+                    <div class="stat-box"><div class="stat-num" style="color:#3498db;">3</div><div class="stat-label">Learning</div></div>
+                    <div class="stat-box"><div class="stat-num" style="color:#f39c12;">2</div><div class="stat-label">Review</div></div>
+                    <div class="stat-box"><div class="stat-num">4</div><div class="stat-label">New</div></div>
+                </div>
+                <div class="sidebar-header">📅 Today's FSRS Review</div>
+                <div class="list-item clickable" onclick="showModuleInfo(this,'Review: Docker Compose','Due Today','FSRS algorithm scheduled this for review. Optimal interval ensures long-term retention.')"><div class="item-dot yellow"></div>Docker Compose <span style="margin-left:auto;font-size:10px;color:#888;">Due</span></div>
+                <div class="list-item clickable" onclick="showModuleInfo(this,'Review: asyncio','Due Today','Python async programming concepts need review to strengthen memory retention.')"><div class="item-dot yellow"></div>asyncio <span style="margin-left:auto;font-size:10px;color:#888;">Due</span></div>
+            </div>
+            <div class="main-panel clickable" onclick="showModuleInfo(this,'📖 Learning Plan','Microservices Path','4-week structured learning plan with 16 topics. Week 1: Docker Basics ✓. Week 2: Service Communication (current). Week 3: Data & CQRS. Week 4: Deploy & Monitor.')">
+                <div style="font-size:14px;font-weight:600;margin-bottom:12px;">📖 Active Plan: Microservices Path</div>
+                <div style="font-size:11px;color:#888;margin-bottom:12px;">4-week · 16 topics · Started 06-01</div>
+                <div class="list-item clickable" onclick="showModuleInfo(this,'Week 1: Docker Basics','Completed ✓','Docker fundamentals, Dockerfile, Compose, and networking basics. All items completed.')"><div class="item-dot green"></div>W1: Docker Basics ✓</div>
+                <div class="list-item clickable" onclick="showModuleInfo(this,'Week 2: Communication','In Progress','Service Discovery, API Gateway, gRPC vs REST, Message Queues. Currently learning.')"><div class="item-dot orange"></div>W2: Service Communication</div>
+                <div class="list-item">W3: Data & CQRS</div>
+                <div class="list-item">W4: Deploy & Monitor</div>
+            </div>
+        </div>
+        <div id="learning-plan-view" style="display:none;height:calc(100% - 60px);">
+            <div class="two-col-layout">
+                <div class="main-panel clickable" onclick="showModuleInfo(this,'Microservices Learning Plan','Markdown-Driven Plan','Rendered from a Markdown file in mods/learning/. Supports checklists, code blocks, and embedded diagrams.')">
+                    <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">Microservices Learning Path</div>
+                    <div style="font-size:14px;line-height:2;color:#555;">
+                        <p>## Week 1: Containerization ✓</p>
+                        <p>- Docker basics, Dockerfile, Compose</p>
+                        <p>## Week 2: Communication</p>
+                        <p>- REST vs gRPC, Message Queues</p>
+                        <p>## Week 3: Data Patterns</p>
+                        <p>- CQRS, Event Sourcing, Saga</p>
+                        <p>## Week 4: Operations</p>
+                        <p>- CI/CD, Monitoring, K8s basics</p>
+                    </div>
+                </div>
+                <div class="dock-panel clickable" onclick="showModuleInfo(this,'Plan Progress','Tracking','Auto-updates as checklist items are completed. FSRS schedules reviews at optimal intervals for long-term retention.')">
+                    <div class="dock-title">Progress</div>
+                    <div style="height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:35%;background:#e85d2e;border-radius:4px;"></div></div>
+                    <div style="font-size:12px;color:#888;">35% · 7/20 items done</div>
+                </div>
+            </div>
+        </div>
+        <div id="learning-overview-view" style="display:none;height:calc(100% - 60px);">
+            <div class="three-col-layout">
+                <div class="sidebar clickable" onclick="showModuleInfo(this,'All Plans','Plan Library','Browse all your learning plans. Each plan is a Markdown file with FSRS-tracked checklists.')">
+                    <div class="sidebar-header">All Plans</div>
+                    <div class="sidebar-item active">📖 Microservices Path</div>
+                    <div class="sidebar-item">📖 Python Mastery</div>
+                    <div class="sidebar-item">📖 System Design</div>
+                </div>
+                <div class="main-panel clickable" onclick="showModuleInfo(this,'Plan Overview','Statistics & Trends','Visual overview of learning progress across all plans. Weekly activity, completion rates, and upcoming reviews.')">
+                    <div style="font-size:16px;font-weight:bold;margin-bottom:16px;">Learning Overview</div>
+                    <div class="stat-row" style="margin-bottom:16px;">
+                        <div class="stat-box"><div class="stat-num">3</div><div class="stat-label">Active Plans</div></div>
+                        <div class="stat-box"><div class="stat-num" style="color:#2ecc71;">20</div><div class="stat-label">Completed</div></div>
+                        <div class="stat-box"><div class="stat-num" style="color:#f39c12;">8</div><div class="stat-label">In Progress</div></div>
+                    </div>
+                </div>
+                <div class="dock-panel clickable" onclick="showModuleInfo(this,'Weekly Activity','Learning Streak','Track your learning consistency. FSRS optimizes review timing based on your performance history.')">
+                    <div class="dock-title">This Week</div>
+                    <div class="dock-item">Mon: 2 reviews ✓</div>
+                    <div class="dock-item">Tue: 3 new + 1 review ✓</div>
+                    <div class="dock-item">Wed: 2 reviews ✓</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SOP 页面 ==================== -->
+<div id="sop" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link active" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search SOPs...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">SOP Standardization</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ New Chain</button>
+                <button class="page-btn">AI Suggest</button>
+                <button class="page-btn">Wiki Unmatched</button>
+            </div>
+        </div>
+        <div class="three-col-layout" style="grid-template-columns:240px 1fr 280px;">
+            <div class="sidebar clickable" onclick="showModuleInfo(this,'🧱 Block Library','Reusable SOP Blocks','Drag blocks to build standardized operation chains. Each block represents a reusable step type: Input, Process, Validate, Output, Wait, Branch.')">
+                <div class="sidebar-header">🧱 Block Library</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+                    <div class="clickable" style="padding:10px;background:#f8f8f8;border:1px solid #ddd;border-radius:8px;cursor:grab;font-size:11px;text-align:center;" onclick="event.stopPropagation();showModuleInfo(this,'📥 Input Block','Receives Data','Entry point for raw content. Accepts documents from Wiki, Automation output, or manual input.')">📥 Input</div>
+                    <div class="clickable" style="padding:10px;background:#f8f8f8;border:1px solid #ddd;border-radius:8px;cursor:grab;font-size:11px;text-align:center;" onclick="event.stopPropagation();showModuleInfo(this,'🔧 Process Block','Transforms Data','Applies formatting, extraction, translation, or enrichment operations to the input data.')">🔧 Process</div>
+                    <div class="clickable" style="padding:10px;background:#f8f8f8;border:1px solid #ddd;border-radius:8px;cursor:grab;font-size:11px;text-align:center;" onclick="event.stopPropagation();showModuleInfo(this,'✅ Validate Block','Quality Check','Verifies completeness, link validity, format correctness. Can branch to revision or proceed to output.')">✅ Validate</div>
+                    <div class="clickable" style="padding:10px;background:#f8f8f8;border:1px solid #ddd;border-radius:8px;cursor:grab;font-size:11px;text-align:center;" onclick="event.stopPropagation();showModuleInfo(this,'📤 Output Block','Publishes Result','Writes processed content to Wiki, KB, or exports to external formats. Final step in the chain.')">📤 Output</div>
+                </div>
+                <div class="sidebar-header">Active Chains</div>
+                <div class="sidebar-item active clickable" onclick="showModuleInfo(this,'文章标准化流程','Active Chain','Standardizes article structure: Input → Process(headers, formatting) → Validate(links, completeness) → Output(publish to Wiki+KB).')">📄 文章标准化流程</div>
+                <div class="sidebar-item clickable" onclick="showModuleInfo(this,'数据报告 SOP','Active Chain','Data report generation pipeline: Input data → Process(charts) → Validate(accuracy) → Output.')">📊 数据报告 SOP</div>
+                <div class="sidebar-item clickable" onclick="showModuleInfo(this,'视频审核 SOP','Active Chain','Video content review pipeline: Input → Content Check → Age Rating → Output(publish/reject).')">📹 视频审核 SOP</div>
+            </div>
+            <div class="main-panel clickable" style="overflow-y:auto;" onclick="showModuleInfo(this,'🔗 Chain Editor','Visual Pipeline Builder','Assemble SOP blocks into a sequential chain. Each step processes data and passes results to the next. Drag to reorder, click to configure.')">
+                <div class="sidebar-header">🔗 Chain: 文章标准化流程</div>
+                <div class="chain-step input clickable" onclick="event.stopPropagation();showModuleInfo(this,'Step 1: Input','Receives raw article','Accepts documents from Wiki pages or Automation output. Supports Markdown and plain text formats.')">
+                    <div style="font-size:20px;">📥</div>
+                    <div style="flex:1;"><div style="font-weight:600;font-size:13px;">Input: 原始文章</div><div style="font-size:11px;color:#888;">接收 Wiki / Automation 文档</div></div>
+                    <span class="info-tag accent">Entry</span>
+                </div>
+                <div class="chain-step process clickable" onclick="event.stopPropagation();showModuleInfo(this,'Step 2: Process','Formatting & Structure','Unifies heading hierarchy, removes redundant content, extracts key information, formats code blocks and tables.')">
+                    <div style="font-size:20px;">🔧</div>
+                    <div style="flex:1;"><div style="font-weight:600;font-size:13px;">Process: 格式化与结构化</div><div style="font-size:11px;color:#888;">统一标题 · 移除冗余 · 提取关键信息</div></div>
+                </div>
+                <div class="chain-step validate clickable" onclick="event.stopPropagation();showModuleInfo(this,'Step 3: Validate','Quality Assurance','Checks: internal link validity, heading completeness, code block syntax, metadata presence. Flags issues for review.')">
+                    <div style="font-size:20px;">✅</div>
+                    <div style="flex:1;"><div style="font-weight:600;font-size:13px;">Validate: 质量检查</div><div style="font-size:11px;color:#888;">完整性 · 链接有效性 · 格式正确性</div></div>
+                </div>
+                <div class="chain-step output clickable" onclick="event.stopPropagation();showModuleInfo(this,'Step 4: Output','Publish Results','Writes standardized article to Wiki pages and Knowledge Base. Updates backlinks and category indexes automatically.')">
+                    <div style="font-size:20px;">📤</div>
+                    <div style="flex:1;"><div style="font-weight:600;font-size:13px;">Output: 发布到 Wiki + KB</div><div style="font-size:11px;color:#888;">同步更新 Wiki 和 Knowledge Base</div></div>
+                </div>
+                <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+                    <div class="sidebar-header">💡 AI Suggestions from Wiki</div>
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px;background:#f8f8f8;border-radius:8px;margin-bottom:6px;" class="clickable" onclick="showModuleInfo(this,'AI Suggestion','Docker 网络模式 → 技术文档 SOP','AI detected the Docker networking page could benefit from standardization. One-click confirmation creates the chain.')">
+                        <div style="flex:1;"><div style="font-size:12px;font-weight:500;">Docker 网络模式</div><div style="font-size:10px;color:#888;">→ 建议创建 "技术文档标准化" SOP</div></div>
+                        <button class="page-btn primary" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();">Confirm</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dock-panel clickable" onclick="showModuleInfo(this,'📋 Chain Properties','Configuration Panel','Configure chain metadata, triggers (manual / scheduled / event-driven), and output targets. View execution history and analytics.')">
+                <div class="dock-title">Chain Properties</div>
+                <div class="dock-item"><strong>Name:</strong> 文章标准化流程</div>
+                <div class="dock-item"><strong>Steps:</strong> 4</div>
+                <div class="dock-item"><strong>Trigger:</strong> Manual / On Import</div>
+                <div class="dock-item"><strong>Output:</strong> Wiki + KB</div>
+                <div class="dock-title" style="margin-top:12px;">Recent Runs</div>
+                <div class="dock-item">06-07 10:30 · Docker 网络模式 · ✓</div>
+                <div class="dock-item">06-06 14:20 · Python 并发 · ✓</div>
+                <div class="dock-item">06-05 09:15 · React 优化 · ✗</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SKILL MARKET 页面 ==================== -->
+<div id="skills" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link active" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Search 226 skills...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Skill Market</div>
+            <div class="page-actions">
+                <div class="segmented-tabs">
+                    <button class="segmented-tab active" onclick="switchSkillsTab('discover',this)">🔍 Discover</button>
+                    <button class="segmented-tab" onclick="switchSkillsTab('installed',this)">📦 Installed (28)</button>
+                    <button class="segmented-tab" onclick="switchSkillsTab('favorites',this)">⭐ Favorites</button>
+                </div>
+                <button class="page-btn primary">Sync Community</button>
+            </div>
+        </div>
+        <div id="skills-discover" style="display:flex;gap:16px;height:calc(100% - 60px);">
+            <div style="flex:1;overflow-y:auto;">
+                <div class="skill-card-grid" style="margin-bottom:16px;">
+                    <div class="skill-item clickable" onclick="showModuleInfo(this,'📄 Auto Readme','⭐ 4.8 · 📥 1.2k','Auto-generates and updates README files as code changes. Supports Python/JS/TS/Go/Rust/Java. Detects project structure and generates docs automatically.')">
+                        <div class="skill-name">📄 Auto Readme</div>
+                        <div class="skill-desc">自动更新 README 系统，代码变更后自动刷新</div>
+                        <div class="skill-meta"><span>⭐ 4.8</span><span>📥 1.2k</span><span>Python/JS</span></div>
+                    </div>
+                    <div class="skill-item clickable" onclick="showModuleInfo(this,'🎵 抖音总结','⭐ 4.6 · 📥 890','Extracts text from Douyin videos, recognizes speech via ASR, generates structured Markdown notes with links and resources.')">
+                        <div class="skill-name">🎵 抖音总结</div>
+                        <div class="skill-desc">抖音视频内容提取、语音识别、Markdown 输出</div>
+                        <div class="skill-meta"><span>⭐ 4.6</span><span>📥 890</span><span>Python</span></div>
+                    </div>
+                    <div class="skill-item clickable" onclick="showModuleInfo(this,'🔍 Deep Research','⭐ 4.9 · 📥 2.1k','Multi-source deep research with fan-out web searches, adversarial verification, and cited synthesis reports.')">
+                        <div class="skill-name">🔍 Deep Research</div>
+                        <div class="skill-desc">多源深度研究，fan-out 搜索 + 交叉验证</div>
+                        <div class="skill-meta"><span>⭐ 4.9</span><span>📥 2.1k</span><span>General</span></div>
+                    </div>
+                    <div class="skill-item clickable" onclick="showModuleInfo(this,'🎨 Swiss PPT','⭐ 4.7 · 📥 650','Swiss International Style web PPT generator with WebGL backgrounds, chapter covers, and data posters.')">
+                        <div class="skill-name">🎨 Swiss PPT</div>
+                        <div class="skill-desc">瑞士国际主义风格网页 PPT，WebGL 背景</div>
+                        <div class="skill-meta"><span>⭐ 4.7</span><span>📥 650</span><span>HTML/CSS</span></div>
+                    </div>
+                    <div class="skill-item clickable" onclick="showModuleInfo(this,'🔀 Workflow','⭐ 4.5 · 📥 430','YAML-driven workflow orchestration. Create workflows from natural language descriptions. Template management and execution tracking.')">
+                        <div class="skill-name">🔀 Workflow</div>
+                        <div class="skill-desc">YAML 驱动的工作流编排，白话文创建</div>
+                        <div class="skill-meta"><span>⭐ 4.5</span><span>📥 430</span><span>YAML</span></div>
+                    </div>
+                    <div class="skill-item clickable" onclick="showModuleInfo(this,'📋 SOP Gen','⭐ 4.4 · 📥 320','Auto-generates SOP standardization chains from Wiki content. AI analyzes document structure and suggests process flows.')">
+                        <div class="skill-name">📋 SOP Gen</div>
+                        <div class="skill-desc">从 Wiki 自动生成 SOP 标准化流程</div>
+                        <div class="skill-meta"><span>⭐ 4.4</span><span>📥 320</span><span>Python</span></div>
+                    </div>
+                </div>
+                <div class="main-panel clickable" onclick="showModuleInfo(this,'📊 Community Stats','Skill Ecosystem Health','226 community skills available. 28 installed locally. 3 have pending updates. Community sync fetches latest versions and metadata.')">
+                    <div class="sidebar-header">📊 Community Stats</div>
+                    <div class="stat-row">
+                        <div class="stat-box"><div class="stat-num" style="color:#3498db;">226</div><div class="stat-label">Community</div></div>
+                        <div class="stat-box"><div class="stat-num" style="color:#2ecc71;">28</div><div class="stat-label">Installed</div></div>
+                        <div class="stat-box"><div class="stat-num" style="color:#f39c12;">3</div><div class="stat-label">Updates</div></div>
+                        <div class="stat-box"><div class="stat-num">5</div><div class="stat-label">Favorites</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dock-panel clickable" style="width:280px;flex-shrink:0;" onclick="showModuleInfo(this,'📋 Skill Detail','Installation & Management','View skill details, toggle enable/disable, uninstall, view related workflows. Installed skills integrate with Creator Hub and Workflow modules.')">
+                <div class="dock-title">Skill Detail</div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:4px;">📄 Auto Readme</div>
+                <div style="font-size:11px;color:#888;margin-bottom:12px;">v2.1.0 · study-hub-team</div>
+                <div style="font-size:12px;line-height:1.6;color:#555;margin-bottom:16px;">为任意项目搭建自动更新 README 系统。支持 Python / JS / TS / Go / Rust / Java 等多语言。</div>
+                <div class="dock-title">Status</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <div style="width:8px;height:8px;background:#2ecc71;border-radius:50%;"></div>
+                    <span style="font-size:12px;color:#2ecc71;">Installed & Enabled</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <button class="page-btn" onclick="showModuleInfo(this,'Toggle Skill','Enable/Disable','Temporarily disable a skill without uninstalling. Disabled skills do not appear in workflows or launchers.')">Toggle</button>
+                    <button class="page-btn" style="color:#e74c3c;" onclick="showModuleInfo(this,'Uninstall','Remove Skill','Removes the skill from local installation. Community skills can be re-installed anytime from the Discover tab.')">Uninstall</button>
+                </div>
+            </div>
+        </div>
+        <div id="skills-installed" style="display:none;height:calc(100% - 60px);overflow-y:auto;">
+            <div class="skill-card-grid">
+                <div class="skill-item clickable" onclick="showModuleInfo(this,'📄 Auto Readme','Installed v2.1.0','Status: Enabled. Last used: 2h ago. Integrated with Creator Hub and Workflow.')"><div class="skill-name">📄 Auto Readme</div><div class="skill-desc">自动更新 README 系统</div><div class="skill-meta"><span style="color:#2ecc71;">● Enabled</span><span>v2.1.0</span></div></div>
+                <div class="skill-item clickable" onclick="showModuleInfo(this,'🎵 抖音总结','Installed v1.5.0','Status: Enabled. ASR: Qwen3. Integrated with Automation module.')"><div class="skill-name">🎵 抖音总结</div><div class="skill-desc">抖音视频内容提取</div><div class="skill-meta"><span style="color:#2ecc71;">● Enabled</span><span>v1.5.0</span></div></div>
+                <div class="skill-item"><div class="skill-name">🔀 Workflow</div><div class="skill-desc">工作流编排引擎</div><div class="skill-meta"><span style="color:#2ecc71;">● Enabled</span><span>v3.1.0</span></div></div>
+            </div>
+        </div>
+        <div id="skills-favorites" style="display:none;height:calc(100% - 60px);"><div class="state-demo"><div style="font-size:48px;">⭐</div><div style="font-size:16px;font-weight:600;color:#666;">No Favorites Yet</div><div style="font-size:13px;color:#888;">Star skills from Discover to see them here</div></div></div>
+    </div>
+</div>
+
+<!-- ==================== SECOND SELF 页面 ==================== -->
+<div id="secondself" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('brainstorm')">Brainstorm</button>
+            <button class="nav-link" onclick="showPage('learning')">Learning</button>
+            <button class="nav-link" onclick="showPage('sop')">SOP</button>
+            <button class="nav-link" onclick="showPage('skills')">Skills</button>
+            <button class="nav-link active" onclick="showPage('secondself')">2nd Self</button>
+        </div>
+        <div class="nav-search">🔍 Message Second Self...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn">🔔</button>
+            <button class="nav-action-btn">⚙️</button>
+            <div class="nav-avatar">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Second Self</div>
+            <div class="page-actions">
+                <div class="segmented-tabs">
+                    <button class="segmented-tab active" onclick="switchSSTab('chat',this)">💬 Chat</button>
+                    <button class="segmented-tab" onclick="switchSSTab('memory',this)">🧠 Memory</button>
+                    <button class="segmented-tab" onclick="switchSSTab('import',this)">📥 Import</button>
+                </div>
+                <button class="page-btn">Settings</button>
+            </div>
+        </div>
+        <div id="ss-chat" style="display:flex;gap:16px;height:calc(100% - 60px);">
+            <div class="sidebar clickable" style="width:260px;flex-shrink:0;" onclick="showModuleInfo(this,'📥 Context Panel','Import & Recent','Import documents, URLs, or text into Second Self context. Recent files are tracked for quick reference. Memory stats show active entries.')">
+                <div class="sidebar-header">📥 Import / Context</div>
+                <div style="min-height:80px;background:#f5f5f5;border:2px dashed #ccc;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px;margin-bottom:12px;padding:12px;text-align:center;">Paste text · URLs · Documents</div>
+                <div class="sidebar-header">📁 Recent</div>
+                <div class="sidebar-item clickable" onclick="event.stopPropagation();showModuleInfo(this,'project-notes.md','2h ago','Project documentation imported for context. Second Self can reference this in conversations.')">📄 project-notes.md · 2h</div>
+                <div class="sidebar-item">📄 meeting-notes.txt · 5h</div>
+                <div class="sidebar-header" style="margin-top:12px;">🧠 Memory</div>
+                <div class="stat-row">
+                    <div class="stat-box"><div class="stat-num" style="color:#3498db;">1,247</div><div class="stat-label">Entries</div></div>
+                    <div class="stat-box"><div class="stat-num" style="color:#2ecc71;">89</div><div class="stat-label">Active</div></div>
+                </div>
+                <button class="page-btn primary" style="width:100%;margin-top:12px;" onclick="showModuleInfo(this,'Ingest Content','Add to Context','Adds the provided content to Second Self context. The AI can then reference this material in conversations.')">📥 Ingest</button>
+            </div>
+            <div class="main-panel clickable" style="display:flex;flex-direction:column;flex:1;" onclick="showModuleInfo(this,'💬 Conversation','Personal AI Agent','Second Self is your personal AI operating system. It has access to your study data, journal, tasks, and can provide personalized recommendations.')">
+                <div class="sidebar-header">💬 Conversation</div>
+                <div style="flex:1;overflow-y:auto;">
+                    <div class="chat-bubble user clickable" onclick="event.stopPropagation();showModuleInfo(this,'Your Question','Context-Aware Query','Second Self analyzes your recent activity across all modules to provide contextual responses.')"><strong>You:</strong> 帮我总结今天的工作</div>
+                    <div class="chat-bubble ai clickable" onclick="event.stopPropagation();showModuleInfo(this,'Second Self Response','Cross-Module Analysis','Synthesizes data from Wiki (edits), Automation (tasks), Learning (FSRS), and Journal (entries) into a unified summary.')"><strong>2nd Self:</strong> 今天：<br>• Wiki: 编辑 "Docker网络模式详解"<br>• Automation: 3任务，2完成1失败<br>• Learning: FSRS复习Docker Compose<br>• Journal: 记录了今日手账<br>⚠️ 抖音#1 ASR超时建议重试</div>
+                    <div class="chat-bubble user clickable" onclick="event.stopPropagation();"><strong>You:</strong> 有什么建议？</div>
+                    <div class="chat-bubble ai clickable" onclick="event.stopPropagation();"><strong>2nd Self:</strong> 建议：<br>1. 重试抖音#1 — ASR已恢复<br>2. Wiki关联到Journal<br>3. 还有2个FSRS复习待完成<br>4. Creator Hub文章30%可继续</div>
+                </div>
+                <div class="chat-input-row">
+                    <input class="inp" placeholder="Message Second Self..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+                    <button class="page-btn primary">Send</button>
+                </div>
+            </div>
+        </div>
+        <div id="ss-memory" style="display:none;height:calc(100% - 60px);">
+            <div class="three-col-layout">
+                <div class="sidebar clickable" onclick="showModuleInfo(this,'Memory Browser','1,247 Entries','Browse, search, and filter memory entries. Each entry links to its source document or conversation.')">
+                    <div class="sidebar-header">Memory Entries</div>
+                    <div class="sidebar-item active">📄 Docker 网络模式笔记</div>
+                    <div class="sidebar-item">📄 Python 并发总结</div>
+                    <div class="sidebar-item">📄 2024-06-07 Journal</div>
+                </div>
+                <div class="main-panel clickable" onclick="showModuleInfo(this,'Entry Detail','Memory Content','Full entry content with metadata, source links, and related entries. Memories are indexed for vector search.')">
+                    <div style="font-size:16px;font-weight:bold;margin-bottom:12px;">Docker 网络模式笔记</div>
+                    <div style="display:flex;gap:6px;margin-bottom:12px;"><span class="info-tag">docker</span><span class="info-tag">network</span><span class="info-tag accent">active</span></div>
+                    <div style="font-size:13px;line-height:1.8;color:#555;">Docker 的四种网络模式：bridge 创建虚拟网桥 docker0，host 直接使用宿主机网络栈，overlay 支持跨主机通信，none 禁用网络。理解这些对构建微服务架构至关重要。</div>
+                </div>
+                <div class="dock-panel clickable" onclick="showModuleInfo(this,'Memory Stats','Vector Search','Memories are vectorized and indexed in ChromaDB for semantic search. Related entries are found via cosine similarity.')">
+                    <div class="dock-title">Stats</div>
+                    <div class="dock-item">Total: 1,247 entries</div>
+                    <div class="dock-item">Active: 89 entries</div>
+                    <div class="dock-item">Vectors: ChromaDB</div>
+                </div>
+            </div>
+        </div>
+        <div id="ss-import" style="display:none;height:calc(100% - 60px);">
+            <div class="main-panel clickable" style="text-align:center;display:flex;align-items:center;justify-content:center;flex-direction:column;" onclick="showModuleInfo(this,'Bulk Import','Documents & URLs','Import multiple documents, URLs, or plain text at once. Content is parsed, vectorized, and added to the memory index.')">
+                <div style="font-size:48px;margin-bottom:12px;">📥</div>
+                <div style="font-size:16px;font-weight:600;">Bulk Import</div>
+                <div style="font-size:13px;color:#888;margin:8px 0 16px;">Paste URLs or drag files to import into Second Self memory</div>
+                <textarea style="width:60%;min-height:120px;background:#f5f5f5;border:2px dashed #ccc;border-radius:12px;padding:16px;font-size:13px;resize:vertical;"></textarea>
+                <button class="page-btn primary" style="margin-top:12px;">📥 Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== Module Info Overlay ========== -->
+<div class="module-info-overlay" id="moduleOverlay" onclick="hideModuleInfo()"></div>
+<div class="module-info-panel" id="moduleInfo">
+    <button class="mi-close" onclick="hideModuleInfo()">✕</button>
+    <div class="mi-title" id="miTitle"></div>
+    <div class="mi-subtitle" id="miSubtitle"></div>
+    <div class="mi-desc" id="miDesc"></div>
+    <div class="mi-actions" id="miActions"></div>
+</div>
+
+<div class="breakpoint-note">Desktop 1280px+ · Top Nav · 4×8 Grid</div>
+
+<script>
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function switchFocusView(view) {
+    const content = document.getElementById('focus-content');
+    const tabs = document.querySelectorAll('[data-card="focus"] .card-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (view === 'ddl') {
+        content.innerHTML = `
+            <div class="card-header" style="margin-bottom:8px;">
+                <div class="card-title">📅 DDL 日程</div>
+                <div style="font-size:18px;font-weight:bold;">67%</div>
+            </div>
+            <div class="progress-bars">
+                <div class="progress-bar bar-done" style="flex:2;"><span class="bar-label">2</span></div>
+                <div class="progress-bar bar-warn" style="flex:1;"><span class="bar-label">1</span></div>
+            </div>
+            <div style="background:#1a1a1a;border-radius:12px;padding:12px;margin-top:8px;flex:1;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-size:12px;font-weight:600;color:#fff;">今日日程</span>
+                    <span style="background:#e85d2e;color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">3</span>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status urgent"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">14:00 项目评审会议</div>
+                        <div style="font-size:10px;color:#888;">超期 2h · 高优先级</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status pending"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">18:00 提交周报</div>
+                        <div style="font-size:10px;color:#888;">Due in 4h</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status done">✓</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">20:00 学习 Docker</div>
+                        <div style="font-size:10px;color:#888;">已完成 · 1h ago</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        content.innerHTML = `
+            <div class="card-header" style="margin-bottom:8px;">
+                <div class="card-title">📌 Today Focus</div>
+                <div style="font-size:18px;font-weight:bold;">60%</div>
+            </div>
+            <div class="progress-bars">
+                <div class="progress-bar bar-1" style="flex:3;"><span class="bar-label">30%</span></div>
+                <div class="progress-bar bar-2" style="flex:2;"><span class="bar-label">25%</span></div>
+                <div class="progress-bar bar-3" style="flex:1;"><span class="bar-label">5%</span></div>
+            </div>
+            <div style="background:#1a1a1a;border-radius:12px;padding:12px;margin-top:8px;flex:1;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-size:12px;font-weight:600;color:#fff;">待处理任务</span>
+                    <span style="background:#e85d2e;color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">5</span>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status done">✓</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">完成 Wiki 编译优化</div>
+                        <div style="font-size:10px;color:#888;">2h ago · 高优先级</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status done">✓</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">Review 自动化队列</div>
+                        <div style="font-size:10px;color:#888;">1h ago</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status pending"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">整理 KB 分类</div>
+                        <div style="font-size:10px;color:#888;">Due 18:00</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status urgent"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">提交项目周报</div>
+                        <div style="font-size:10px;color:#888;">超期 2h · 紧急</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// 拖拽功能 — 交换 DOM 节点位置（保留事件监听器和尺寸类）
+(function initDragAndDrop() {
+    const grid = document.getElementById('dashboard-grid');
+    if (!grid) return;
+    let draggedCard = null;
+
+    function swapNodes(a, b) {
+        const parent = a.parentNode;
+        const siblingA = a.nextSibling === b ? a : a.nextSibling;
+        b.parentNode.insertBefore(a, b);
+        parent.insertBefore(b, siblingA);
+    }
+
+    function setupCard(card) {
+        card.addEventListener('dragstart', function(e) {
+            draggedCard = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.grid-card').forEach(c => c.classList.remove('drag-over'));
+            draggedCard = null;
+        });
+        card.addEventListener('dragover', function(e) {
+            if (this === draggedCard) return;
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        card.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        card.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            if (this === draggedCard || !draggedCard) return;
+            // 真正交换 DOM 节点位置，保留各自的尺寸类和事件监听
+            swapNodes(draggedCard, this);
+        });
+    }
+
+    document.querySelectorAll('.grid-card').forEach(setupCard);
+
+    // ===== Module Info Panel (click any module to see what it does) =====
+    window.showModuleInfo = function(element, title, subtitle, description) {
+        var overlay = document.getElementById('moduleOverlay');
+        var panel = document.getElementById('moduleInfo');
+        document.getElementById('miTitle').textContent = title || 'Module';
+        document.getElementById('miSubtitle').textContent = subtitle || '';
+        document.getElementById('miDesc').textContent = description || 'Click any module in the framework to learn what it does.';
+        document.getElementById('miActions').innerHTML = '<span class="info-tag accent">Framework Guide</span><span class="info-tag">Click to Learn</span>';
+        overlay.classList.add('show');
+        panel.classList.add('show');
+        // highlight the clicked element
+        element.classList.add('clickable-highlight');
+        setTimeout(function(){ element.classList.remove('clickable-highlight'); }, 1500);
+    };
+    window.hideModuleInfo = function() {
+        document.getElementById('moduleOverlay').classList.remove('show');
+        document.getElementById('moduleInfo').classList.remove('show');
+    };
+    // Close info panel on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideModuleInfo();
+    });
+
+    // ===== Learning Page: Tab Switching =====
+    window.switchLearningTab = function(tab, btn) {
+        document.querySelectorAll('#learning .segmented-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('learning-checklist-view').style.display = tab === 'checklist' ? 'grid' : 'none';
+        document.getElementById('learning-plan-view').style.display = tab === 'plan' ? 'block' : 'none';
+        document.getElementById('learning-overview-view').style.display = tab === 'overview' ? 'block' : 'none';
+    };
+    // Checklist toggle
+    window.toggleCheck = function(row) {
+        var circle = row.querySelector('.check-circle');
+        var span = row.querySelector('span');
+        if (circle.classList.contains('done')) {
+            circle.classList.remove('done');
+            circle.textContent = '○';
+            if (span) span.style.textDecoration = '';
+            if (span) span.style.color = '';
+        } else {
+            circle.classList.add('done');
+            circle.textContent = '✓';
+            if (span) span.style.textDecoration = 'line-through';
+            if (span) span.style.color = '#aaa';
+        }
+    };
+
+    // ===== Skill Market: Tab Switching =====
+    window.switchSkillsTab = function(tab, btn) {
+        document.querySelectorAll('#skills .segmented-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('skills-discover').style.display = tab === 'discover' ? 'flex' : 'none';
+        document.getElementById('skills-installed').style.display = tab === 'installed' ? 'block' : 'none';
+        document.getElementById('skills-favorites').style.display = tab === 'favorites' ? 'block' : 'none';
+    };
+
+    // ===== Second Self: Tab Switching =====
+    window.switchSSTab = function(tab, btn) {
+        document.querySelectorAll('#secondself .segmented-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('ss-chat').style.display = tab === 'chat' ? 'flex' : 'none';
+        document.getElementById('ss-memory').style.display = tab === 'memory' ? 'block' : 'none';
+        document.getElementById('ss-import').style.display = tab === 'import' ? 'block' : 'none';
+    };
+
+    // ===== Make ALL existing module cards clickable =====
+    // Home page: make each grid-card show info on click
+    document.querySelectorAll('#home .grid-card').forEach(function(card) {
+        card.classList.add('clickable');
+        var title = card.querySelector('.card-title');
+        var titleText = title ? title.textContent.trim() : 'Module';
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.drag-handle') || e.target.closest('.card-tab') || e.target.closest('button')) return;
+            showModuleInfo(card, titleText, 'Dashboard Module',
+                'This is a Bento Grid module on the Home dashboard. Each card represents a functional area: Queue, DDL, Wiki, KB, Creator, or Journal. Cards are draggable to rearrange the dashboard layout.');
+        });
+    });
+
+    // Wiki page: make sidebar items and panels clickable
+    document.querySelectorAll('#wiki .sidebar-item, #wiki .main-panel, #wiki .dock-panel').forEach(function(el) {
+        el.classList.add('clickable');
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            var hdr = el.querySelector('.sidebar-header, .dock-title');
+            showModuleInfo(el, hdr ? hdr.textContent.trim() : 'Wiki Module',
+                'Wiki Knowledge Base Component',
+                'The Wiki module uses a 3-column layout: Categories sidebar (left), Reading/Editing canvas (center), and Preview Dock with wikilinks, backlinks, and actions (right).');
+        });
+    });
+
+    // KB page
+    document.querySelectorAll('#kb .sidebar-item, #kb .main-panel, #kb .dock-panel, #kb [style*="cursor:pointer"]').forEach(function(el) {
+        el.classList.add('clickable');
+    });
+
+    // Automation page
+    document.querySelectorAll('#auto .sidebar, #auto .main-panel, #auto [style*="border-radius:16px"]').forEach(function(el) {
+        el.classList.add('clickable');
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            showModuleInfo(el, 'Automation Module', 'Task Submission & Queue Management',
+                'Submit URLs from Douyin/Bilibili/XHS for parsing. Queue shows task progress with step indicators. Failed tasks can be retried with one click.');
+        });
+    });
+
+    // DDL page
+    document.querySelectorAll('#ddl .sidebar, #ddl .main-panel, #ddl .dock-panel').forEach(function(el) {
+        el.classList.add('clickable');
+    });
+
+    // Journal page
+    document.querySelectorAll('#journal .sidebar, #journal .main-panel, #journal .dock-panel').forEach(function(el) {
+        el.classList.add('clickable');
+    });
+
+    // Workflow page
+    document.querySelectorAll('#flow .sidebar, #flow .main-panel, #flow .flow-node').forEach(function(el) {
+        el.classList.add('clickable');
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            showModuleInfo(el, 'Workflow Component',
+                el.classList.contains('flow-node') ? 'Flow Step Node' : 'Workflow Panel',
+                el.classList.contains('flow-node') ? 'Each node represents a step in the workflow: Start, Process, Decision, or End. Nodes can be dragged to reorder.' :
+                'The Workflow module has a Template sidebar (left) and Flow Canvas (right) where steps are visually arranged.');
+        });
+    });
+
+    // Creator Hub page
+    document.querySelectorAll('#creator .sidebar, #creator .main-panel, #creator .dock-panel').forEach(function(el) {
+        el.classList.add('clickable');
+    });
+
+    console.log('Study Hub Dashboard Framework: All modules are now clickable. Click any card, panel, or list item to learn what it does.');
+    console.log('New pages added: Brainstorm, Learning, SOP, Skill Market, Second Self.');
+
+    // 生成 8×4 网格背景虚线框
+    const gridBg = document.getElementById('grid-bg');
+    if (gridBg) {
+        for (let i = 0; i < 32; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-bg-cell';
+            gridBg.appendChild(cell);
+        }
+    }
+})();
+</script>
+
+</body>
+</html>

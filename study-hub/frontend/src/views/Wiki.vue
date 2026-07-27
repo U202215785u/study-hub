@@ -5,9 +5,18 @@
       <!-- Header -->
       <div class="flex items-center justify-between p-3 pb-2">
         <h2 class="text-base font-bold">🧠 Wiki 知识库</h2>
-        <router-link to="/kb" class="text-[13px] text-text-secondary hover:text-accent transition-colors" title="返回文档管理">
-          ← 文档
-        </router-link>
+        <div class="flex items-center gap-2">
+          <button
+            class="text-[13px] px-2 py-1 rounded-[6px] bg-surface-hover hover:bg-border transition-colors"
+            :title="`当前主题: ${currentMdThemeLabel}`"
+            @click="cycleMdTheme"
+          >
+            {{ currentMdThemeIcon }}
+          </button>
+          <router-link to="/kb" class="text-[13px] text-text-secondary hover:text-accent transition-colors" title="返回文档管理">
+            ← 文档
+          </router-link>
+        </div>
       </div>
 
       <!-- Actions -->
@@ -25,6 +34,16 @@
           @click="regenerateWiki"
         >
           {{ regenerating ? '重建中…' : '🔄 重建' }}
+        </button>
+      </div>
+
+      <!-- New Page -->
+      <div class="px-3 mb-2">
+        <button
+          class="w-full text-center px-3 py-[6px] rounded-[8px] border text-[12px] whitespace-nowrap transition-all bg-success border-success text-white hover:opacity-90"
+          @click="openCreateModal"
+        >
+          ➕ 新建文章
         </button>
       </div>
 
@@ -63,14 +82,15 @@
           </div>
           <div v-if="node.children.length > 0 && expandedCats.has(node.name)" class="ml-3 border-l border-border pl-2 mt-0.5">
             <div
-              v-for="child in node.children"
+              v-for="(child, childIdx) in node.children"
               :key="child.name"
-              class="px-2 py-0.5 rounded-[6px] cursor-pointer text-[11px] transition-colors mb-0.5"
+              class="px-2 py-0.5 rounded-[6px] cursor-pointer text-[11px] transition-colors mb-0.5 flex items-center gap-1"
               :class="currentCat === child.name ? 'bg-accent-glow text-accent' : 'text-text-secondary hover:bg-surface-hover'"
               @click.stop="filterByCat(child.name)"
             >
+              <span class="text-[10px] opacity-50">{{ childIdx === node.children.length - 1 ? '└' : '├' }}</span>
               <span class="truncate">{{ child.displayName || child.name }}</span>
-              <span class="text-[10px] opacity-60 ml-1">{{ child.count }}</span>
+              <span class="text-[10px] opacity-60 ml-auto">{{ child.count }}</span>
             </div>
           </div>
         </div>
@@ -177,12 +197,20 @@
           <!-- Content -->
           <div v-else :class="previewPage ? 'max-w-full' : 'max-w-[800px] mx-auto'">
             <!-- Meta bar -->
-            <div class="flex gap-4 flex-wrap text-[13px] text-text-secondary mb-5 pb-4 border-b border-border">
-              <span v-if="currentPage.category">📂 {{ currentPage.category }}</span>
-              <span>📝 v{{ currentPage.version }}</span>
-              <span>📊 {{ currentPage.char_count }} 字</span>
-              <span>📅 {{ (currentPage.updated_at || currentPage.created_at || '').slice(0, 10) }}</span>
-              <div v-if="pageTags.length" class="flex gap-1 flex-wrap">
+            <div class="flex flex-col gap-2 text-[13px] text-text-secondary mb-5 pb-4 border-b border-border">
+              <!-- 第一行：分类 / 版本 / 字数 / 日期 -->
+              <div class="flex gap-3 flex-wrap items-center">
+                <span v-if="currentPage.category" class="px-2 py-0.5 rounded-[6px] bg-surface-hover">
+                  📂 {{ currentPage.category }}
+                </span>
+                <span class="px-2 py-0.5 rounded-[6px] bg-surface-hover">📝 v{{ currentPage.version }}</span>
+                <span class="px-2 py-0.5 rounded-[6px] bg-surface-hover">📊 {{ currentPage.char_count }} 字</span>
+                <span class="px-2 py-0.5 rounded-[6px] bg-surface-hover">
+                  📅 {{ (currentPage.updated_at || currentPage.created_at || '').slice(0, 10) }}
+                </span>
+              </div>
+              <!-- 第二行：标签 -->
+              <div v-if="pageTags.length" class="flex gap-1.5 flex-wrap">
                 <span
                   v-for="t in pageTags"
                   :key="t"
@@ -240,6 +268,7 @@
             <h4 class="text-[13px] font-semibold truncate">{{ previewPage.title }}</h4>
             <div class="flex gap-2">
               <button
+                v-if="!previewPage.__missing"
                 class="px-2 py-1 rounded-[6px] border text-[11px] transition-all bg-bg border-border hover:border-accent"
                 @click="promotePreview"
               >
@@ -255,14 +284,29 @@
           </div>
           <!-- Preview Content -->
           <div class="flex-1 overflow-y-auto px-4 py-4">
-            <div class="flex gap-3 flex-wrap text-[12px] text-text-secondary mb-3 pb-3 border-b border-border">
-              <span v-if="previewPage.category">📂 {{ previewPage.category }}</span>
-              <span>📝 v{{ previewPage.version }}</span>
-              <span>📊 {{ previewPage.char_count }} 字</span>
+            <!-- 空目标状态 -->
+            <div v-if="previewPage.__missing" class="text-center py-12">
+              <div class="text-4xl mb-3">📝</div>
+              <p class="text-text-secondary text-[14px] mb-2">「{{ previewPage.title }}」页面尚未创建</p>
+              <p class="text-text-secondary text-[12px] mb-4">点击下方按钮创建此页面，或继续阅读当前文章</p>
+              <button
+                class="px-4 py-2 rounded-[8px] bg-accent text-white text-[13px] hover:opacity-90 transition-opacity"
+                @click="openCreateModalWithTitle(previewPage.title)"
+              >
+                ➕ 创建此页面
+              </button>
             </div>
-            <div class="leading-[1.7] text-[14px]">
-              <MarkdownRenderer :content="previewPage.content" @link-click="onPreviewLinkClick" />
-            </div>
+            <!-- 正常预览 -->
+            <template v-else>
+              <div class="flex gap-3 flex-wrap text-[12px] text-text-secondary mb-3 pb-3 border-b border-border">
+                <span v-if="previewPage.category">📂 {{ previewPage.category }}</span>
+                <span>📝 v{{ previewPage.version }}</span>
+                <span>📊 {{ previewPage.char_count }} 字</span>
+              </div>
+              <div class="leading-[1.7] text-[14px]">
+                <MarkdownRenderer :content="previewPage.content" @link-click="onPreviewLinkClick" />
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -307,14 +351,14 @@
       </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Edit / Create Modal -->
     <div
       v-if="editModalVisible"
       class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]"
       @click.self="closeEditModal"
     >
       <div class="bg-surface border border-border rounded-[12px] p-6 w-[90%] max-w-[800px] flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-base font-semibold">编辑: {{ currentPage?.title }}</h3>
+        <h3 class="text-base font-semibold">{{ isCreating ? '新建文章' : `编辑: ${currentPage?.title}` }}</h3>
         <div class="flex gap-2.5 flex-wrap">
           <input v-model="editForm.title" type="text" placeholder="页面标题" class="flex-1 min-w-[120px] px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-sm text-text outline-none focus:border-accent" />
           <input v-model="editForm.category" type="text" placeholder="分类（可选）" class="flex-1 min-w-[120px] px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-sm text-text outline-none focus:border-accent" />
@@ -445,6 +489,26 @@ const compiling = ref(false)
 const regenerating = ref(false)
 const compileLogs = ref([])
 
+// ====== Markdown Theme (global control) ======
+const mdThemes = [
+  { key: 'parchment', label: '米白', icon: '☀️' },
+  { key: 'kraft', label: '牛皮纸', icon: '📜' },
+  { key: 'dark', label: '暗黑', icon: '🌙' }
+]
+const currentMdTheme = ref(
+  localStorage.getItem('markdown-theme') || 'parchment'
+)
+const currentMdThemeObj = computed(() => mdThemes.find(t => t.key === currentMdTheme.value) || mdThemes[0])
+const currentMdThemeLabel = computed(() => currentMdThemeObj.value.label)
+const currentMdThemeIcon = computed(() => currentMdThemeObj.value.icon)
+function cycleMdTheme() {
+  const idx = mdThemes.findIndex(t => t.key === currentMdTheme.value)
+  const next = mdThemes[(idx + 1) % mdThemes.length]
+  currentMdTheme.value = next.key
+  localStorage.setItem('markdown-theme', next.key)
+  window.dispatchEvent(new CustomEvent('markdown-theme-change', { detail: next.key }))
+}
+
 const toastRef = ref(null)
 const showMindmap = ref(false)
 const mindmapRef = ref(null)
@@ -452,6 +516,7 @@ let mmInstance = null
 
 // ====== Edit Modal ======
 const editModalVisible = ref(false)
+const isCreating = ref(false)
 const editForm = ref({ title: '', category: '', tags: '', content: '', cover_image: '' })
 
 // ====== AI Generate Cover ======
@@ -476,16 +541,19 @@ const viewTitle = computed(() => {
   return currentPage.value ? currentPage.value.title : 'Wiki 阅读'
 })
 
-// 将标题 + 封面图插入到 Markdown 内容最前面
+// 将封面图 + 兜底标题插入到 Markdown 内容最前面
+// 如果内容本身已有 h1，不再注入，避免重复
 const pageContentWithCover = computed(() => {
   if (!currentPage.value) return ''
-  const title = currentPage.value.title
-    ? `# ${currentPage.value.title}\n\n`
-    : ''
+  const content = currentPage.value.content || ''
   const cover = currentPage.value.cover_image
     ? `![封面](${resolveImageUrl(currentPage.value.cover_image)})\n\n`
     : ''
-  return title + cover + (currentPage.value.content || '')
+  const hasH1 = content.trim().startsWith('# ')
+  const title = !hasH1 && currentPage.value.title
+    ? `# ${currentPage.value.title}\n\n`
+    : ''
+  return cover + title + content
 })
 
 function resolveImageUrl(url) {
@@ -581,7 +649,17 @@ onMounted(async () => {
   await loadPages()
   await loadCategories()
   await loadGraph()
+  // 监听 MarkdownRenderer 触发的全局 wikilink 点击事件
+  window.addEventListener('markdown-wikilink-click', handleWikilinkClick)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('markdown-wikilink-click', handleWikilinkClick)
+})
+
+function handleWikilinkClick(e) {
+  if (e.detail) onLinkClick(e.detail)
+}
 
 onUnmounted(() => {
   if (chartInstance) {
@@ -688,7 +766,7 @@ async function onLinkClick(slug) {
   try {
     const data = await settings.apiGet(`/wiki/pages/${encodeURIComponent(slug)}`)
     if (data.error) {
-      toast(data.error, true)
+      previewPage.value = { __missing: true, title: slug, slug: slug }
       return
     }
     previewPage.value = data
@@ -703,7 +781,7 @@ async function onPreviewLinkClick(slug) {
   try {
     const data = await settings.apiGet(`/wiki/pages/${encodeURIComponent(slug)}`)
     if (data.error) {
-      toast(data.error, true)
+      previewPage.value = { __missing: true, title: slug, slug: slug }
       return
     }
     previewPage.value = data
@@ -732,6 +810,7 @@ function openCurrentPageInNewTab() {
 // ====== Edit Modal ======
 function openEditModal() {
   if (!currentPage.value) return
+  isCreating.value = false
   editForm.value = {
     title: currentPage.value.title || '',
     category: currentPage.value.category || '',
@@ -742,12 +821,36 @@ function openEditModal() {
   editModalVisible.value = true
 }
 
+function openCreateModal() {
+  isCreating.value = true
+  editForm.value = {
+    title: '',
+    category: '',
+    tags: '',
+    content: '',
+    cover_image: ''
+  }
+  editModalVisible.value = true
+}
+
+function openCreateModalWithTitle(title) {
+  isCreating.value = true
+  editForm.value = {
+    title: title || '',
+    category: currentPage.value?.category || '',
+    tags: '',
+    content: `# ${title || ''}\n\n`,
+    cover_image: ''
+  }
+  editModalVisible.value = true
+}
+
 function closeEditModal() {
   editModalVisible.value = false
+  isCreating.value = false
 }
 
 async function saveEdit() {
-  if (!currentPage.value) return
   const title = editForm.value.title.trim()
   const content = editForm.value.content.trim()
   if (!title || !content) { toast('标题和内容不能为空', true); return }
@@ -756,18 +859,36 @@ async function saveEdit() {
   const tagsStr = editForm.value.tags.trim()
   const tags = tagsStr ? tagsStr.split(/[,，]\s*/).map(t => t.trim()).filter(Boolean) : []
 
-  try {
-    const r = await settings.apiPut(`/wiki/pages/${currentPage.value.id}`, { title, content, category, tags, cover_image: editForm.value.cover_image.trim() })
-    if (r.error) { toast(r.error, true); return }
-    toast('保存成功')
-    closeEditModal()
-    // 用后端返回的新 slug 刷新页面数据
-    const newSlug = r.slug || currentPage.value.slug || currentPage.value.id
-    await openPageBySlug(newSlug)
-    // 刷新列表（更新标题、分类等）
-    await loadPages()
-  } catch (e) {
-    toast('保存失败', true)
+  if (isCreating.value) {
+    // 新建
+    try {
+      const r = await settings.apiPost('/wiki/pages', { title, content, category, tags, cover_image: editForm.value.cover_image.trim() })
+      if (r.error) { toast(r.error, true); return }
+      toast('创建成功')
+      closeEditModal()
+      // 刷新列表并打开新页面
+      await loadPages()
+      await loadCategories()
+      await openPageBySlug(r.slug)
+    } catch (e) {
+      toast('创建失败', true)
+    }
+  } else {
+    // 编辑
+    if (!currentPage.value) return
+    try {
+      const r = await settings.apiPut(`/wiki/pages/${currentPage.value.id}`, { title, content, category, tags, cover_image: editForm.value.cover_image.trim() })
+      if (r.error) { toast(r.error, true); return }
+      toast('保存成功')
+      closeEditModal()
+      // 用后端返回的新 slug 刷新页面数据
+      const newSlug = r.slug || currentPage.value.slug || currentPage.value.id
+      await openPageBySlug(newSlug)
+      // 刷新列表（更新标题、分类等）
+      await loadPages()
+    } catch (e) {
+      toast('保存失败', true)
+    }
   }
 }
 

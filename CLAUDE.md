@@ -6,7 +6,7 @@
 
 管家是本项目的唯一用户界面。用户不知道系统有多复杂。
 
-管家 Skill 文件：`.agents/skills/butler.md`（永远加载）
+管家 Skill 文件：`.claude/skills/butler/SKILL.md`（永远加载）
 
 管家按场景自动加载扩展层，不需要用户指示。
 
@@ -26,15 +26,16 @@
 ## 文件地图
 
 ```
-.agents/skills/butler.md                  ← 管家核心层（永远加载）
-.agents/skills/butler-*.md                ← 管家扩展层（按需加载）
-.agents/skills/*.md                       ← 内部角色 + 外部专家
-.agents/owners/*.md                       ← 领域知识库
-project-memory/项目索引.md                 ← 管家唯一入口
-study-hub/project-memory/[模块]/状态.md   ← 模块状态
-context/indexer.py                        ← 代码地图生成
-context/tool-scanner.py                   ← 已装工具扫描
-user-memory.example/                              ← 用户级跨项目记忆
+.claude/skills/butler/SKILL.md             ← 管家核心层（永远加载）
+.agents/skills/butler-*.md                 ← 管家扩展层（按需加载）
+.agents/skills/*.md                        ← 内部角色 + 外部专家
+.agents/owners/*.md                        ← 领域知识库
+project-memory/项目索引.md                  ← 管家唯一入口
+study-hub/project-memory/[模块]/状态.md    ← 模块状态
+context/indexer.py                         ← 代码地图生成
+context/tool-scanner.py                    ← 已装工具扫描
+context/run.py                             ← 工具统一入口
+user-memory.example/                       ← 用户级跨项目记忆
 ```
 
 ## 记忆层级
@@ -44,30 +45,3 @@ user-memory.example/                              ← 用户级跨项目记忆
 ## 跨模块影响
 
 改动影响其他模块 → 管家在退出时主动提醒
-
----
-
-## 项目记忆上下文
-
-> 以下内容由 Study-Hub 五层记忆系统自动生成，请勿手动编辑。
-> 最后更新：2026-05-30 18:21
-
-## 项目行为指令
-1. 用户正在做项目「前端项目」。 请在涉及此项目时基于现有技术栈和进度给出建议。
-
-## 工作流行为指令
-1. 用户的工作流「style_adjustment」偏好：。 请在协作时遵循此工作流习惯。
-
-## 参考上下文（按需使用）
-- 【文档】网页对话：性感空乘 菜菜不菜 下班淫乱自慰 假肉棒猛抽骚穴 搅出汹涌粘腻白浆                                                                                                                    
-                                                  ...
-- 【文档】Kimi对话：知道。你是985数字媒体艺术专业的毕业生，正在做毕业设计项目 RailLINK OS（高铁自助票务终端系统），同时也是个"纯vibe coder"——习惯用AI辅助开发而非传统编码方式。你目前手头有多个并行项目：UE5.7的GAS多人游戏系统、AI协作架构、线上剧本杀工具、毕业展设计、论文收尾，还有独立游戏开发计划。你对AI的要求很高：要它自主研究、自测自调、不整保底机制，还要能扮演特定角色（设计...
-- 【Wiki】ai-game-builder 手绘游戏 Demo 生成工具：## 简介
-
-ai-game-builder 是一款 AI 工具，用户只需手绘 UI 界面或玩法草图并拍照上传，即可自动生成可在游戏引擎中运行的游戏 Demo。该工具由游戏行业从业者开发，旨在降低个人和小团队的游戏开发门槛，让"游戏开发不再困难"。
-
-## 安装/获取
-
-该项目的 GitHub 仓库地址为：https://github.com/va-11-halla/ai-game-builder...
-- 【Wiki】AI 游戏开发三阶段路线图：## 定义
-

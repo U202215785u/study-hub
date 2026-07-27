@@ -1,0 +1,707 @@
+- generic [ref=e23]:
+  - complementary [ref=e24]:
+    - generic [ref=e25]:
+      - heading "🧠 Wiki 知识库" [level=2] [ref=e26]
+      - link "← 文档" [ref=e27] [cursor=pointer]:
+        - /url: /kb
+    - generic [ref=e28]:
+      - button "⚡ 编译" [ref=e29] [cursor=pointer]
+      - button "🔄 重建" [ref=e30] [cursor=pointer]
+    - textbox "搜索 Wiki 页面…" [ref=e32]
+    - generic [ref=e33]: 索引
+    - generic [ref=e34]:
+      - generic [ref=e35] [cursor=pointer]: 📂 全部
+      - generic [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: ·
+        - generic [ref=e39]: 设计
+        - generic [ref=e40]: "6"
+      - generic [ref=e42] [cursor=pointer]:
+        - generic [ref=e43]: ·
+        - generic [ref=e44]: 人物
+        - generic [ref=e45]: "6"
+      - generic [ref=e47] [cursor=pointer]:
+        - generic [ref=e48]: ·
+        - generic [ref=e49]: AI应用
+        - generic [ref=e50]: "6"
+      - generic [ref=e52] [cursor=pointer]:
+        - generic [ref=e53]: ·
+        - generic [ref=e54]: AI工具
+        - generic [ref=e55]: "6"
+      - generic [ref=e57] [cursor=pointer]:
+        - generic [ref=e58]: ·
+        - generic [ref=e59]: AI 工具与项目
+        - generic [ref=e60]: "6"
+      - generic [ref=e62] [cursor=pointer]:
+        - generic [ref=e63]: ·
+        - generic [ref=e64]: 编程语言
+        - generic [ref=e65]: "4"
+      - generic [ref=e67] [cursor=pointer]:
+        - generic [ref=e68]: ·
+        - generic [ref=e69]: 学习路径
+        - generic [ref=e70]: "4"
+      - generic [ref=e72] [cursor=pointer]:
+        - generic [ref=e73]: ·
+        - generic [ref=e74]: AI工具资源
+        - generic [ref=e75]: "4"
+      - generic [ref=e77] [cursor=pointer]:
+        - generic [ref=e78]: ·
+        - generic [ref=e79]: AI工具与项目
+        - generic [ref=e80]: "4"
+      - generic [ref=e82] [cursor=pointer]:
+        - generic [ref=e83]: ·
+        - generic [ref=e84]: AI 工具使用
+        - generic [ref=e85]: "4"
+      - generic [ref=e87] [cursor=pointer]:
+        - generic [ref=e88]: ·
+        - generic [ref=e89]: 工具与工作流
+        - generic [ref=e90]: "3"
+      - generic [ref=e92] [cursor=pointer]:
+        - generic [ref=e93]: ·
+        - generic [ref=e94]: 内容创作方法论
+        - generic [ref=e95]: "3"
+      - generic [ref=e97] [cursor=pointer]:
+        - generic [ref=e98]: ·
+        - generic [ref=e99]: AI 工具
+        - generic [ref=e100]: "2"
+      - generic [ref=e102] [cursor=pointer]:
+        - generic [ref=e103]: ·
+        - generic [ref=e104]: 软件开发方法论
+        - generic [ref=e105]: "1"
+      - generic [ref=e107] [cursor=pointer]:
+        - generic [ref=e108]: ·
+        - generic [ref=e109]: 设计工具
+        - generic [ref=e110]: "1"
+      - generic [ref=e112] [cursor=pointer]:
+        - generic [ref=e113]: ·
+        - generic [ref=e114]: 组件
+        - generic [ref=e115]: "1"
+      - generic [ref=e117] [cursor=pointer]:
+        - generic [ref=e118]: ·
+        - generic [ref=e119]: 社会科学
+        - generic [ref=e120]: "1"
+      - generic [ref=e122] [cursor=pointer]:
+        - generic [ref=e123]: ·
+        - generic [ref=e124]: 生活技巧
+        - generic [ref=e125]: "1"
+      - generic [ref=e127] [cursor=pointer]:
+        - generic [ref=e128]: ·
+        - generic [ref=e129]: 理财投资
+        - generic [ref=e130]: "1"
+      - generic [ref=e132] [cursor=pointer]:
+        - generic [ref=e133]: ·
+        - generic [ref=e134]: 测试
+        - generic [ref=e135]: "1"
+      - generic [ref=e137] [cursor=pointer]:
+        - generic [ref=e138]: ·
+        - generic [ref=e139]: 技术趋势
+        - generic [ref=e140]: "1"
+      - generic [ref=e142] [cursor=pointer]:
+        - generic [ref=e143]: ·
+        - generic [ref=e144]: 技术笔记
+        - generic [ref=e145]: "1"
+      - generic [ref=e147] [cursor=pointer]:
+        - generic [ref=e148]: ·
+        - generic [ref=e149]: 开源项目
+        - generic [ref=e150]: "1"
+      - generic [ref=e152] [cursor=pointer]:
+        - generic [ref=e153]: ▶
+        - generic [ref=e154]: 工具
+        - generic [ref=e155]: "1"
+      - generic [ref=e157] [cursor=pointer]:
+        - generic [ref=e158]: ·
+        - generic [ref=e159]: 协议规范
+        - generic [ref=e160]: "1"
+      - generic [ref=e162] [cursor=pointer]:
+        - generic [ref=e163]: ·
+        - generic [ref=e164]: 协议
+        - generic [ref=e165]: "1"
+      - generic [ref=e167] [cursor=pointer]:
+        - generic [ref=e168]: ·
+        - generic [ref=e169]: 创作者
+        - generic [ref=e170]: "1"
+      - generic [ref=e172] [cursor=pointer]:
+        - generic [ref=e173]: ·
+        - generic [ref=e174]: AI编程方法论
+        - generic [ref=e175]: "1"
+      - generic [ref=e177] [cursor=pointer]:
+        - generic [ref=e178]: ·
+        - generic [ref=e179]: AI编程
+        - generic [ref=e180]: "1"
+      - generic [ref=e182] [cursor=pointer]:
+        - generic [ref=e183]: ·
+        - generic [ref=e184]: AI模型
+        - generic [ref=e185]: "1"
+      - generic [ref=e187] [cursor=pointer]:
+        - generic [ref=e188]: ·
+        - generic [ref=e189]: AI工具指南
+        - generic [ref=e190]: "1"
+      - generic [ref=e192] [cursor=pointer]:
+        - generic [ref=e193]: ·
+        - generic [ref=e194]: AI交互设计
+        - generic [ref=e195]: "1"
+      - generic [ref=e197] [cursor=pointer]:
+        - generic [ref=e198]: ·
+        - generic [ref=e199]: AI 趋势与理念
+        - generic [ref=e200]: "1"
+      - generic [ref=e202] [cursor=pointer]:
+        - generic [ref=e203]: ·
+        - generic [ref=e204]: AI 开发工具
+        - generic [ref=e205]: "1"
+      - generic [ref=e207] [cursor=pointer]:
+        - generic [ref=e208]: ·
+        - generic [ref=e209]: AI 人物
+        - generic [ref=e210]: "1"
+    - generic [ref=e211]: 全部文章
+    - generic [ref=e212]:
+      - generic [ref=e775] [cursor=pointer]:
+        - generic [ref=e776]: Cavalry 入门指南与 AE 对比
+        - generic [ref=e777]:
+          - generic [ref=e778]: v1
+          - generic [ref=e779]: 2047字
+      - generic [ref=e780] [cursor=pointer]:
+        - generic [ref=e781]: FIRE 提前退休投资指南
+        - generic [ref=e782]:
+          - generic [ref=e783]: v1
+          - generic [ref=e784]: 2606字
+      - generic [ref=e785] [cursor=pointer]:
+        - generic [ref=e786]: ai-game-builder 手绘游戏 Demo 生成工具
+        - generic [ref=e787]:
+          - generic [ref=e788]: v20
+          - generic [ref=e789]: 1975字
+      - generic [ref=e790] [cursor=pointer]:
+        - generic [ref=e791]: AI 游戏开发三阶段路线图
+        - generic [ref=e792]:
+          - generic [ref=e793]: v5
+          - generic [ref=e794]: 1028字
+      - generic [ref=e795] [cursor=pointer]:
+        - generic [ref=e796]: OpenClaw 小龙虾 AI Agent
+        - generic [ref=e797]:
+          - generic [ref=e798]: v8
+          - generic [ref=e799]: 345字
+      - generic [ref=e800] [cursor=pointer]:
+        - generic [ref=e801]: 手绘草图转游戏 Demo 技术综述
+        - generic [ref=e802]:
+          - generic [ref=e803]: v1
+          - generic [ref=e804]: 1280字
+      - generic [ref=e805] [cursor=pointer]:
+        - generic [ref=e806]: Vibe Coding 实战指南
+        - generic [ref=e807]:
+          - generic [ref=e808]: v2
+          - generic [ref=e809]: 3471字
+      - generic [ref=e810] [cursor=pointer]:
+        - generic [ref=e811]: shadcn UI 组件搜索工具
+        - generic [ref=e812]:
+          - generic [ref=e813]: v1
+          - generic [ref=e814]: 1722字
+      - generic [ref=e815] [cursor=pointer]:
+        - generic [ref=e816]: DIY 理发省钱指南
+        - generic [ref=e817]:
+          - generic [ref=e818]: v1
+          - generic [ref=e819]: 947字
+      - generic [ref=e820] [cursor=pointer]:
+        - generic [ref=e821]: 📂 内容创作方法论 · 知识综述
+        - generic [ref=e822]:
+          - generic [ref=e823]: v1
+          - generic [ref=e824]: 878字
+      - generic [ref=e825] [cursor=pointer]:
+        - generic [ref=e826]: 📂 工具与工作流 · 知识综述
+        - generic [ref=e827]:
+          - generic [ref=e828]: v1
+          - generic [ref=e829]: 694字
+      - generic [ref=e830] [cursor=pointer]:
+        - generic [ref=e831]: 📂 AI 工具使用 · 知识综述
+        - generic [ref=e832]:
+          - generic [ref=e833]: v1
+          - generic [ref=e834]: 1154字
+      - generic [ref=e835] [cursor=pointer]:
+        - generic [ref=e836]: 📂 AI工具与项目 · 知识综述
+        - generic [ref=e837]:
+          - generic [ref=e838]: v1
+          - generic [ref=e839]: 1240字
+      - generic [ref=e840] [cursor=pointer]:
+        - generic [ref=e841]: 📂 AI工具资源 · 知识综述
+        - generic [ref=e842]:
+          - generic [ref=e843]: v1
+          - generic [ref=e844]: 1184字
+      - generic [ref=e845] [cursor=pointer]:
+        - generic [ref=e846]: 📂 AI应用 · 知识综述
+        - generic [ref=e847]:
+          - generic [ref=e848]: v1
+          - generic [ref=e849]: 1014字
+      - generic [ref=e850] [cursor=pointer]:
+        - generic [ref=e851]: 📂 编程语言 · 知识综述
+        - generic [ref=e852]:
+          - generic [ref=e853]: v1
+          - generic [ref=e854]: 1087字
+      - generic [ref=e855] [cursor=pointer]:
+        - generic [ref=e856]: 📂 AI工具 · 知识综述
+        - generic [ref=e857]:
+          - generic [ref=e858]: v1
+          - generic [ref=e859]: 1492字
+      - generic [ref=e860] [cursor=pointer]:
+        - generic [ref=e861]: 📂 AI 工具与项目 · 知识综述
+        - generic [ref=e862]:
+          - generic [ref=e863]: v1
+          - generic [ref=e864]: 1301字
+      - generic [ref=e865] [cursor=pointer]:
+        - generic [ref=e866]: 📂 人物 · 知识综述
+        - generic [ref=e867]:
+          - generic [ref=e868]: v1
+          - generic [ref=e869]: 1270字
+      - generic [ref=e870] [cursor=pointer]:
+        - generic [ref=e871]: 📂 设计 · 知识综述
+        - generic [ref=e872]:
+          - generic [ref=e873]: v1
+          - generic [ref=e874]: 1453字
+      - generic [ref=e875] [cursor=pointer]:
+        - generic [ref=e876]: AI 编程实战：从零到一人公司
+        - generic [ref=e877]:
+          - generic [ref=e878]: v1
+          - generic [ref=e879]: 702字
+      - generic [ref=e880] [cursor=pointer]:
+        - generic [ref=e881]: AI 内容创作：从选题到爆款
+        - generic [ref=e882]:
+          - generic [ref=e883]: v1
+          - generic [ref=e884]: 555字
+      - generic [ref=e885] [cursor=pointer]:
+        - generic [ref=e886]: AI 演示设计：从 PPT 到 HTML 的革命
+        - generic [ref=e887]:
+          - generic [ref=e888]: v1
+          - generic [ref=e889]: 649字
+      - generic [ref=e890] [cursor=pointer]:
+        - generic [ref=e891]: 📚 学习路径总览
+        - generic [ref=e892]:
+          - generic [ref=e893]: v1
+          - generic [ref=e894]: 735字
+      - generic [ref=e895] [cursor=pointer]:
+        - generic [ref=e896]: Karpathy 自定义软件时代
+        - generic [ref=e897]:
+          - generic [ref=e898]: v2
+          - generic [ref=e899]: 3265字
+      - generic [ref=e900] [cursor=pointer]:
+        - generic [ref=e901]: TDD+AI 编程方法论
+        - generic [ref=e902]:
+          - generic [ref=e903]: v4
+          - generic [ref=e904]: 2234字
+      - generic [ref=e905] [cursor=pointer]:
+        - generic [ref=e906]: 一人公司 AI 趋势
+        - generic [ref=e907]:
+          - generic [ref=e908]: v7
+          - generic [ref=e909]: 2794字
+      - generic [ref=e910] [cursor=pointer]:
+        - generic [ref=e911]: AI IDE 生态
+        - generic [ref=e912]:
+          - generic [ref=e913]: v3
+          - generic [ref=e914]: 1612字
+      - generic [ref=e915] [cursor=pointer]:
+        - generic [ref=e916]: 当代中国治理与秩序分析
+        - generic [ref=e917]:
+          - generic [ref=e918]: v1
+          - generic [ref=e919]: 1948字
+      - generic [ref=e920] [cursor=pointer]:
+        - generic [ref=e921]: 袁本初 人文社科博主
+        - generic [ref=e922]:
+          - generic [ref=e923]: v1
+          - generic [ref=e924]: 466字
+      - generic [ref=e925] [cursor=pointer]:
+        - generic [ref=e926]: Claude Code Skill 创建指南
+        - generic [ref=e927]:
+          - generic [ref=e928]: v6
+          - generic [ref=e929]: 3886字
+      - generic [ref=e930] [cursor=pointer]:
+        - generic [ref=e931]: guizang-ppt-skill 项目
+        - generic [ref=e932]:
+          - generic [ref=e933]: v2
+          - generic [ref=e934]: 1649字
+      - generic [ref=e935] [cursor=pointer]:
+        - generic [ref=e936]: Frontend Slides 演示文稿工具
+        - generic [ref=e937]:
+          - generic [ref=e938]: v1
+          - generic [ref=e939]: 1452字
+      - generic [ref=e940] [cursor=pointer]:
+        - generic [ref=e941]: Zara Zhang 张咋啦
+        - generic [ref=e942]:
+          - generic [ref=e943]: v1
+          - generic [ref=e944]: 665字
+      - generic [ref=e945] [cursor=pointer]:
+        - generic [ref=e946]: HTML 演示文稿趋势
+        - generic [ref=e947]:
+          - generic [ref=e948]: v1
+          - generic [ref=e949]: 620字
+      - generic [ref=e950] [cursor=pointer]:
+        - generic [ref=e951]: superpowers AI 技能框架
+        - generic [ref=e952]:
+          - generic [ref=e953]: v2
+          - generic [ref=e954]: 689字
+      - generic [ref=e955] [cursor=pointer]:
+        - generic [ref=e956]: slavingia/skills 一人公司技能包
+        - generic [ref=e957]:
+          - generic [ref=e958]: v1
+          - generic [ref=e959]: 1636字
+      - generic [ref=e960] [cursor=pointer]:
+        - generic [ref=e961]: Sahil Lavingia 一人公司理念
+        - generic [ref=e962]:
+          - generic [ref=e963]: v1
+          - generic [ref=e964]: 803字
+      - generic [ref=e965] [cursor=pointer]:
+        - generic [ref=e966]: Gumroad 数字产品销售平台
+        - generic [ref=e967]:
+          - generic [ref=e968]: v1
+          - generic [ref=e969]: 432字
+      - generic [ref=e970] [cursor=pointer]:
+        - generic [ref=e971]: Skill Creator 使用指南
+        - generic [ref=e972]:
+          - generic [ref=e973]: v2
+          - generic [ref=e974]: 1519字
+      - generic [ref=e975] [cursor=pointer]:
+        - generic [ref=e976]: 歸藏设计师
+        - generic [ref=e977]:
+          - generic [ref=e978]: v1
+          - generic [ref=e979]: 354字
+      - generic [ref=e980] [cursor=pointer]:
+        - generic [ref=e981]: PPT 设计审美规则
+        - generic [ref=e982]:
+          - generic [ref=e983]: v1
+          - generic [ref=e984]: 542字
+      - generic [ref=e985] [cursor=pointer]:
+        - generic [ref=e986]: html-ppt-skill 项目
+        - generic [ref=e987]:
+          - generic [ref=e988]: v1
+          - generic [ref=e989]: 337字
+      - generic [ref=e990] [cursor=pointer]:
+        - generic [ref=e991]: DeepPresenter PPT 智能体
+        - generic [ref=e992]:
+          - generic [ref=e993]: v1
+          - generic [ref=e994]: 301字
+      - generic [ref=e995] [cursor=pointer]:
+        - generic [ref=e996]: Agency-Agents 虚拟公司
+        - generic [ref=e997]:
+          - generic [ref=e998]: v2
+          - generic [ref=e999]: 1917字
+      - generic [ref=e1000] [cursor=pointer]:
+        - generic [ref=e1001]: 小优 AI 开发博主
+        - generic [ref=e1002]:
+          - generic [ref=e1003]: v4
+          - generic [ref=e1004]: 1261字
+      - generic [ref=e1005] [cursor=pointer]:
+        - generic [ref=e1006]: Agency-Agents 项目详解
+        - generic [ref=e1007]:
+          - generic [ref=e1008]: v1
+          - generic [ref=e1009]: 1198字
+      - generic [ref=e1010] [cursor=pointer]:
+        - generic [ref=e1011]: 小优 AI 开发博主介绍
+        - generic [ref=e1012]:
+          - generic [ref=e1013]: v1
+          - generic [ref=e1014]: 504字
+      - generic [ref=e1015] [cursor=pointer]:
+        - generic [ref=e1016]: AI 开发工具横向对比
+        - generic [ref=e1017]:
+          - generic [ref=e1018]: v1
+          - generic [ref=e1019]: 907字
+      - generic [ref=e1020] [cursor=pointer]:
+        - generic [ref=e1021]: SKILL.md 文件规范
+        - generic [ref=e1022]:
+          - generic [ref=e1023]: v2
+          - generic [ref=e1024]: 1607字
+      - generic [ref=e1025] [cursor=pointer]:
+        - generic [ref=e1026]: 数字生命卡兹克 AI 博主
+        - generic [ref=e1027]:
+          - generic [ref=e1028]: v1
+          - generic [ref=e1029]: 1505字
+      - generic [ref=e1030] [cursor=pointer]:
+        - generic [ref=e1031]: HKR 选题质检模型
+        - generic [ref=e1032]:
+          - generic [ref=e1033]: v1
+          - generic [ref=e1034]: 594字
+      - generic [ref=e1035] [cursor=pointer]:
+        - generic [ref=e1036]: 卡兹克四层自检体系
+        - generic [ref=e1037]:
+          - generic [ref=e1038]: v1
+          - generic [ref=e1039]: 492字
+      - generic [ref=e1040] [cursor=pointer]:
+        - generic [ref=e1041]: Claude Opus 4.6
+        - generic [ref=e1042]:
+          - generic [ref=e1043]: v1
+          - generic [ref=e1044]: 325字
+      - generic [ref=e1045] [cursor=pointer]:
+        - generic [ref=e1046]: 报纸式AI输出界面
+        - generic [ref=e1047]:
+          - generic [ref=e1048]: v2
+          - generic [ref=e1049]: 1827字
+      - generic [ref=e1050] [cursor=pointer]:
+        - generic [ref=e1051]: GPT-5.4 超长回复问题
+        - generic [ref=e1052]:
+          - generic [ref=e1053]: v3
+          - generic [ref=e1054]: 1418字
+      - generic [ref=e1055] [cursor=pointer]:
+        - generic [ref=e1056]: The Daily Crosswire 项目
+        - generic [ref=e1057]:
+          - generic [ref=e1058]: v3
+          - generic [ref=e1059]: 1228字
+      - generic [ref=e1060] [cursor=pointer]:
+        - generic [ref=e1061]: 报纸式AI输出界面项目发布
+        - generic [ref=e1062]:
+          - generic [ref=e1063]: v1
+          - generic [ref=e1064]: 886字
+      - generic [ref=e1065] [cursor=pointer]:
+        - generic [ref=e1066]: OpenClaw 超长输出场景
+        - generic [ref=e1067]:
+          - generic [ref=e1068]: v1
+          - generic [ref=e1069]: 785字
+      - generic [ref=e1070] [cursor=pointer]:
+        - generic [ref=e1071]: nature-skills 项目
+        - generic [ref=e1072]:
+          - generic [ref=e1073]: v2
+          - generic [ref=e1074]: 1152字
+      - generic [ref=e1075] [cursor=pointer]:
+        - generic [ref=e1076]: Anthropic 官方 Skills 仓库
+        - generic [ref=e1077]:
+          - generic [ref=e1078]: v2
+          - generic [ref=e1079]: 870字
+      - generic [ref=e1080] [cursor=pointer]:
+        - generic [ref=e1081]: Awesome Claude Code Config
+        - generic [ref=e1082]:
+          - generic [ref=e1083]: v2
+          - generic [ref=e1084]: 873字
+      - generic [ref=e1085] [cursor=pointer]:
+        - generic [ref=e1086]: Research Skills 科研工作流
+        - generic [ref=e1087]:
+          - generic [ref=e1088]: v2
+          - generic [ref=e1089]: 819字
+      - generic [ref=e1090] [cursor=pointer]:
+        - generic [ref=e1091]: PDF Skill 文档处理
+        - generic [ref=e1092]:
+          - generic [ref=e1093]: v1
+          - generic [ref=e1094]: 990字
+      - generic [ref=e1095] [cursor=pointer]:
+        - generic [ref=e1096]: 原始未来主义设计思潮
+        - generic [ref=e1097]:
+          - generic [ref=e1098]: v1
+          - generic [ref=e1099]: 2178字
+      - generic [ref=e1100] [cursor=pointer]:
+        - generic [ref=e1101]: Ronan Space Systems 品牌设计
+        - generic [ref=e1102]:
+          - generic [ref=e1103]: v1
+          - generic [ref=e1104]: 1026字
+      - generic [ref=e1105] [cursor=pointer]:
+        - generic [ref=e1106]: ZAK 创意设计工作室
+        - generic [ref=e1107]:
+          - generic [ref=e1108]: v1
+          - generic [ref=e1109]: 423字
+      - generic [ref=e1110] [cursor=pointer]:
+        - generic [ref=e1111]: 古代岩画与现代设计
+        - generic [ref=e1112]:
+          - generic [ref=e1113]: v1
+          - generic [ref=e1114]: 580字
+      - generic [ref=e1115] [cursor=pointer]:
+        - generic [ref=e1116]: B站总结文档处理流程
+        - generic [ref=e1117]:
+          - generic [ref=e1118]: v1
+          - generic [ref=e1119]: 493字
+      - generic [ref=e1120] [cursor=pointer]:
+        - generic [ref=e1121]: B站总结文档目录
+        - generic [ref=e1122]:
+          - generic [ref=e1123]: v1
+          - generic [ref=e1124]: 310字
+      - generic [ref=e1125] [cursor=pointer]:
+        - generic [ref=e1126]: gstack 虚拟开发团队
+        - generic [ref=e1127]:
+          - generic [ref=e1128]: v1
+          - generic [ref=e1129]: 363字
+      - generic [ref=e1130] [cursor=pointer]:
+        - generic [ref=e1131]: V0 UI 生成工具
+        - generic [ref=e1132]:
+          - generic [ref=e1133]: v1
+          - generic [ref=e1134]: 325字
+      - generic [ref=e1135] [cursor=pointer]:
+        - generic [ref=e1136]: MCP 测试笔记
+        - generic [ref=e1137]:
+          - generic [ref=e1138]: v3
+          - generic [ref=e1139]: 794字
+      - generic [ref=e1140] [cursor=pointer]:
+        - generic [ref=e1141]: MCP 测试概述
+        - generic [ref=e1142]:
+          - generic [ref=e1143]: v2
+          - generic [ref=e1144]: 596字
+      - generic [ref=e583] [cursor=pointer]:
+        - generic [ref=e584]: Python asyncio 入门
+        - generic [ref=e585]:
+          - generic [ref=e586]: v1
+          - generic [ref=e587]: 828字
+      - generic [ref=e588] [cursor=pointer]:
+        - generic [ref=e589]: Python threading 简介
+        - generic [ref=e590]:
+          - generic [ref=e591]: v1
+          - generic [ref=e592]: 716字
+      - generic [ref=e593] [cursor=pointer]:
+        - generic [ref=e594]: Python multiprocessing 简介
+        - generic [ref=e595]:
+          - generic [ref=e596]: v1
+          - generic [ref=e597]: 428字
+      - generic [ref=e1145] [cursor=pointer]:
+        - generic [ref=e1146]: MCP Server 简介
+        - generic [ref=e1147]:
+          - generic [ref=e1148]: v2
+          - generic [ref=e1149]: 525字
+      - generic [ref=e1150] [cursor=pointer]:
+        - generic [ref=e1151]: Model Context Protocol
+        - generic [ref=e1152]:
+          - generic [ref=e1153]: v1
+          - generic [ref=e1154]: 272字
+      - generic [ref=e1155] [cursor=pointer]:
+        - generic [ref=e1156]: MCP 协议概述
+        - generic [ref=e1157]:
+          - generic [ref=e1158]: v1
+          - generic [ref=e1159]: 302字
+    - generic [ref=e613]:
+      - generic [ref=e614]: 页面 80
+      - generic [ref=e615]: 链接 205
+  - main [ref=e616]:
+    - generic [ref=e617]:
+      - heading "Cavalry 入门指南与 AE 对比" [level=3] [ref=e627]
+      - button "📄 页面" [ref=e619] [cursor=pointer]
+      - button "🕸️ 知识图谱" [ref=e620] [cursor=pointer]
+      - button "📋 编译日志" [ref=e621] [cursor=pointer]
+      - button "✏️ 编辑" [ref=e628] [cursor=pointer]
+      - button "🧠 思维导图" [ref=e629] [cursor=pointer]
+      - button "📽️ 幻灯片" [ref=e630] [cursor=pointer]
+      - button "↗ 新标签页打开" [active] [ref=e631] [cursor=pointer]
+    - generic [ref=e632]:
+      - generic [ref=e633]:
+        - generic [ref=e634]: 📂 设计工具
+        - generic [ref=e635]: 📝 v1
+        - generic [ref=e636]: 📊 2047 字
+        - generic [ref=e637]: 📅 2026-05-30
+        - generic [ref=e638]:
+          - generic [ref=e639]: Cavalry
+          - generic [ref=e640]: 动态图形
+          - generic [ref=e641]: 动画
+          - generic [ref=e642]: After Effects
+          - generic [ref=e643]: 节点式
+          - generic [ref=e644]: 程序化动画
+          - generic [ref=e645]: 设计工具
+      - generic [ref=e647]:
+        - button "☀️" [ref=e648] [cursor=pointer]
+        - generic [ref=e649]:
+          - heading "Cavalry 入门指南与 AE 对比" [level=1] [ref=e650]
+          - heading "Cavalry 入门指南与 AE 对比" [level=1] [ref=e651]
+          - heading "简介" [level=2] [ref=e652]
+          - paragraph [ref=e653]:
+            - text: Cavalry 是一款
+            - strong [ref=e654]: 基于节点系统（Node-based）的程序化 2D 动画与动态图形软件
+            - text: ，被业界称为“2D 界的 Houdini”。它通过定义规则与行为驱动动画，天然支持数据连接、批量生成与实时预览。2026 年 2 月被 Canva 收购后，
+            - strong [ref=e655]: Pro 专业版已对个人用户完全免费
+            - text: 。
+          - paragraph [ref=e656]: 本指南帮助初学者判断是否值得学习 Cavalry，理解其核心范式，并与 After Effects 进行对比。
+          - heading "安装/获取" [level=2] [ref=e657]
+          - list [ref=e658]:
+            - listitem [ref=e659]:
+              - text: 访问官网
+              - link "cavalry.scenegroup.co" [ref=e660] [cursor=pointer]:
+                - /url: https://cavalry.scenegroup.co
+              - text: 下载 Pro 版（个人免费）
+            - listitem [ref=e661]:
+              - text: 官方文档：
+              - link "beta-docs.cavalry.scenegroup.co" [ref=e662] [cursor=pointer]:
+                - /url: https://beta-docs.cavalry.scenegroup.co
+          - heading "核心功能" [level=2] [ref=e663]
+          - list [ref=e664]:
+            - listitem [ref=e665]:
+              - strong [ref=e666]: 节点驱动
+              - text: ：通过连线定义动画逻辑，无需逐帧关键帧
+            - listitem [ref=e667]:
+              - strong [ref=e668]: Duplicator 批量生成
+              - text: ：一键创建数百个对象，并联动动画行为
+            - listitem [ref=e669]:
+              - strong [ref=e670]: 原生数据绑定
+              - text: ：支持 JSON、CSV、Google Sheets，适合动态数据可视化
+            - listitem [ref=e671]:
+              - strong [ref=e672]: 实时预览
+              - text: ：GPU 加速，默认实时播放，无需等待缓存
+            - listitem [ref=e673]:
+              - strong [ref=e674]: Falloffs & 时间编辑器
+              - text: ：精细控制动画衰减和节奏
+          - heading "适用场景" [level=2] [ref=e675]
+          - list [ref=e676]:
+            - listitem [ref=e677]: 数据可视化与信息图表动画
+            - listitem [ref=e678]: 社交模板批量生成（如动态海报、广告变体）
+            - listitem [ref=e679]: 几何 Logo 动画、广播包装
+            - listitem [ref=e680]: 自动化动态内容（参数化设计）
+          - paragraph [ref=e681]: 暂不必须的场景：角色动画、视效合成、依赖庞大插件生态的项目。
+          - heading "同类对比：Cavalry vs After Effects" [level=2] [ref=e682]
+          - table [ref=e683]:
+            - rowgroup [ref=e684]:
+              - row "维度 Cavalry After Effects" [ref=e685]:
+                - columnheader "维度" [ref=e686]
+                - columnheader "Cavalry" [ref=e687]
+                - columnheader "After Effects" [ref=e688]
+            - rowgroup [ref=e689]:
+              - row "核心理念 节点驱动，定义规则自动动画 图层 + 关键帧，手动逐层控制" [ref=e690]:
+                - cell "核心理念" [ref=e691]:
+                  - strong [ref=e692]: 核心理念
+                - cell "节点驱动，定义规则自动动画" [ref=e693]
+                - cell "图层 + 关键帧，手动逐层控制" [ref=e694]
+              - row "批量处理 Duplicator 一键批量生成并联动动画 需逐个复制图层，效率有限" [ref=e695]:
+                - cell "批量处理" [ref=e696]:
+                  - strong [ref=e697]: 批量处理
+                - cell "Duplicator 一键批量生成并联动动画" [ref=e698]
+                - cell "需逐个复制图层，效率有限" [ref=e699]
+              - row "数据绑定 原生支持 JSON/CSV/Google Sheets 需第三方脚本或复杂表达式" [ref=e700]:
+                - cell "数据绑定" [ref=e701]:
+                  - strong [ref=e702]: 数据绑定
+                - cell "原生支持 JSON/CSV/Google Sheets" [ref=e703]
+                - cell "需第三方脚本或复杂表达式" [ref=e704]
+              - row "实时预览 GPU 加速，默认实时播放 RAM 预览，复杂项目需缓存" [ref=e705]:
+                - cell "实时预览" [ref=e706]:
+                  - strong [ref=e707]: 实时预览
+                - cell "GPU 加速，默认实时播放" [ref=e708]
+                - cell "RAM 预览，复杂项目需缓存" [ref=e709]
+              - row "学习曲线 需转换思维模式，约 2-4 周上手 上手直观，但精通曲线长" [ref=e710]:
+                - cell "学习曲线" [ref=e711]:
+                  - strong [ref=e712]: 学习曲线
+                - cell "需转换思维模式，约 2-4 周上手" [ref=e713]
+                - cell "上手直观，但精通曲线长" [ref=e714]
+              - row "插件生态 较年轻，插件较少 大量成熟插件" [ref=e715]:
+                - cell "插件生态" [ref=e716]:
+                  - strong [ref=e717]: 插件生态
+                - cell "较年轻，插件较少" [ref=e718]
+                - cell "大量成熟插件" [ref=e719]
+              - row "价格 个人免费（Pro） Creative Cloud 订阅制" [ref=e720]:
+                - cell "价格" [ref=e721]:
+                  - strong [ref=e722]: 价格
+                - cell "个人免费（Pro）" [ref=e723]
+                - cell "Creative Cloud 订阅制" [ref=e724]
+          - paragraph [ref=e725]:
+            - strong [ref=e726]: 结论
+            - text: ：Cavalry 不替代 AE，而是互补关系。推荐工作流：Illustrator/Figma 设计 → Cavalry 程序化动画 → AE 最终合成与特效。
+          - heading "📎 相关资源" [level=2] [ref=e727]
+          - list [ref=e728]:
+            - listitem [ref=e729]:
+              - link "Cavalry 官网" [ref=e730] [cursor=pointer]:
+                - /url: https://cavalry.scenegroup.co
+              - text: – 下载与官方信息
+            - listitem [ref=e731]:
+              - link "Cavalry 官方文档" [ref=e732] [cursor=pointer]:
+                - /url: https://beta-docs.cavalry.scenegroup.co
+            - listitem [ref=e733]:
+              - link "School of Motion：为什么 Cavalry 是 2D 界的 Houdini" [ref=e734] [cursor=pointer]:
+                - /url: https://www.schoolofmotion.com/blog/cavalry-houdini-of-2d-after-effects
+              - text: – 深度解析范式差异（英文）
+            - listitem [ref=e735]:
+              - link "Cavalry Motion Design 2026 完整测评" [ref=e736] [cursor=pointer]:
+                - /url: https://superrendersfarm.com/article/cavalry-motion-design-review-2026
+              - text: – 功能总览与免费政策（英文）
+            - listitem [ref=e737]:
+              - link "Cavalry Pro 现已完全免费——AE 替代方案报道" [ref=e738] [cursor=pointer]:
+                - /url: https://www.3dart.it/en/cavalry-pro-is-now-completely-free-the-after-effects-alternative-rides-in/
+              - text: – 免费策略中文报道
+            - listitem [ref=e739]:
+              - link "【中字】Cavalry 动态图形基础系统入门课（微信）" [ref=e740] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s?__biz=MzU3NDM0ODYyMg==&mid=2247496298&idx=1&sn=5eda4e8b1f4c7c2c8d51d32be770ece7
+            - listitem [ref=e741]:
+              - link "B站 Cavalry 教程合集" [ref=e742] [cursor=pointer]:
+                - /url: https://www.bilibili.com/video/BV1EPqYBJEiW/
+              - text: – 含海外优质内容搬运翻译
+            - listitem [ref=e743]:
+              - link "抖音视频来源：Cavalry新手入门必看指南" [ref=e744] [cursor=pointer]:
+                - /url: https://www.douyin.com/video/7644136292271410467

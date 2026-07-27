@@ -43,6 +43,42 @@ def _find_ffmpeg() -> str:
 FFMPEG_CMD = _find_ffmpeg()
 
 
+def _safe_filename(name: str | None, max_len: int = 80) -> str:
+    """将字符串转换为 Windows / 跨平台安全文件名。"""
+    if not name:
+        return "untitled"
+    import unicodedata
+
+    name = str(name)
+    # 1. 替换 Windows 保留字符和 ASCII 控制字符（含 DEL \x7f）
+    name = re.sub(r'[\\/:*?"<>|\x00-\x1f\x7f]', '_', name)
+
+    # 2. 移除零宽字符和不可见格式字符
+    invisible = '\u200b\u200c\u200d\u200e\u200f\ufeff\u2060'
+    for ch in invisible:
+        name = name.replace(ch, '')
+
+    # 3. 过滤 emoji 和装饰符号（覆盖主要 emoji 区块）
+    name = re.sub(r'[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0000FE00-\U0000FE0F]', '_', name)
+
+    # 4. Unicode 规范化（NFC），避免组合字符导致问题
+    name = unicodedata.normalize('NFC', name)
+
+    # 5. 去掉首尾的空格和点号（Windows 保留名风险）
+    name = name.strip('. ')
+    if not name:
+        name = "untitled"
+
+    # 6. 防御 Windows 保留名（CON, PRN, AUX, NUL, COM1-9, LPT1-9）
+    reserved = {'CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5',
+                'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4',
+                'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'}
+    if name.split('.')[0].upper() in reserved:
+        name = f"_{name}"
+
+    return name[:max_len]
+
+
 def verify_external_deps() -> dict:
     """启动时校验外部依赖（ffmpeg / claude 等），返回状态报告。
 
@@ -350,8 +386,9 @@ def _extract_douyin_raw(user_input: str) -> dict:
 
     try:
         import ffmpeg as ffmpeg_mod
-        tmp_video = os.path.join(tempfile.gettempdir(), f"douyin_{info['video_id']}.mp4")
-        tmp_audio = os.path.join(tempfile.gettempdir(), f"douyin_{info['video_id']}.mp3")
+        safe_vid = _safe_filename(info['video_id'])
+        tmp_video = os.path.join(tempfile.gettempdir(), f"douyin_{safe_vid}.mp4")
+        tmp_audio = os.path.join(tempfile.gettempdir(), f"douyin_{safe_vid}.mp3")
 
         # 下载视频
         resp = requests.get(video_url, headers={
@@ -408,6 +445,9 @@ def _extract_douyin_raw(user_input: str) -> dict:
         raw["asr_error"] = f"ffmpeg 未找到（{e}）。请安装 ffmpeg 并确保其在系统 PATH 中，或重启后端以刷新 PATH。"
     except Exception as e:
         error_msg = str(e)
+        # 补充临时文件路径上下文，方便定位 Invalid argument 问题
+        if tmp_video or tmp_audio:
+            print(f"[douyin debug] tmp_video={tmp_video}, tmp_audio={tmp_audio}", flush=True)
         # 提取 ffmpeg 详细错误信息
         if hasattr(e, 'stderr') and e.stderr:
             stderr_text = e.stderr.decode('utf-8', errors='replace')
@@ -672,7 +712,7 @@ def _run_claude(prompt: str, output_dir: str, timeout: int = 480) -> dict:
             if line.startswith("# ") and not line.startswith("## "):
                 title_line = line[2:].strip()
                 break
-        safe = re.sub(r'[\\/:*?"<>|]', '_', title_line or "summary")[:60]
+        safe = _safe_filename(title_line or "summary", max_len=60)
         md_path = os.path.join(output_dir, f"{safe}.md")
         with open(md_path, "w", encoding="utf-8") as f:
             f.write(stdout)

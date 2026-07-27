@@ -211,14 +211,28 @@
               <div class="text-xs text-text-secondary">{{ mod.desc }}</div>
             </div>
           </div>
-          <input v-model="mod.input" :placeholder="mod.placeholder" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
+          <input
+            v-model="mod.input"
+            :placeholder="mod.placeholder"
+            @input="mod.inputError = false"
+            class="px-3.5 py-2.5 bg-bg border rounded-[8px] text-text text-sm outline-none focus:border-accent transition-colors"
+            :class="mod.inputError ? 'border-danger' : 'border-border'"
+          >
           <!-- 抖音模块：额外的批量导入区 -->
           <div v-if="mod.id === 'douyin-summary'" class="flex flex-col gap-1.5">
             <div class="flex items-center justify-between">
               <span class="text-[11px] text-text-secondary">📥 批量导入（每行一个链接）</span>
               <button @click="mod.showBatch = !mod.showBatch" class="text-[11px] text-accent hover:underline">{{ mod.showBatch ? '收起' : '展开' }}</button>
             </div>
-            <textarea v-if="mod.showBatch" v-model="mod.batchInput" placeholder="粘贴多个抖音分享链接，每行一个…&#10;例如：&#10;https://v.douyin.com/xxxxx/&#10;https://v.douyin.com/yyyyy/" rows="4" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent resize-none"></textarea>
+            <textarea
+            v-if="mod.showBatch"
+            v-model="mod.batchInput"
+            @input="mod.inputError = false"
+            placeholder="粘贴多个抖音分享链接，每行一个…&#10;例如：&#10;https://v.douyin.com/xxxxx/&#10;https://v.douyin.com/yyyyy/"
+            rows="4"
+            class="px-3.5 py-2.5 bg-bg border rounded-[8px] text-text text-sm outline-none focus:border-accent resize-none transition-colors"
+            :class="mod.batchInputError ? 'border-danger' : 'border-border'"
+          ></textarea>
           </div>
           <!-- 细粒度进度指示器 -->
           <div v-if="mod.activeTaskId && taskSteps[mod.activeTaskId]" class="flex flex-col gap-1.5">
@@ -303,10 +317,20 @@
               <span class="text-danger text-[11px] flex-1">⚠️ API Key 无效：{{ t.api_key_error_msg }}</span>
               <button @click="retryTask(t.task_id)" class="px-2 py-0.5 rounded-[4px] bg-danger text-white text-[10px] hover:bg-danger/80 flex-shrink-0">🔄 重新加载</button>
             </div>
+            <!-- 失败任务：完整错误 + 操作 -->
+            <div v-else-if="t.status === 'error' || t.status === 'failed'" class="flex flex-col gap-1.5">
+              <div class="text-[11px] text-danger bg-danger/5 border border-danger/20 rounded-[6px] px-2.5 py-1.5">
+                <div class="font-medium mb-0.5">❌ 处理失败</div>
+                <div class="whitespace-pre-wrap break-all">{{ t.error || t.progress || '未知错误' }}</div>
+              </div>
+              <div class="flex gap-2 justify-end">
+                <button @click="copyTaskDiagnostics(t)" class="px-2 py-1 rounded-[4px] border border-border bg-surface text-[10px] text-text-secondary hover:bg-bg">📋 复制诊断</button>
+                <button @click="retryTask(t.task_id)" class="px-2 py-1 rounded-[4px] bg-accent text-white text-[10px] hover:opacity-90">🔄 重试</button>
+              </div>
+            </div>
             <div v-else class="flex items-center justify-between text-[11px] text-text-secondary">
               <span class="truncate max-w-[140px]">{{ t.progress }}</span>
-              <span v-if="t.error" class="text-danger truncate max-w-[140px] text-right" :title="t.error">{{ t.error }}</span>
-              <span v-else-if="t.doc_id">
+              <span v-if="t.doc_id">
                 <button @click="viewDocument(t.doc_id)" class="text-accent hover:underline">查看文档 #{{ t.doc_id }}</button>
               </span>
             </div>
@@ -376,16 +400,13 @@
     </div>
   </div>
 
-  <!-- Toast -->
-  <div v-if="toastVisible" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-[8px] text-sm border z-[200] transition-opacity"
-    :class="toastError ? 'border-danger text-danger' : 'border-border text-text bg-surface'">
-    {{ toastMessage }}
-  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '../stores/settings.js'
+import { toast } from '../composables/useToast.js'
+import { useConfirm } from '../composables/useConfirm.js'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
 import TaskStatusBadge from '../components/TaskStatusBadge.vue'
 
@@ -435,7 +456,7 @@ async function doSearch() {
       const commands = settings.loadFromStorage('commands', {})
       const url = commands[val]
       if (url) openExternal(url)
-      else showToast(`未知命令: ${val}`, true)
+      else toast.error(`未知命令: ${val}`)
       searchLoading.value = false
       return
     }
@@ -480,7 +501,7 @@ function openShortcutModal(idx) {
 
 function saveShortcut() {
   const { name, url, icon } = shortcutForm.value
-  if (!name || !url) { showToast('请填写名称和 URL', true); return }
+  if (!name || !url) { toast.error('请填写名称和 URL'); return }
   if (editingShortcutIdx.value >= 0) {
     settings.shortcuts[editingShortcutIdx.value] = { name, url, icon: icon || '🔗' }
   } else {
@@ -500,23 +521,23 @@ function openAIModal() {
 
 function saveAI() {
   const { name, url, icon } = aiForm.value
-  if (!name || !url) { showToast('请填写名称和 URL', true); return }
+  if (!name || !url) { toast.error('请填写名称和 URL'); return }
   settings.addLauncher({ name, url, icon: icon || '🤖' })
   aiModal.value = false
 }
 
 function launchAI(url) { openExternal(url) }
 
-function confirmRemoveShortcut(i) {
-  if (confirm('确定删除这个常用网站吗？')) {
-    settings.removeShortcut(i)
-  }
+const { confirm } = useConfirm()
+
+async function confirmRemoveShortcut(i) {
+  const ok = await confirm({ message: '确定删除这个常用网站吗？' })
+  if (ok) settings.removeShortcut(i)
 }
 
-function confirmRemoveLauncher(i) {
-  if (confirm('确定删除这个 AI 服务吗？')) {
-    settings.removeLauncher(i)
-  }
+async function confirmRemoveLauncher(i) {
+  const ok = await confirm({ message: '确定删除这个 AI 服务吗？' })
+  if (ok) settings.removeLauncher(i)
 }
 
 // ===== 知识库 =====
@@ -538,44 +559,46 @@ async function viewDocument(id) {
   try {
     const doc = await settings.apiGet(`/documents/${id}`)
     if (doc.error) {
-      showToast(doc.error, true)
+      toast.error(doc.error)
       return
     }
     docTitle.value = doc.title
     docContent.value = doc.content || ''
     docModal.value = true
-  } catch { showToast('加载文档失败', true) }
+  } catch { toast.error('加载文档失败') }
 }
 
 async function copyDocument(doc) {
   try {
     await navigator.clipboard.writeText(doc.content || '')
-    showToast('已复制到剪贴板')
-  } catch { showToast('复制失败', true) }
+    toast.success('已复制到剪贴板')
+  } catch { toast.error('复制失败') }
 }
 
 async function deleteDocument(id) {
-  if (!confirm('确定要删除这篇文档吗？')) return
+  const ok = await confirm({ message: '确定要删除这篇文档吗？', danger: true })
+  if (!ok) return
   try {
     await settings.apiDelete(`/documents/${id}`)
-    showToast('文档已删除')
+    toast.success('文档已删除')
     loadDocuments()
-  } catch { showToast('删除失败', true) }
+  } catch { toast.error('删除失败') }
 }
 
 async function reparseDocument(id) {
   const doc = documents.value.find(d => d.id === id)
   if (!doc) return
-  if (!confirm(`重新识别 "${doc.title}"？\n将重新提取语音文本并更新文档。`)) return
+  const ok = await confirm({ message: `重新识别 "${doc.title}"？\n将重新提取语音文本并更新文档。` })
+  if (!ok) return
   try {
     const data = await settings.apiPost(`/automation/reparse/${id}`)
     if (data.error) {
-      showToast(data.error, true)
+      toast.error(data.error)
     } else {
-      showToast('已重新提交识别任务，处理完成后自动刷新')
+      toast.success('已重新提交识别任务，处理完成后自动刷新')
       startQueuePoll()  // 启动轮询，等任务完成后自动刷新文档列表
     }
-  } catch { showToast('重新识别失败', true) }
+  } catch { toast.error('重新识别失败') }
 }
 
 async function handleUpload(e) {
@@ -587,9 +610,9 @@ async function handleUpload(e) {
     if (searchCategory.value) form.append('category_id', searchCategory.value)
     try {
       const data = await settings.apiUpload('/upload', form)
-      if (data.id) showToast(`"${file.name}" 上传成功`)
-      else showToast(`上传失败`, true)
-    } catch { showToast(`上传 "${file.name}" 失败`, true) }
+      if (data.id) toast.success(`"${file.name}" 上传成功`)
+      else toast.error(`上传失败`)
+    } catch { toast.error(`上传 "${file.name}" 失败`) }
   }
   e.target.value = ''
   loadDocuments()
@@ -598,9 +621,9 @@ async function handleUpload(e) {
 async function openInbox() {
   try {
     const data = await settings.apiGet('/inbox/open')
-    if (data.error) showToast(data.error, true)
-    else showToast(`收件箱已打开`)
-  } catch { showToast('打开收件箱失败', true) }
+    if (data.error) toast.error(data.error)
+    else toast.success(`收件箱已打开`)
+  } catch { toast.error('打开收件箱失败') }
 }
 
 // ===== 粘贴 Claude 对话 =====
@@ -617,17 +640,17 @@ function openPasteModal() {
 
 async function savePaste() {
   const { title, content } = pasteForm.value
-  if (!content) { showToast('请粘贴对话内容', true); return }
+  if (!content) { toast.error('请粘贴对话内容'); return }
   try {
     const body = { title: title || pasteForm.value.title, content, source: 'claude' }
     if (searchCategory.value) body.category_id = parseInt(searchCategory.value)
     const data = await settings.apiPost('/upload/text', body)
     if (data.id) {
-      showToast(`已存入知识库`)
+      toast.success(`已存入知识库`)
       pasteModal.value = false
       loadDocuments()
-    } else showToast('存入失败', true)
-  } catch { showToast('存入失败', true) }
+    } else toast.error('存入失败')
+  } catch { toast.error('存入失败') }
 }
 
 // ===== 每日复盘 =====
@@ -639,7 +662,7 @@ const reviewHistory = ref([])
 
 async function polishReview() {
   const text = reviewInput.value.trim()
-  if (!text) { showToast('请先输入今天的笔记', true); return }
+  if (!text) { toast.error('请先输入今天的笔记'); return }
   reviewLoading.value = true
   reviewStatus.value = '正在润色…'
   try {
@@ -649,7 +672,7 @@ async function polishReview() {
     reviewStatus.value = '完成'
     loadReviewHistory()
   } catch {
-    showToast('润色失败', true)
+    toast.error('润色失败')
     reviewStatus.value = ''
   } finally { reviewLoading.value = false }
 }
@@ -662,7 +685,7 @@ async function weeklyReport() {
     reviewResult.value = data.report || ''
     reviewStatus.value = '完成'
   } catch {
-    showToast('周报生成失败', true)
+    toast.error('周报生成失败')
     reviewStatus.value = ''
   } finally { reviewLoading.value = false }
 }
@@ -710,9 +733,9 @@ function sopTypeClass(type) {
 
 // ===== 自动化工具 =====
 const automationModules = ref([
-  { id: 'douyin-summary', name: '抖音摘要', icon: '📹', desc: '粘贴抖音分享链接，自动提取文本、识别资源、生成文档', placeholder: '粘贴抖音分享链接…', input: '', batchInput: '', showBatch: false, loading: false, status: '', statusClass: '', activeTaskId: '' },
-  { id: 'bilibili-summary', name: 'B站解析', icon: '📺', desc: '粘贴B站分享链接，自动解析视频信息、提取语音文本、生成文档', placeholder: '粘贴B站分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
-  { id: 'xiaohongshu-summary', name: '小红书解析', icon: '📕', desc: '粘贴小红书分享链接，自动提取笔记内容、图片视频、生成文档', placeholder: '粘贴小红书分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
+  { id: 'douyin-summary', name: '抖音摘要', icon: '📹', desc: '粘贴抖音分享链接，自动提取文本、识别资源、生成文档', placeholder: '粘贴抖音分享链接…', input: '', batchInput: '', showBatch: false, loading: false, status: '', statusClass: '', activeTaskId: '', inputError: false },
+  { id: 'bilibili-summary', name: 'B站解析', icon: '📺', desc: '粘贴B站分享链接，自动解析视频信息、提取语音文本、生成文档', placeholder: '粘贴B站分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '', inputError: false },
+  { id: 'xiaohongshu-summary', name: '小红书解析', icon: '📕', desc: '粘贴小红书分享链接，自动提取笔记内容、图片视频、生成文档', placeholder: '粘贴小红书分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '', inputError: false },
 ])
 
 // 全局队列面板状态
@@ -761,8 +784,8 @@ async function clearQueue() {
   try {
     await settings.apiDelete('/automation/queue/clear')
     fetchQueue()
-    showToast('已清除已完成任务')
-  } catch { showToast('清除失败', true) }
+    toast.success('已清除已完成任务')
+  } catch { toast.error('清除失败') }
 }
 
 async function retryTask(taskId) {
@@ -770,17 +793,32 @@ async function retryTask(taskId) {
     const data = await settings.apiPost(`/automation/queue/retry/${taskId}`)
     if (data.error) {
       if (data.api_key_invalid) {
-        alert(data.error + '\n\n请按以下步骤操作:\n1. 打开 backend/.env 文件\n2. 更新 DASHSCOPE_API_KEY=你的新密钥\n3. 重启后端服务\n4. 再次点击重试')
+        toast.error(data.error + ' — 请检查 backend/.env 中的 DASHSCOPE_API_KEY 并重启后端')
       } else {
-        showToast(data.error, true)
+        toast.error(data.error)
       }
     } else {
-      showToast('任务已重新提交')
+      toast.success('任务已重新提交')
       fetchQueue()
     }
-  } catch { showToast('重试失败', true) }
+  } catch { toast.error('重试失败') }
 }
-function refreshQueue() { fetchQueue(); showToast('已刷新') }
+function refreshQueue() { fetchQueue(); toast.success('已刷新') }
+
+async function copyTaskDiagnostics(t) {
+  const info = `任务ID: ${t.task_id}
+模块: ${t.module_name}
+输入: ${t.input}
+状态: ${t.status}
+错误: ${t.error || t.progress || '未知错误'}
+时间: ${new Date().toISOString()}`
+  try {
+    await navigator.clipboard.writeText(info)
+    toast.success('诊断信息已复制')
+  } catch {
+    toast.error('复制失败')
+  }
+}
 
 async function runAutomation(mod) {
   // 检查是否有批量输入（仅抖音模块）
@@ -788,7 +826,13 @@ async function runAutomation(mod) {
   const singleInput = mod.input.trim()
   const hasBatch = mod.id === 'douyin-summary' && batchText
 
-  if (!hasBatch && !singleInput) { showToast('请粘贴分享链接', true); return }
+  if (!hasBatch && !singleInput) {
+    mod.inputError = true
+    toast.error('请粘贴分享链接')
+    return
+  }
+  mod.inputError = false
+  if (mod.batchInputError !== undefined) mod.batchInputError = false
   mod.loading = true
   mod.status = '⏳ 已提交，正在处理…'
   mod.statusClass = 'text-text-secondary'
@@ -808,7 +852,7 @@ async function runAutomation(mod) {
     if (data.error) {
       mod.status = data.error
       mod.statusClass = 'text-danger'
-      showToast('提交失败', true)
+      toast.error('提交失败')
     } else if (data.task_ids && data.task_ids.length) {
       mod.activeTaskId = data.task_ids[0]
       const count = data.count || data.task_ids.length
@@ -822,23 +866,11 @@ async function runAutomation(mod) {
   } catch (err) {
     mod.status = '无法连接后端'
     mod.statusClass = 'text-danger'
-    showToast('请求失败', true)
+    toast.error('请求失败')
   } finally { mod.loading = false }
 }
 
-// ===== Toast =====
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastError = ref(false)
-let toastTimer = null
 
-function showToast(msg, isError = false) {
-  toastMessage.value = msg
-  toastError.value = isError
-  toastVisible.value = true
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toastVisible.value = false }, 2500)
-}
 
 // ===== 初始化 =====
 onMounted(async () => {

@@ -1,0 +1,13 @@
+[mcp_servers.douyin-mcp]
+command = "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/Scripts/douyin-mcp-server.exe"
+
+[mcp_servers.douyin-mcp.env]
+DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+
+[mcp_servers.study-hub]
+command = "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe"
+args = ["backend/mcp_server.py"]
+
+[mcp_servers.study-hub.env]
+DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+STUDY_HUB_API_BASE = "http://localhost:8741"

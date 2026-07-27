@@ -1,0 +1,787 @@
+{
+  "scan_time": "2026-06-06T22:00:06.642644",
+  "total_tools": 47,
+  "tools": [
+    {
+      "name": "architect",
+      "file": "architect.md",
+      "trigger_domain": [
+        "架构师 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "auditor",
+      "file": "auditor.md",
+      "trigger_domain": [
+        "审计者 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "automation expert",
+      "file": "automation-expert.md",
+      "trigger_domain": [
+        "asr",
+        "ffmpeg",
+        "视频解析",
+        "语音识别",
+        "音频",
+        "downloader",
+        "多平台",
+        "whisper",
+        "转文字",
+        "下载"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "backend expert",
+      "file": "backend-expert.md",
+      "trigger_domain": [
+        "后端",
+        "api",
+        "接口",
+        "数据库",
+        "sqlite",
+        "fastapi",
+        "服务端",
+        "路由",
+        "端点",
+        "chromadb",
+        "向量",
+        "查询"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "caretaker",
+      "file": "caretaker.md",
+      "trigger_domain": [
+        "照料者 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "debugger",
+      "file": "debugger.md",
+      "trigger_domain": [
+        "调试者 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "deploy expert",
+      "file": "deploy-expert.md",
+      "trigger_domain": [
+        "部署",
+        "启动",
+        "端口",
+        "进程",
+        "环境",
+        "后台服务",
+        "powershell",
+        "bat",
+        "脚本",
+        "后台",
+        "停止",
+        "重启",
+        "上线",
+        "发布"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "explorer",
+      "file": "explorer.md",
+      "trigger_domain": [
+        "探索专家 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "frontend expert",
+      "file": "frontend-expert.md",
+      "trigger_domain": [
+        "前端",
+        "vue",
+        "组件",
+        "页面",
+        "样式",
+        "css",
+        "按钮",
+        "表单",
+        "布局",
+        "构建",
+        "浏览器",
+        "显示",
+        "界面"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "implementer",
+      "file": "implementer.md",
+      "trigger_domain": [
+        "实现者 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "product manager",
+      "file": "product-manager.md",
+      "trigger_domain": [
+        "产品经理 skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "smoke tester",
+      "file": "smoke-tester.md",
+      "trigger_domain": [
+        "烟测",
+        "冒烟测试",
+        "部署",
+        "上线",
+        "发布",
+        "验证",
+        "巡检",
+        "核心流程",
+        "环境检查",
+        "smoke test",
+        "deploy",
+        "release"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "visual expert",
+      "file": "visual-expert.md",
+      "trigger_domain": [
+        "视觉",
+        "配色",
+        "字体",
+        "设计",
+        "ui",
+        "主题",
+        "图标",
+        "动画",
+        "颜色",
+        "对比度",
+        "美观",
+        "风格"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "brainstorming",
+      "file": "brainstorming\\SKILL.md",
+      "trigger_domain": [
+        "brainstorming ideas into designs"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "spec document reviewer prompt",
+      "file": "brainstorming\\spec-document-reviewer-prompt.md",
+      "trigger_domain": [
+        "spec document reviewer prompt template"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "visual companion",
+      "file": "brainstorming\\visual-companion.md",
+      "trigger_domain": [
+        "visual companion guide"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "dispatching-parallel-agents",
+      "file": "dispatching-parallel-agents\\SKILL.md",
+      "trigger_domain": [
+        "dispatching parallel agents"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "executing-plans",
+      "file": "executing-plans\\SKILL.md",
+      "trigger_domain": [
+        "executing plans"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "finishing-a-development-branch",
+      "file": "finishing-a-development-branch\\SKILL.md",
+      "trigger_domain": [
+        "finishing a development branch"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "kimi-webbridge",
+      "file": "kimi-webbridge\\SKILL.md",
+      "trigger_domain": [
+        "kimi webbridge"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "receiving-code-review",
+      "file": "receiving-code-review\\SKILL.md",
+      "trigger_domain": [
+        "code review reception"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "code reviewer",
+      "file": "requesting-code-review\\code-reviewer.md",
+      "trigger_domain": [
+        "code review agent"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "requesting-code-review",
+      "file": "requesting-code-review\\SKILL.md",
+      "trigger_domain": [
+        "requesting code review"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "code quality reviewer prompt",
+      "file": "subagent-driven-development\\code-quality-reviewer-prompt.md",
+      "trigger_domain": [
+        "code quality reviewer prompt template"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "implementer prompt",
+      "file": "subagent-driven-development\\implementer-prompt.md",
+      "trigger_domain": [
+        "implementer subagent prompt template"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "subagent-driven-development",
+      "file": "subagent-driven-development\\SKILL.md",
+      "trigger_domain": [
+        "subagent-driven development"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "spec reviewer prompt",
+      "file": "subagent-driven-development\\spec-reviewer-prompt.md",
+      "trigger_domain": [
+        "spec compliance reviewer prompt template"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "condition based waiting",
+      "file": "systematic-debugging\\condition-based-waiting.md",
+      "trigger_domain": [
+        "condition-based waiting"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "CREATION LOG",
+      "file": "systematic-debugging\\CREATION-LOG.md",
+      "trigger_domain": [
+        "creation log: systematic debugging skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "defense in depth",
+      "file": "systematic-debugging\\defense-in-depth.md",
+      "trigger_domain": [
+        "defense-in-depth validation"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "root cause tracing",
+      "file": "systematic-debugging\\root-cause-tracing.md",
+      "trigger_domain": [
+        "root cause tracing"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "systematic-debugging",
+      "file": "systematic-debugging\\SKILL.md",
+      "trigger_domain": [
+        "systematic debugging"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "test academic",
+      "file": "systematic-debugging\\test-academic.md",
+      "trigger_domain": [
+        "academic test: systematic debugging skill"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "test pressure 1",
+      "file": "systematic-debugging\\test-pressure-1.md",
+      "trigger_domain": [
+        "pressure test 1: emergency production fix"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "test pressure 2",
+      "file": "systematic-debugging\\test-pressure-2.md",
+      "trigger_domain": [
+        "pressure test 2: sunk cost + exhaustion"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "test pressure 3",
+      "file": "systematic-debugging\\test-pressure-3.md",
+      "trigger_domain": [
+        "pressure test 3: authority + social pressure"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "test-driven-development",
+      "file": "test-driven-development\\SKILL.md",
+      "trigger_domain": [
+        "test-driven development (tdd)"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "testing anti patterns",
+      "file": "test-driven-development\\testing-anti-patterns.md",
+      "trigger_domain": [
+        "testing anti-patterns"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "using-git-worktrees",
+      "file": "using-git-worktrees\\SKILL.md",
+      "trigger_domain": [
+        "using git worktrees"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "using-superpowers",
+      "file": "using-superpowers\\SKILL.md",
+      "trigger_domain": [
+        "using skills"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "verification-before-completion",
+      "file": "verification-before-completion\\SKILL.md",
+      "trigger_domain": [
+        "verification before completion"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "plan document reviewer prompt",
+      "file": "writing-plans\\plan-document-reviewer-prompt.md",
+      "trigger_domain": [
+        "plan document reviewer prompt template"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "writing-plans",
+      "file": "writing-plans\\SKILL.md",
+      "trigger_domain": [
+        "writing plans"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "operations",
+      "file": "kimi-webbridge\\references\\operations.md",
+      "trigger_domain": [
+        "operations: install, lifecycle, diagnose"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "codex tools",
+      "file": "using-superpowers\\references\\codex-tools.md",
+      "trigger_domain": [
+        "codex tool mapping"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "copilot tools",
+      "file": "using-superpowers\\references\\copilot-tools.md",
+      "trigger_domain": [
+        "copilot cli tool mapping"
+      ],
+      "is_builtin": false
+    },
+    {
+      "name": "gemini tools",
+      "file": "using-superpowers\\references\\gemini-tools.md",
+      "trigger_domain": [
+        "gemini cli tool mapping"
+      ],
+      "is_builtin": false
+    }
+  ],
+  "trigger_index": {
+    "架构师 skill": [
+      "architect"
+    ],
+    "审计者 skill": [
+      "auditor"
+    ],
+    "asr": [
+      "automation expert"
+    ],
+    "ffmpeg": [
+      "automation expert"
+    ],
+    "视频解析": [
+      "automation expert"
+    ],
+    "语音识别": [
+      "automation expert"
+    ],
+    "音频": [
+      "automation expert"
+    ],
+    "downloader": [
+      "automation expert"
+    ],
+    "多平台": [
+      "automation expert"
+    ],
+    "whisper": [
+      "automation expert"
+    ],
+    "转文字": [
+      "automation expert"
+    ],
+    "下载": [
+      "automation expert"
+    ],
+    "后端": [
+      "backend expert"
+    ],
+    "api": [
+      "backend expert"
+    ],
+    "接口": [
+      "backend expert"
+    ],
+    "数据库": [
+      "backend expert"
+    ],
+    "sqlite": [
+      "backend expert"
+    ],
+    "fastapi": [
+      "backend expert"
+    ],
+    "服务端": [
+      "backend expert"
+    ],
+    "路由": [
+      "backend expert"
+    ],
+    "端点": [
+      "backend expert"
+    ],
+    "chromadb": [
+      "backend expert"
+    ],
+    "向量": [
+      "backend expert"
+    ],
+    "查询": [
+      "backend expert"
+    ],
+    "照料者 skill": [
+      "caretaker"
+    ],
+    "调试者 skill": [
+      "debugger"
+    ],
+    "部署": [
+      "deploy expert",
+      "smoke tester"
+    ],
+    "启动": [
+      "deploy expert"
+    ],
+    "端口": [
+      "deploy expert"
+    ],
+    "进程": [
+      "deploy expert"
+    ],
+    "环境": [
+      "deploy expert"
+    ],
+    "后台服务": [
+      "deploy expert"
+    ],
+    "powershell": [
+      "deploy expert"
+    ],
+    "bat": [
+      "deploy expert"
+    ],
+    "脚本": [
+      "deploy expert"
+    ],
+    "后台": [
+      "deploy expert"
+    ],
+    "停止": [
+      "deploy expert"
+    ],
+    "重启": [
+      "deploy expert"
+    ],
+    "上线": [
+      "deploy expert",
+      "smoke tester"
+    ],
+    "发布": [
+      "deploy expert",
+      "smoke tester"
+    ],
+    "探索专家 skill": [
+      "explorer"
+    ],
+    "前端": [
+      "frontend expert"
+    ],
+    "vue": [
+      "frontend expert"
+    ],
+    "组件": [
+      "frontend expert"
+    ],
+    "页面": [
+      "frontend expert"
+    ],
+    "样式": [
+      "frontend expert"
+    ],
+    "css": [
+      "frontend expert"
+    ],
+    "按钮": [
+      "frontend expert"
+    ],
+    "表单": [
+      "frontend expert"
+    ],
+    "布局": [
+      "frontend expert"
+    ],
+    "构建": [
+      "frontend expert"
+    ],
+    "浏览器": [
+      "frontend expert"
+    ],
+    "显示": [
+      "frontend expert"
+    ],
+    "界面": [
+      "frontend expert"
+    ],
+    "实现者 skill": [
+      "implementer"
+    ],
+    "产品经理 skill": [
+      "product manager"
+    ],
+    "烟测": [
+      "smoke tester"
+    ],
+    "冒烟测试": [
+      "smoke tester"
+    ],
+    "验证": [
+      "smoke tester"
+    ],
+    "巡检": [
+      "smoke tester"
+    ],
+    "核心流程": [
+      "smoke tester"
+    ],
+    "环境检查": [
+      "smoke tester"
+    ],
+    "smoke test": [
+      "smoke tester"
+    ],
+    "deploy": [
+      "smoke tester"
+    ],
+    "release": [
+      "smoke tester"
+    ],
+    "视觉": [
+      "visual expert"
+    ],
+    "配色": [
+      "visual expert"
+    ],
+    "字体": [
+      "visual expert"
+    ],
+    "设计": [
+      "visual expert"
+    ],
+    "ui": [
+      "visual expert"
+    ],
+    "主题": [
+      "visual expert"
+    ],
+    "图标": [
+      "visual expert"
+    ],
+    "动画": [
+      "visual expert"
+    ],
+    "颜色": [
+      "visual expert"
+    ],
+    "对比度": [
+      "visual expert"
+    ],
+    "美观": [
+      "visual expert"
+    ],
+    "风格": [
+      "visual expert"
+    ],
+    "brainstorming ideas into designs": [
+      "brainstorming"
+    ],
+    "spec document reviewer prompt template": [
+      "spec document reviewer prompt"
+    ],
+    "visual companion guide": [
+      "visual companion"
+    ],
+    "dispatching parallel agents": [
+      "dispatching-parallel-agents"
+    ],
+    "executing plans": [
+      "executing-plans"
+    ],
+    "finishing a development branch": [
+      "finishing-a-development-branch"
+    ],
+    "kimi webbridge": [
+      "kimi-webbridge"
+    ],
+    "code review reception": [
+      "receiving-code-review"
+    ],
+    "code review agent": [
+      "code reviewer"
+    ],
+    "requesting code review": [
+      "requesting-code-review"
+    ],
+    "code quality reviewer prompt template": [
+      "code quality reviewer prompt"
+    ],
+    "implementer subagent prompt template": [
+      "implementer prompt"
+    ],
+    "subagent-driven development": [
+      "subagent-driven-development"
+    ],
+    "spec compliance reviewer prompt template": [
+      "spec reviewer prompt"
+    ],
+    "condition-based waiting": [
+      "condition based waiting"
+    ],
+    "creation log: systematic debugging skill": [
+      "CREATION LOG"
+    ],
+    "defense-in-depth validation": [
+      "defense in depth"
+    ],
+    "root cause tracing": [
+      "root cause tracing"
+    ],
+    "systematic debugging": [
+      "systematic-debugging"
+    ],
+    "academic test: systematic debugging skill": [
+      "test academic"
+    ],
+    "pressure test 1: emergency production fix": [
+      "test pressure 1"
+    ],
+    "pressure test 2: sunk cost + exhaustion": [
+      "test pressure 2"
+    ],
+    "pressure test 3: authority + social pressure": [
+      "test pressure 3"
+    ],
+    "test-driven development (tdd)": [
+      "test-driven-development"
+    ],
+    "testing anti-patterns": [
+      "testing anti patterns"
+    ],
+    "using git worktrees": [
+      "using-git-worktrees"
+    ],
+    "using skills": [
+      "using-superpowers"
+    ],
+    "verification before completion": [
+      "verification-before-completion"
+    ],
+    "plan document reviewer prompt template": [
+      "plan document reviewer prompt"
+    ],
+    "writing plans": [
+      "writing-plans"
+    ],
+    "operations: install, lifecycle, diagnose": [
+      "operations"
+    ],
+    "codex tool mapping": [
+      "codex tools"
+    ],
+    "copilot cli tool mapping": [
+      "copilot tools"
+    ],
+    "gemini cli tool mapping": [
+      "gemini tools"
+    ]
+  }
+}

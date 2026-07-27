@@ -42,7 +42,7 @@
 ## 一键撤销
 
 每次改动前自动做 git atomic commit。commit message 是人类语言。
-用户说"撤销刚才的修改" → 管家自己查最近一次 commit，自己回滚，自己汇报。
+用户说"撤销刚才的修改" → 管家叫 implementer 查最近一次 commit 并回滚，管家汇报结果。
 
 "已撤销，回到改之前的状态。"
 

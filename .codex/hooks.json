@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe -c \"import os,json,sys; inp=json.loads(os.getenv('CLAUDE_TOOL_INPUT','{}')); fp=inp.get('file_path',''); sys.exit(0 if 'study-hub' in fp else 1)\" && C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe \"F:/360MoveData/Users/Administrator/Desktop/study web/.claude/scripts/generate_readme.py\" --write"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe -c \"import os,json,sys; inp=json.loads(os.getenv('CLAUDE_TOOL_INPUT','{}')); fp=inp.get('file_path',''); sys.exit(0 if 'study-hub' in fp else 1)\" && C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe \"F:/360MoveData/Users/Administrator/Desktop/study web/.claude/scripts/generate_readme.py\" --write"
+          }
+        ]
+      }
+    ]
+  }
+}

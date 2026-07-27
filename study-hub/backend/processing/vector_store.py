@@ -30,7 +30,6 @@ class VectorStore:
         # 使用版本化集合名：中文模型用 1024 维，与旧英文 384 维集合隔离
         self.collection = self._get_or_create_collection_with_meta("documents_zh")
         self.wiki_collection = self._get_or_create_collection_with_meta("wiki_pages")
-        self.memory_collection = self._get_or_create_collection_with_meta("memories")
         self._embed_fn = None
         self._use_api = False
         self._current_model = None
@@ -235,7 +234,6 @@ class VectorStore:
 
         # 从三个 collection 分别查询
         collections = [
-            ("memory", self.memory_collection),
             ("document", self.collection),
             ("wiki", self.wiki_collection),
         ]
@@ -283,7 +281,6 @@ class VectorStore:
         for name, coll in [
             ("documents_zh", self.collection),
             ("wiki_pages", self.wiki_collection),
-            ("memories", self.memory_collection),
         ]:
             meta = coll.metadata or {}
             status[name] = {

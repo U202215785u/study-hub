@@ -1,0 +1,193 @@
+{
+  "reply": "你好，我是 Second Self，你的 AI 分身。我正在运行中，可以协助你进行各种任务和决策。当前系统状态正常，可以开始工作。\n\n请问你需要测试哪些具体功能或模块？我可以根据你的需求提供相应的支持和帮助。",
+  "decision": {
+    "priority": "LOW",
+    "priority_reason": "未匹配任何优先级或知识域",
+    "linked_project": null,
+    "history_references": [],
+    "anti_pattern_risk": {
+      "detected": false,
+      "description": null
+    },
+    "principle_matches": [],
+    "principle_preference_deviation": {
+      "detected": false,
+      "detail": null
+    },
+    "autonomy_level": {
+      "level": "L2",
+      "reason": "低优先级，自动处理",
+      "requires_confirmation": false
+    },
+    "suggested_next_step": "低优先级。建议：记录一句话备忘，不展开。",
+    "should_capture_memory": false,
+    "capture_candidates": [],
+    "decided_at": "2026-06-06T21:21:43",
+    "field_type": "通用场",
+    "emotional_state": "neutral",
+    "emotional_tuning": ""
+  },
+  "snapshot": {
+    "me": {
+      "identity": {
+        "姓名代号": "L",
+        "年龄": "22 岁",
+        "学历": "华中科技大学（985），本科毕业",
+        "城市": "武汉",
+        "感情状态": "有女朋友，关系稳定，同居中"
+      },
+      "career": {
+        "公司": "岚图汽车（东风集团旗下新能源品牌）",
+        "部门": "用户体验部门",
+        "岗位": "移动端交互设计师（做手机 App，不是车机 HMI）",
+        "目标年薪": "13.5 万（70% 底薪 + 30% 绩效）",
+        "月到手": "约 7,800-8,000 元",
+        "公积金": "双边 10%，月缴约 2,000 元（含公司部分）",
+        "餐补": "520 元/月",
+        "公寓": "公司提供，免租"
+      },
+      "assets": {
+        "存款": "6 万元（应急金，不动）",
+        "月储蓄目标": "3,000-4,000 元",
+        "年储蓄目标": "4-5 万元"
+      },
+      "skills": [
+        "交互设计（移动端）",
+        "Figma / Sketch",
+        "正在自学：AI（通用方向，目标是 AI + 交互的复合能力）",
+        "学习能力：自评较强，985 工科训练"
+      ],
+      "traits": {
+        "系统性思维": "喜欢量化、建模、结构化",
+        "焦虑倾向": "对未来不确定性的耐受度较低",
+        "决策风格": "理性分析型，但有时过度分析导致行动延迟",
+        "社交倾向": "自我评价\"交涉能力强\"，在国企环境中有相对优势",
+        "野心与恐惧并存": "有很强的上进心，但容易因为\"选了舒适圈\"而自我怀疑"
+      },
+      "constraints": {
+        "工作节奏": "国企，相对低压，有业余时间"
+      },
+      "top_priorities": [
+        {
+          "rank": 1,
+          "title": "用 AI 做出可展示的作品",
+          "description": "不是\"学 AI\"，是\"用 AI 做了东西\""
+        },
+        {
+          "rank": 2,
+          "title": "在岚图积累完整的量产项目经验",
+          "description": "至少一个完整项目从头跟到尾"
+        },
+        {
+          "rank": 3,
+          "title": "维持生活和关系的稳定质量",
+          "description": "不因焦虑破坏已有的好局面"
+        }
+      ]
+    },
+    "dashboard": {
+      "strategic_projects": [
+        {
+          "name": "AI + 交互的实战产出",
+          "goal": "做出至少 2 个可展示的 AI+交互作品（非工作中，个人项目或工作中可公开的部分）",
+          "progress": "启动阶段，方向待定",
+          "next_milestone": "确定第一个作品的方向和范围（2026.06 内）",
+          "blocker": "想法太多，不知道从哪个开始",
+          "updated": "2026-06-03"
+        },
+        {
+          "name": "岚图量产项目经验积累",
+          "goal": "在岚图跟完至少一个完整的 App 版本迭代周期（从需求到发版）",
+          "progress": "刚入职，处于学习期",
+          "next_milestone": "明确自己在当前版本中的职责范围，脱离\"等安排\"状态",
+          "blocker": "新人阶段，主动权有限",
+          "updated": "2026-06-03"
+        },
+        {
+          "name": "确定租房方案",
+          "goal": "找到合适的整租房源，签好合同，预算控制在 2,000-2,500 / 月",
+          "progress": "未开始寻找",
+          "next_milestone": "明确需求（地段、户型、通勤时间），开始看 2-3 套房源（2026.06 完成）",
+          "blocker": "对武汉租房市场不熟悉",
+          "updated": "2026-06-03"
+        }
+      ],
+      "maintenance_items": [
+        {
+          "task": "交房租（每月 5 号前）",
+          "deadline": "每月 5 号前",
+          "status": "pending"
+        },
+        {
+          "task": "信用卡 / 花呗还款（每月 10 号前）",
+          "deadline": "每月 10 号前",
+          "status": "pending"
+        },
+        {
+          "task": "更新 DASHBOARD 战略项目进度（每周日）",
+          "deadline": "每周日",
+          "status": "pending"
+        },
+        {
+          "task": "体检预约（截止：2026.07 前）",
+          "deadline": "截止：2026.07 前",
+          "status": "pending"
+        },
+        {
+          "task": "确认公积金提取政策（用于租房）→ 完成后将结果 ingest 到 wiki/finance/",
+          "deadline": "用于租房",
+          "status": "pending"
+        },
+        {
+          "task": "社保卡激活确认",
+          "deadline": "",
+          "status": "pending"
+        },
+        {
+          "task": "审视 ME.md 优先级是否仍然准确（每季度一次，下次：2026-09）",
+          "deadline": "每季度一次，下次：2026-09",
+          "status": "pending"
+        },
+        {
+          "task": "审视 PRINCIPLES.md 是否需要修改（每季度一次，下次：2026-09）",
+          "deadline": "每季度一次，下次：2026-09",
+          "status": "pending"
+        }
+      ]
+    },
+    "snapshot_at": "2026-06-06T21:21:43"
+  },
+  "field_type": "通用场",
+  "emotional_state": "neutral",
+  "memory_field": {
+    "field_type": "通用场",
+    "emotional_state": "neutral",
+    "core": {
+      "identity": [
+        {
+          "source": "self://ME.md",
+          "type": "identity",
+          "content": "代号 L，22 岁岁，华中科技大学（985），本科毕业，武汉\n岚图汽车（东风集团旗下新能源品牌） · 移动端交互设计师（做手机 App，不是车机 HMI） · 月入约 7,800-8,000 元\n性格：系统性思维:喜欢量化、建模、结构化、焦虑倾向:对未来不确定性的耐受度较低、决策风格:理性分析型，但有时过度分析导致行动延迟",
+          "temperature": 1.0,
+          "field": "identity",
+          "depth": "core"
+        }
+      ],
+      "priorities": [
+        {
+          "source": "self://DASHBOARD.md",
+          "type": "project",
+          "content": "当前战略项目：\n- AI + 交互的实战产出：启动阶段，方向待定\n  ⚠ 阻断：想法太多，不知道从哪个开始\n- 岚图量产项目经验积累：刚入职，处于学习期\n  ⚠ 阻断：新人阶段，主动权有限\n- 确定租房方案：未开始寻找\n  ⚠ 阻断：对武汉租房市场不熟悉",
+          "temperature": 0.9,
+          "field": "project",
+          "depth": "core"
+        }
+      ]
+    },
+    "activated": {
+      "general": []
+    },
+    "suppressed": [],
+    "emotional_tuning": ""
+  }
+}

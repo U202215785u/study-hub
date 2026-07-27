@@ -8,7 +8,6 @@
       <router-link to="/kb" class="text-[13px] text-text-secondary hover:text-accent transition-colors">知识库</router-link>
       <router-link to="/wiki" class="text-[13px] text-text-secondary hover:text-accent transition-colors">Wiki</router-link>
       <router-link to="/learning" class="text-[13px] text-text-secondary hover:text-accent transition-colors">学习</router-link>
-      <router-link to="/memory" class="text-[13px] text-text-secondary hover:text-accent transition-colors">记忆</router-link>
       <router-link to="/workflow" class="text-[13px] text-text-secondary hover:text-accent transition-colors">工作流</router-link>
       <router-link to="/ddl" class="text-[13px] text-text-secondary hover:text-accent transition-colors">DDL</router-link>
       <router-link to="/sop" class="text-[13px] text-text-secondary hover:text-accent transition-colors">SOP</router-link>
@@ -33,7 +32,6 @@ const titles = {
   '/learning': '学习路线',
   '/learning-checklist': '学习清单',
   '/learning-plan': '学习计划',
-  '/memory': '记忆系统',
   '/workflow': '工作流',
   '/ddl': 'DDL 面板',
   '/sop': 'SOP 规范化',

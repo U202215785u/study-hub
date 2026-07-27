@@ -9,7 +9,6 @@ const routes = [
   { path: '/learning', name: 'learning', component: () => import('../views/Learning.vue') },
   { path: '/learning-checklist', name: 'checklist', component: () => import('../views/LearningChecklist.vue') },
   { path: '/learning-plan', name: 'learningPlan', component: () => import('../views/LearningPlan.vue') },
-  { path: '/memory', name: 'memory', component: () => import('../views/MemoryView.vue') },
   { path: '/workflow', name: 'workflow', component: () => import('../views/Workflow.vue') },
   { path: '/ddl', name: 'ddl', component: () => import('../views/DDL.vue') },
   { path: '/sop', name: 'sop', component: () => import('../views/SOP.vue') },

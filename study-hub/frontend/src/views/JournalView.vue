@@ -273,6 +273,7 @@ const selectedDate = ref(today)
 const selectedEntryId = ref(0)
 const saving = ref(false)
 const tagInput = ref('')
+const lastSavedSnapshot = ref(null)
 
 const currentYear = ref(new Date().getFullYear())
 const currentMonth = ref(new Date().getMonth() + 1)
@@ -309,6 +310,29 @@ const currentEntry = ref({
 function moodEmoji(mood) {
   const m = moods.find(x => x.value === mood)
   return m ? m.emoji : '😐'
+}
+
+function captureSnapshot() {
+  return {
+    content: currentEntry.value.content,
+    mood: currentEntry.value.mood,
+    tags: [...currentEntry.value.tags],
+    weather: currentEntry.value.weather,
+    location: currentEntry.value.location,
+    sticker: currentEntry.value.sticker
+  }
+}
+
+function hasUnsavedChanges() {
+  if (!lastSavedSnapshot.value) return false
+  const cur = currentEntry.value
+  const snap = lastSavedSnapshot.value
+  return cur.content !== snap.content ||
+    cur.mood !== snap.mood ||
+    JSON.stringify(cur.tags) !== JSON.stringify(snap.tags) ||
+    cur.weather !== snap.weather ||
+    cur.location !== snap.location ||
+    cur.sticker !== snap.sticker
 }
 
 function formatDay(dateStr) {
@@ -410,7 +434,22 @@ function nextMonth() {
   }
 }
 
-function selectDate(dateStr) {
+const { confirm } = useConfirm()
+
+async function selectDate(dateStr) {
+  // 检查是否有未保存的修改
+  if (hasUnsavedChanges()) {
+    const save = await confirm({
+      title: '未保存的修改',
+      message: '当前日记有未保存的内容，是否保存后再切换？\n\n"确认" = 保存并切换\n"取消" = 留在此页'
+    })
+    if (save) {
+      await saveEntry()
+    } else {
+      return  // 留在此页，不切换
+    }
+  }
+
   selectedDate.value = dateStr
   const found = entries.value.find(e => e.date === dateStr)
   if (found) {
@@ -427,6 +466,7 @@ function selectDate(dateStr) {
       sticker: ''
     }
     selectedEntryId.value = 0
+    lastSavedSnapshot.value = captureSnapshot()
   }
 }
 
@@ -441,6 +481,7 @@ function loadEntry(entry) {
   const d = new Date(entry.date)
   currentYear.value = d.getFullYear()
   currentMonth.value = d.getMonth() + 1
+  lastSavedSnapshot.value = captureSnapshot()
 }
 
 function addTag() {
@@ -475,11 +516,12 @@ async function saveEntry() {
     }
     const result = await store.apiPost('/journal/entries', payload)
     if (result.error) {
-      alert(result.error)
+      toast.error('保存失败：' + result.error)
       return
     }
     currentEntry.value = { ...result, tags: [...(result.tags || [])] }
     selectedEntryId.value = result.id
+    lastSavedSnapshot.value = captureSnapshot()
     await fetchEntries()
     await fetchStats()
     await fetchTags()
@@ -491,7 +533,8 @@ async function saveEntry() {
 
 async function deleteEntry() {
   if (!currentEntry.value.id) return
-  if (!confirm('确定要删除这篇日记吗？')) return
+  const ok = await confirm({ message: '确定要删除这篇日记吗？', danger: true })
+  if (!ok) return
   await store.apiDelete(`/journal/entries/${currentEntry.value.id}`)
   currentEntry.value = {
     id: 0,
@@ -504,6 +547,7 @@ async function deleteEntry() {
     sticker: ''
   }
   selectedEntryId.value = 0
+  lastSavedSnapshot.value = captureSnapshot()
   await fetchEntries()
   await fetchStats()
   await fetchTags()
@@ -544,6 +588,8 @@ onMounted(async () => {
   const todayEntry = entries.value.find(e => e.date === today)
   if (todayEntry) {
     loadEntry(todayEntry)
+  } else {
+    lastSavedSnapshot.value = captureSnapshot()
   }
 })
 </script>

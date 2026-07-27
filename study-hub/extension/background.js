@@ -1,10 +1,7 @@
-// Service Worker：五层记忆系统 + API 代理
-// 代理 content script 的请求，绕过 CORS 限制
+// Service Worker：API 代理 + 网页剪藏
+// 代理扩展请求，绕过 CORS 限制
 
-const STORAGE_KEY = 'study_hub_dialogues';
 const API_BASE_CONFIG_KEY = 'study_hub_api_base';
-const AUTO_EXTRACT_KEY = 'study_hub_auto_extract';
-const CUSTOM_ADAPTERS_KEY = 'study_hub_custom_adapters';
 
 // Service Worker 保活：使用 alarms API（Edge/Chrome 都支持，比 setInterval 更可靠）
 chrome.alarms.create('keepAlive', { periodInMinutes: 0.5 });
@@ -31,17 +28,7 @@ async function getApiBase() {
   }
 }
 
-// 检查自动提取是否开启
-async function isAutoExtractEnabled() {
-  try {
-    const data = await chrome.storage.sync.get([AUTO_EXTRACT_KEY]);
-    return data[AUTO_EXTRACT_KEY] !== false;
-  } catch (e) {
-    return true;
-  }
-}
-
-// 代理 API 请求（content script → background → 后端）
+// 代理 API 请求（扩展 → background → 后端）
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('[study-hub] 收到消息:', request.type, request.path || '');
   
@@ -104,55 +91,10 @@ async function handleApiRequest(request, sendResponse) {
   }
 }
 
-// 标签页关闭时自动提取
-chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
-  try {
-    const autoEnabled = await isAutoExtractEnabled();
-    if (!autoEnabled) {
-      await chrome.storage.local.remove(STORAGE_KEY);
-      return;
-    }
-
-    const data = await chrome.storage.local.get([STORAGE_KEY]);
-    const dialogue = data[STORAGE_KEY] || '';
-
-    if (dialogue.trim().length < 200) {
-      await chrome.storage.local.remove(STORAGE_KEY);
-      return;
-    }
-
-    const apiBase = await getApiBase();
-    const resp = await fetch(`${apiBase}/memory/summarize_and_extract`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conversation: dialogue,
-        source_tool: 'chrome_extension',
-        source_ref: `tab_${tabId}`,
-      }),
-    });
-
-    const result = await resp.json();
-    if (result.added > 0) {
-      console.log(`[study-hub] 自动提取 ${result.added} 条记忆:`, result.added_by_layer);
-    }
-
-    await chrome.storage.local.remove(STORAGE_KEY);
-  } catch (err) {
-    console.error('[study-hub] 自动提取失败:', err);
-  }
-});
-
 // 扩展安装/更新时初始化
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('[study-hub] 扩展事件:', details.reason);
-  console.log('[study-hub] 五层记忆系统扩展 v2.0 已安装');
-
-  chrome.storage.sync.get([AUTO_EXTRACT_KEY], (data) => {
-    if (data[AUTO_EXTRACT_KEY] === undefined) {
-      chrome.storage.sync.set({ [AUTO_EXTRACT_KEY]: true });
-    }
-  });
+  console.log('[study-hub] Study-Hub 扩展已安装');
 
   // 创建右键菜单
   chrome.contextMenus.create({

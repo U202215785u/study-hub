@@ -259,7 +259,7 @@ study-hub/
 
 <!-- AUTO-GENERATED-START -->
 
-<!-- 自动生成于 2026-05-19 05:59 UTC，请勿手动编辑此区块 -->
+<!-- 自动生成于 2026-06-07 01:10 UTC，请勿手动编辑此区块 -->
 
 ## API 路由全览
 
@@ -271,25 +271,41 @@ study-hub/
 | GET | `/logs` | `admin_logs()` | lines | `58` |
 | GET | `/documents/recent` | `recent_documents()` | limit | `77` |
 | GET | `/system/info` | `system_info()` |  | `95` |
+| GET | `/monitored-urls` | `list_monitored_urls()` |  | `118` |
+| POST | `/monitored-urls` | `add_monitored_url()` | payload | `128` |
+| DELETE | `/monitored-urls/{url_id}` | `delete_monitored_url()` | url_id | `152` |
+| POST | `/monitored-urls/check` | `check_monitored_urls()` |  | `162` |
+| GET | `/monitored-urls/changes` | `get_url_changes()` |  | `209` |
 | POST | `/ai-search` | `ai_search()` | payload | `126` |
-| GET | `/automation/modules` | `list_modules()` |  | `437` |
-| POST | `/automation/run` | `run_automation()` | payload | `442` |
-| POST | `/automation/queue` | `queue_tasks()` | payload | `472` |
-| GET | `/automation/queue/status` | `queue_status()` |  | `512` |
-| GET | `/automation/queue/{task_id}` | `task_status()` | task_id | `548` |
-| DELETE | `/automation/queue/clear` | `clear_completed()` |  | `565` |
-| POST | `/automation/reparse/{doc_id}` | `reparse_document()` | doc_id | `577` |
-| GET | `/automation/reparseable` | `list_reparseable()` |  | `627` |
-| POST | `/documents/cleanup` | `cleanup_documents()` | payload | `659` |
+| GET | `/automation/modules` | `list_modules()` |  | `1276` |
+| POST | `/automation/run` | `run_automation()` | payload | `1281` |
+| POST | `/automation/queue` | `queue_tasks()` | payload | `1320` |
+| GET | `/automation/queue/status` | `queue_status()` |  | `1385` |
+| GET | `/automation/queue/{task_id}` | `task_status()` | task_id | `1425` |
+| POST | `/automation/queue/retry/{task_id}` | `retry_task()` | task_id | `1479` |
+| DELETE | `/automation/queue/clear` | `clear_completed()` |  | `1518` |
+| POST | `/automation/reparse/{doc_id}` | `reparse_document()` | doc_id | `1565` |
+| GET | `/automation/reparseable` | `list_reparseable()` |  | `1634` |
+| POST | `/documents/cleanup` | `cleanup_documents()` | payload | `1666` |
+| POST | `/automation/extract-webpage` | `extract_webpage()` | payload | `1784` |
 | POST | `/brainstorm/step2` | `brainstorm_step2()` | payload | `237` |
 | POST | `/brainstorm/step3` | `brainstorm_step3()` | payload | `262` |
 | GET | `/categories` | `list_categories()` |  | `8` |
 | POST | `/categories` | `create_category()` | payload | `22` |
-| PUT | `/categories/{cat_id}` | `update_category()` | cat_id, payload | `47` |
-| DELETE | `/categories/{cat_id}` | `delete_category()` | cat_id | `69` |
-| PUT | `/documents/{doc_id}/move` | `move_document()` | doc_id, payload | `84` |
-| PUT | `/documents/batch-move` | `batch_move_documents()` | payload | `124` |
-| PUT | `/documents/{doc_id}/tags` | `update_document_tags()` | doc_id, payload | `167` |
+| PUT | `/categories/{cat_id}` | `update_category()` | cat_id, payload | `48` |
+| DELETE | `/categories/{cat_id}` | `delete_category()` | cat_id | `71` |
+| PUT | `/documents/{doc_id}/move` | `move_document()` | doc_id, payload | `86` |
+| PUT | `/documents/batch-move` | `batch_move_documents()` | payload | `126` |
+| PUT | `/documents/{doc_id}/tags` | `update_document_tags()` | doc_id, payload | `169` |
+| POST | `/documents/{doc_id}/auto-tags` | `auto_tag_document()` | doc_id | `201` |
+| GET | `/services` | `list_services()` |  | `84` |
+| GET | `/services/{service_id}` | `get_service_status()` | service_id | `108` |
+| GET | `/ddl/tasks` | `list_tasks()` | status, task_type, project_id, plan_date, plan_type | `8` |
+| POST | `/ddl/tasks` | `create_task()` | payload | `53` |
+| PUT | `/ddl/tasks/{task_id}` | `update_task()` | task_id, payload | `103` |
+| DELETE | `/ddl/tasks/{task_id}` | `delete_task()` | task_id | `136` |
+| PUT | `/ddl/tasks/reorder` | `reorder_tasks()` | payload | `151` |
+| GET | `/ddl/stats` | `ddl_stats()` |  | `166` |
 | POST | `/evolution/analyze` | `trigger_analysis()` | payload | `13` |
 | GET | `/evolution/patches` | `list_patches()` | status, risk_level, limit | `38` |
 | GET | `/evolution/patches/{patch_id}` | `get_patch()` | patch_id | `57` |
@@ -303,31 +319,131 @@ study-hub/
 | GET | `/evolution/config` | `get_config()` |  | `208` |
 | GET | `/export/all` | `export_all()` |  | `41` |
 | GET | `/export/document/{doc_id}` | `export_document()` | doc_id | `95` |
+| POST | `/images/generate-cover` | `generate_cover()` | req | `25` |
+| GET | `/journal/entries` | `list_entries()` | year, month, tag, mood | `56` |
+| GET | `/journal/entries/{entry_id}` | `get_entry()` | entry_id | `81` |
+| GET | `/journal/today` | `get_today()` |  | `91` |
+| POST | `/journal/entries` | `create_entry()` | payload | `102` |
+| PUT | `/journal/entries/{entry_id}` | `update_entry()` | entry_id, payload | `133` |
+| DELETE | `/journal/entries/{entry_id}` | `delete_entry()` | entry_id | `161` |
+| GET | `/journal/stats` | `get_stats()` |  | `170` |
+| GET | `/journal/tags` | `list_tags()` |  | `200` |
 | GET | `/documents/{doc_id}/links` | `get_document_links()` | doc_id | `43` |
 | GET | `/documents/{doc_id}/backlinks` | `get_document_backlinks()` | doc_id | `68` |
+| POST | `/topics` | `create_topic()` | req | `94` |
+| GET | `/topics` | `list_topics()` | limit, unused_only | `108` |
+| POST | `/topics/ai-discover` | `ai_discover_topics()` | keyword, count | `136` |
+| POST | `/accounts` | `add_account()` | req | `190` |
+| GET | `/accounts` | `list_accounts()` | platform | `204` |
+| POST | `/projects` | `create_project()` | req | `232` |
+| GET | `/projects` | `list_projects()` | status, platform, limit | `255` |
+| GET | `/projects/{project_id}` | `get_project()` | project_id | `289` |
+| POST | `/projects/{project_id}/status` | `update_project_status()` | project_id, status | `315` |
+| POST | `/projects/{project_id}/script/generate` | `generate_script()` | project_id, req | `332` |
+| POST | `/projects/{project_id}/script/update` | `update_script()` | project_id, req | `382` |
+| POST | `/projects/{project_id}/script/polish` | `polish_script()` | project_id, style | `395` |
+| POST | `/projects/{project_id}/video/editing-plan` | `generate_editing_plan()` | project_id | `434` |
+| POST | `/projects/{project_id}/video/upload` | `upload_video_path()` | project_id, video_path | `476` |
+| POST | `/projects/{project_id}/cover/generate` | `generate_cover_for_project()` | project_id, req | `493` |
+| GET | `/images/{filename}` | `serve_cover_image()` | filename | `609` |
+| POST | `/projects/{project_id}/publish` | `publish_project()` | project_id, req | `623` |
+| POST | `/projects/{project_id}/publish/confirm` | `confirm_published()` | project_id, platform, url | `720` |
+| POST | `/projects/{project_id}/auto-edit` | `auto_edit_video()` | project_id, req | `768` |
+| GET | `/video/{filename}` | `serve_video()` | filename | `907` |
+| POST | `/projects/{project_id}/video/capcut-export` | `capcut_export_guide()` | project_id | `917` |
+| POST | `/projects/{project_id}/auto-publish` | `auto_publish()` | project_id, req | `993` |
+| GET | `/publish/config` | `get_publish_config()` |  | `1169` |
+| POST | `/projects/{project_id}/tts/generate` | `generate_tts()` | project_id, req | `1212` |
+| GET | `/audio/{filename}` | `serve_audio()` | filename | `1317` |
+| GET | `/tts/voices` | `list_tts_voices()` |  | `1327` |
+| GET | `/dashboard` | `operations_dashboard()` |  | `1342` |
 | POST | `/rag/query` | `rag_query()` | payload | `65` |
 | POST | `/review/polish` | `polish_review()` | payload | `24` |
 | GET | `/review/list` | `list_reviews()` |  | `117` |
 | GET | `/review/weekly` | `weekly_report()` |  | `127` |
-| POST | `/upload` | `upload_file()` | file | `19` |
-| POST | `/upload/text` | `upload_text()` | payload | `70` |
-| GET | `/documents` | `()` |  | `118` |
-| GET | `/documents/{doc_id}` | `get_document()` | doc_id | `160` |
-| DELETE | `/documents/{doc_id}` | `delete_document()` | doc_id | `176` |
-| POST | `/documents/batch-delete` | `batch_delete_documents()` | payload | `201` |
-| POST | `/wiki/compile` | `compile_wiki()` | payload | `173` |
-| GET | `/wiki/pages` | `list_wiki_pages()` | category, search | `309` |
-| GET | `/wiki/pages/{page_id}` | `get_wiki_page()` | page_id | `338` |
-| GET | `/wiki/graph` | `get_wiki_graph()` |  | `368` |
-| GET | `/wiki/categories` | `get_wiki_categories()` |  | `406` |
-| DELETE | `/wiki/pages/{page_id}` | `delete_wiki_page()` | page_id | `417` |
-| PUT | `/wiki/pages/{page_id}` | `update_wiki_page()` | page_id, payload | `432` |
-| DELETE | `/wiki/pages` | `delete_all_wiki_pages()` |  | `492` |
-| POST | `/wiki/regenerate` | `regenerate_wiki()` |  | `502` |
-| POST | `/wiki/search` | `search_wiki()` | payload | `520` |
-| POST | `/wiki/reindex` | `reindex_wiki()` |  | `551` |
-| POST | `/wiki/learning-paths` | `generate_learning_paths()` |  | `571` |
-| POST | `/wiki/category-overviews` | `generate_category_overviews()` |  | `699` |
+| GET | `/api/files` | `list_files()` |  | `79` |
+| GET | `/api/file` | `read_file()` | path, description="相对路径" | `92` |
+| POST | `/api/file` | `write_file()` | path, description="相对路径" | `100` |
+| GET | `/api/self` | `get_self_layer()` |  | `115` |
+| POST | `/api/decide` | `decide()` | body | `124` |
+| POST | `/api/chat` | `chat()` | body | `143` |
+| POST | `/api/chat/stream` | `chat_stream()` | body | `185` |
+| GET | `/api/memory/stats` | `memory_stats()` |  | `239` |
+| GET | `/api/memory` | `search_memory_api()` | q, description="搜索关键词" | `248` |
+| POST | `/api/lint` | `run_lint()` |  | `309` |
+| POST | `/api/ingest` | `ingest_api()` | body | `335` |
+| POST | `/api/ingest/enhanced` | `ingest_enhanced_api()` | body | `377` |
+| POST | `/api/self/scan-changes` | `scan_self_changes_api()` |  | `396` |
+| GET | `/api/pending-captures` | `get_pending_captures_api()` |  | `409` |
+| POST | `/api/pending-captures/confirm` | `confirm_pending_api()` | body | `419` |
+| POST | `/api/project/scan` | `scan_project_api()` |  | `437` |
+| POST | `/api/social/ingest` | `social_ingest_api()` | body | `450` |
+| POST | `/api/chat/distill` | `chat_distill_api()` | body | `470` |
+| POST | `/api/batch-import` | `batch_import_api()` | body | `490` |
+| POST | `/api/chat/batch-distill` | `()` |  | `594` |
+| GET | `/community` | `()` |  | `98` |
+| GET | `/community/categories` | `list_categories()` |  | `146` |
+| POST | `/community/sync` | `sync_community()` |  | `152` |
+| GET | `/community/stats` | `community_stats()` |  | `159` |
+| GET | `/local` | `list_local_skills()` |  | `168` |
+| POST | `/local/scan` | `scan_local()` |  | `176` |
+| POST | `/local/{skill_id}/toggle` | `toggle_local_skill()` | skill_id, req | `183` |
+| DELETE | `/local/{skill_id}` | `delete_local_skill()` | skill_id | `190` |
+| POST | `/local/install` | `install_skill()` | req | `197` |
+| GET | `/sop/blocks` | `list_blocks()` | search, tag | `14` |
+| GET | `/sop/blocks/{block_id}` | `get_block()` | block_id | `32` |
+| POST | `/sop/blocks` | `create_block()` | payload | `42` |
+| PUT | `/sop/blocks/{block_id}` | `update_block()` | block_id, payload | `64` |
+| DELETE | `/sop/blocks/{block_id}` | `delete_block()` | block_id | `91` |
+| GET | `/sop/chains` | `list_chains()` |  | `104` |
+| GET | `/sop/chains/{chain_id}` | `get_chain()` | chain_id | `118` |
+| POST | `/sop/chains` | `create_chain()` | payload | `165` |
+| PUT | `/sop/chains/{chain_id}` | `update_chain()` | chain_id, payload | `194` |
+| DELETE | `/sop/chains/{chain_id}` | `delete_chain()` | chain_id | `218` |
+| POST | `/sop/chains/{chain_id}/blocks` | `add_block_to_chain()` | chain_id, payload | `231` |
+| PUT | `/sop/chains/{chain_id}/blocks/{cb_id}` | `update_chain_block()` | chain_id, cb_id, payload | `267` |
+| DELETE | `/sop/chains/{chain_id}/blocks/{cb_id}` | `remove_block_from_chain()` | chain_id, cb_id | `292` |
+| PUT | `/sop/chains/{chain_id}/reorder` | `reorder_chain_blocks()` | chain_id, payload | `303` |
+| GET | `/sop/suggestions` | `list_suggestions()` | status, suggestion_type, limit | `322` |
+| GET | `/sop/suggestions/{sug_id}` | `get_suggestion()` | sug_id | `340` |
+| POST | `/sop/suggestions/{sug_id}/confirm` | `confirm_suggestion()` | sug_id | `350` |
+| POST | `/sop/suggestions/{sug_id}/reject` | `reject_suggestion()` | sug_id, payload | `474` |
+| POST | `/sop/evolution/analyze` | `trigger_analysis()` | payload | `499` |
+| GET | `/sop/wiki-unmatched` | `list_unmatched_wiki()` |  | `513` |
+| POST | `/upload` | `upload_file()` | file | `72` |
+| POST | `/upload/text` | `upload_text()` | payload | `148` |
+| GET | `/documents` | `()` |  | `221` |
+| GET | `/documents/{doc_id}` | `get_document()` | doc_id | `296` |
+| DELETE | `/documents/{doc_id}` | `delete_document()` | doc_id | `312` |
+| POST | `/documents/batch-delete` | `batch_delete_documents()` | payload | `337` |
+| POST | `/wiki/compile` | `compile_wiki()` | payload | `174` |
+| GET | `/wiki/pages` | `list_wiki_pages()` | category, search | `297` |
+| GET | `/wiki/pages/{page_id}` | `get_wiki_page()` | page_id | `326` |
+| GET | `/wiki/graph` | `get_wiki_graph()` |  | `356` |
+| GET | `/wiki/categories` | `get_wiki_categories()` |  | `394` |
+| DELETE | `/wiki/pages/{page_id}` | `delete_wiki_page()` | page_id | `405` |
+| POST | `/wiki/pages` | `create_wiki_page()` | request | `420` |
+| PUT | `/wiki/pages/{page_id}` | `update_wiki_page()` | page_id, payload | `481` |
+| DELETE | `/wiki/pages` | `delete_all_wiki_pages()` |  | `544` |
+| POST | `/wiki/regenerate` | `regenerate_wiki()` |  | `554` |
+| POST | `/wiki/search` | `search_wiki()` | payload | `572` |
+| POST | `/wiki/reindex` | `reindex_wiki()` |  | `603` |
+| POST | `/wiki/learning-paths` | `generate_learning_paths()` |  | `623` |
+| POST | `/wiki/category-overviews` | `generate_category_overviews()` |  | `751` |
+| POST | `/workflow/run` | `workflow_run()` | req | `48` |
+| GET | `/workflow/status/{task_id}` | `workflow_status()` | task_id | `69` |
+| POST | `/workflow/pause/{task_id}` | `workflow_pause()` | task_id | `78` |
+| POST | `/workflow/resume/{task_id}` | `workflow_resume()` | task_id, req | `87` |
+| GET | `/workflow/templates` | `workflow_templates()` |  | `97` |
+| GET | `/workflow/templates/{filename}` | `workflow_template_get()` | filename | `138` |
+| PUT | `/workflow/templates/{filename}` | `workflow_template_save()` | filename, req | `163` |
+| DELETE | `/workflow/templates/{filename}` | `workflow_template_delete()` | filename | `184` |
+| POST | `/workflow/templates/{filename}/copy` | `workflow_template_copy()` | filename | `195` |
+| POST | `/workflow/create-from-text` | `workflow_create_from_text()` | req | `217` |
+| GET | `/workflow/queue/status` | `workflow_queue_status()` | show_archived | `265` |
+| POST | `/workflow/archive/{task_id}` | `workflow_archive()` | task_id | `284` |
+| GET | `/workflow/tools` | `workflow_tools()` |  | `293` |
+| GET | `/workflow/output/{task_id}/{filename}` | `workflow_download()` | task_id, filename | `300` |
 
 ## 数据库表结构
 
@@ -340,6 +456,7 @@ study-hub/
 | `icon` | TEXT DEFAULT '📁' |
 | `color` | TEXT ' |
 | `sort_order` | INTEGER |
+| `tag_rules` | TEXT DEFAULT '[]' |
 | `created_at` | TIMESTAMP |
 
 ### `documents` 表
@@ -384,6 +501,7 @@ study-hub/
 | `contradictions` | TEXT DEFAULT '[]' |
 | `tags` | TEXT DEFAULT '[]' |
 | `category` | TEXT DEFAULT '' |
+| `cover_image` | TEXT DEFAULT '' |
 | `version` | INTEGER |
 | `char_count` | INTEGER |
 | `created_at` | TIMESTAMP |
@@ -443,6 +561,209 @@ study-hub/
 | `patch_ids_applied` | TEXT DEFAULT '[]' |
 | `created_at` | TIMESTAMP |
 
+### `ddl_tasks` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `title` | TEXT |
+| `description` | TEXT DEFAULT '' |
+| `due_date` | TEXT |
+| `task_type` | TEXT ' CHECK(task_type IN ('milestone','todo','learning')) |
+| `project_id` | INTEGER |
+| `status` | TEXT ' CHECK(status IN ('todo','in_progress','done')) |
+| `sort_order` | INTEGER |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `task_queue` 表
+
+| 列名 | 类型 |
+|------|------|
+| `task_id` | TEXT |
+| `module_id` | TEXT |
+| `module_name` | TEXT DEFAULT '' |
+| `input_text` | TEXT |
+| `input_hash` | TEXT DEFAULT '' |
+| `status` | TEXT ' CHECK(status IN ('pending','extracting','summarizing','importing','done','error')) |
+| `progress` | TEXT DEFAULT '' |
+| `error` | TEXT DEFAULT '' |
+| `result_doc_id` | INTEGER |
+| `result_title` | TEXT DEFAULT '' |
+| `steps_json` | TEXT DEFAULT '[]' |
+| `current_step` | TEXT DEFAULT '' |
+| `api_key_error` | INTEGER |
+| `api_key_error_msg` | TEXT DEFAULT '' |
+| `replace_doc_id` | INTEGER |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `sop_blocks` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `title` | TEXT |
+| `description` | TEXT DEFAULT '' |
+| `content` | TEXT DEFAULT '' |
+| `tags` | TEXT DEFAULT '[]' |
+| `source_wiki_page_id` | INTEGER |
+| `source_type` | TEXT ' CHECK(source_type IN ('manual','wiki')) |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `sop_chains` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `name` | TEXT |
+| `description` | TEXT DEFAULT '' |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `sop_chain_blocks` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `chain_id` | INTEGER |
+| `block_id` | INTEGER |
+| `sort_order` | INTEGER |
+| `parent_id` | INTEGER |
+| `branch_label` | TEXT DEFAULT '' |
+
+### `sop_suggestions` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `suggestion_type` | TEXT |
+| `wiki_page_id` | INTEGER |
+| `block_id` | INTEGER |
+| `chain_id` | INTEGER |
+| `suggested_title` | TEXT DEFAULT '' |
+| `suggested_content` | TEXT DEFAULT '' |
+| `rationale` | TEXT DEFAULT '' |
+| `status` | TEXT ' CHECK(status IN ('pending','confirmed','rejected')) |
+| `created_at` | TIMESTAMP |
+| `resolved_at` | TIMESTAMP |
+
+### `community_skills` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | TEXT |
+| `display_name` | TEXT |
+| `category` | TEXT DEFAULT '' |
+| `sub_category` | TEXT DEFAULT '' |
+| `primary_link` | TEXT |
+| `secondary_link` | TEXT DEFAULT '' |
+| `author_name` | TEXT DEFAULT '' |
+| `author_link` | TEXT DEFAULT '' |
+| `license` | TEXT DEFAULT '' |
+| `description` | TEXT DEFAULT '' |
+| `stars` | INTEGER |
+| `active` | INTEGER |
+| `date_added` | TEXT DEFAULT '' |
+| `last_modified` | TEXT DEFAULT '' |
+| `last_checked` | TEXT DEFAULT '' |
+| `repo_created` | TEXT DEFAULT '' |
+| `latest_release` | TEXT DEFAULT '' |
+| `release_version` | TEXT DEFAULT '' |
+| `release_source` | TEXT DEFAULT '' |
+| `synced_at` | TIMESTAMP |
+
+### `local_skills` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | TEXT |
+| `name` | TEXT |
+| `display_name` | TEXT DEFAULT '' |
+| `source` | TEXT ' CHECK(source IN ('claude','agents','kimi')) |
+| `install_path` | TEXT |
+| `github_url` | TEXT DEFAULT '' |
+| `enabled` | INTEGER |
+| `config_json` | TEXT DEFAULT '{}' |
+| `installed_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `journal_entries` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `date` | TEXT |
+| `content` | TEXT  DEFAULT '' |
+| `mood` | TEXT ' CHECK(mood IN ('happy','excited','calm','neutral','tired','sad','angry','loved')) |
+| `tags` | TEXT DEFAULT '[]' |
+| `weather` | TEXT DEFAULT '' |
+| `location` | TEXT DEFAULT '' |
+| `sticker` | TEXT DEFAULT '' |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `content_projects` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `title` | TEXT |
+| `topic_idea` | TEXT DEFAULT '' |
+| `platform` | TEXT DEFAULT '' |
+| `status` | TEXT ' CHECK(status IN ('idea','script','recording','editing','cover','ready','published','archived')) |
+| `script_content` | TEXT DEFAULT '' |
+| `script_audio_url` | TEXT DEFAULT '' |
+| `video_path` | TEXT DEFAULT '' |
+| `cover_image_url` | TEXT DEFAULT '' |
+| `published_urls` | TEXT DEFAULT '{}' |
+| `tags` | TEXT DEFAULT '[]' |
+| `scheduled_at` | TIMESTAMP |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+
+### `topic_ideas` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `title` | TEXT |
+| `source` | TEXT DEFAULT '' |
+| `trend_score` | INTEGER |
+| `used_in_project_id` | INTEGER |
+| `tags` | TEXT DEFAULT '[]' |
+| `created_at` | TIMESTAMP |
+
+### `platform_accounts` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `platform` | TEXT |
+| `account_name` | TEXT |
+| `account_id` | TEXT DEFAULT '' |
+| `avatar_url` | TEXT DEFAULT '' |
+| `followers_count` | INTEGER |
+| `is_active` | INTEGER |
+| `config_json` | TEXT DEFAULT '{}' |
+| `created_at` | TIMESTAMP |
+
+### `monitored_urls` 表
+
+| 列名 | 类型 |
+|------|------|
+| `id` | INTEGER |
+| `url` | TEXT |
+| `title` | TEXT DEFAULT '' |
+| `last_content_hash` | TEXT DEFAULT '' |
+| `last_content` | TEXT DEFAULT '' |
+| `last_checked` | TIMESTAMP |
+| `change_detected` | INTEGER |
+| `change_count` | INTEGER |
+| `notify_enabled` | INTEGER |
+| `created_at` | TIMESTAMP |
+
 ## 环境变量 (.env)
 
 | 变量 | 默认值 | 说明 |
@@ -452,7 +773,7 @@ study-hub/
 
 ## 后端核心文件
 
-#### `backend/main.py` (311 行)
+#### `backend/main.py` (458 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
 |------|------|----------|------|
@@ -462,9 +783,12 @@ study-hub/
 | GET | `/inbox/open` | `open_inbox()` |  |
 | GET | `/{full_path:path}` | `serve_spa()` | full_path |
 
+**类 `StripApiPrefixMiddleware`** (继承 `BaseHTTPMiddleware`) — 行 175
+
 | 函数 | 签名 | 说明 |
 |------|------|------|
 | `lifespan` | `(app: FastAPI)` | - |
+|   \u2b91 `dispatch` | `(self, request, call_next)` | - |
 | `health` | `()` | - |
 | `global_exception_handler` | `(request: Request, exc: Exception)` | - |
 | `list_learning_plans` | `()` | - |
@@ -501,7 +825,7 @@ study-hub/
 - `import httpx`
 
 ---
-#### `backend/database.py` (139 行)
+#### `backend/database.py` (421 行)
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -532,6 +856,28 @@ study-hub/
 #### `backend/__init__.py` (2 行)
 
 ---
+#### `backend/core/skills_scanner.py` (212 行)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `scan_claude_skills` | `(project_root: str) -> List[Dict]` | 扫描 .claude/skills/ 目录下的 Skill |
+| `scan_agents_skills` | `(project_root: str) -> List[Dict]` | 扫描 .agents/skills/ 目录下的 Skill |
+| `scan_all_local_skills` | `(project_root: str) -> List[Dict]` | 扫描所有本地 Skill |
+| `sync_local_skills_to_db` | `(db_path: str, project_root: str) -> Dict` | 将本地 Skill 扫描结果同步到数据库 |
+| `get_local_skills_from_db` | `(db_path: str) -> List[Dict]` | 从数据库获取本地 Skill 列表 |
+| `toggle_skill` | `(db_path: str, skill_id: str, enabled: bool) -> Dict` | 启用/禁用 Skill |
+| `uninstall_skill` | `(db_path: str, skill_id: str, project_root: str) -> Dict` | 卸载 Skill：删除文件 + 删除数据库记录 |
+
+---
+#### `backend/core/skills_sync.py` (244 行)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `sync_from_awesome_claude_code` | `(db_path: str) -> Dict` | 从 awesome-claude-code 同步 Skill 目录  Returns: {"success": bool, "added": int, "upd |
+| `get_skill_categories` | `(db_path: str) -> List[str]` | 获取所有分类列表 |
+| `get_sync_stats` | `(db_path: str) -> Dict` | 获取同步统计信息 |
+
+---
 #### `backend/evolution_files.py` (169 行)
 
 | 函数 | 签名 | 说明 |
@@ -556,7 +902,7 @@ study-hub/
 - `from ai_client import ai_client`
 
 ---
-#### `backend/mcp_server.py` (821 行)
+#### `backend/mcp_server.py` (823 行)
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -601,13 +947,13 @@ study-hub/
 - `from mcp.types import Tool, TextContent`
 
 ---
-#### `backend/social_parsers.py` (339 行)
+#### `backend/social_parsers.py` (352 行)
 
 **类 `QwenASR`** — 行 33
 
-**类 `BilibiliParser`** — 行 86
+**类 `BilibiliParser`** — 行 99
 
-**类 `XiaohongshuParser`** — 行 218
+**类 `XiaohongshuParser`** — 行 231
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -620,6 +966,17 @@ study-hub/
 |   \u2b91 `extract_note_id` | `(share_text: str) -> str` | - |
 |   \u2b91 `get_note_info` | `(share_text: str) -> dict` | - |
 |   \u2b91 `get_video_url` | `(share_text: str) -> tuple` | 返回 (video_url, note_info_dict) |
+
+---
+#### `backend/sop_evolution.py` (297 行)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `analyze_wiki_for_sop` | `(wiki_page_ids: list[int] = None, force: bool = False, limit: int = 100) -> dict` | Analyze wiki pages and generate SOP suggestions.  Args: wiki_page_ids: Optional  |
+
+**关键依赖：**
+- `from database import get_db`
+- `from ai_client import ai_client`
 
 ---
 #### `backend/tests/test_main.py` (82 行)
@@ -636,6 +993,60 @@ study-hub/
 
 **关键依赖：**
 - `from httpx import AsyncClient, ASGITransport`
+
+---
+#### `backend/workflow/__init__.py` (3 行)
+
+---
+#### `backend/workflow/engine.py` (343 行)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `launch` | `(yaml_path: str, params: dict | None = None) -> str` | 启动一个 workflow，返回 task_id。 |
+| `pause` | `(task_id: str) -> bool` | - |
+| `resume` | `(task_id: str, user_input: dict | None = None) -> bool` | - |
+| `list_recent` | `(limit: int = 20, include_archived: bool = False) -> list[dict]` | - |
+| `archive` | `(task_id: str) -> bool` | 切换归档状态。 |
+
+---
+#### `backend/workflow/executors.py` (362 行)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `setup_builtin_tools` | `()` | - |
+
+**关键依赖：**
+- `import httpx`
+- `from ai_client import API_KEY, API_BASE, MODEL`
+
+---
+#### `backend/workflow/loader.py` (226 行)
+
+**类 `ParamDef`** — 行 22
+
+**类 `GateDef`** — 行 30
+
+**类 `StepDef`** — 行 37
+
+**类 `WorkflowTemplate`** — 行 50
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `resolve_template` | `(text: str, context: dict) -> str` | 解析字符串中的所有 {{.xxx}} 模板变量。 |
+| `resolve_in` | `(obj, context: dict)` | 递归解析对象中所有字符串的模板变量。 |
+| `load` | `(yaml_path: str) -> WorkflowTemplate` | 加载并校验一个 YAML workflow 模板。 |
+
+---
+#### `backend/workflow/registry.py` (75 行)
+
+**类 `ToolDef`** — 行 10
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+|   \u2b91 `to_dict` | `(self)` | - |
+| `register` | `(name: str, desc: str, inputs: dict, outputs: dict, executor) -> None` | 注册一个工具。 |
+| `list_tools` | `() -> list[dict]` | 列出所有已注册工具的信息（给前端）。 |
+| `execute` | `(name: str, input_data: dict, context: dict, workspace: str) -> dict` | 执行工具调用。  参数： name       —— 工具名 input_data —— 步骤的 input 字段（模板变量已解析） context    —— |
 
 ---
 #### `venv/Lib/site-packages/anyio/_backends/_asyncio.py` (2997 行)
@@ -2786,9 +3197,9 @@ study-hub/
 - `from database import get_db`
 
 ---
-#### `backend/processing/vector_store.py` (163 行)
+#### `backend/processing/vector_store.py` (303 行)
 
-**类 `VectorStore`** — 行 12
+**类 `VectorStore`** — 行 23
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -2800,6 +3211,8 @@ study-hub/
 |   \u2b91 `index_wiki_page` | `(self, page_id: int, title: str, content: str, category: str = "", tags: str = "")` | 将 Wiki 页面全文嵌入后存入向量库 |
 |   \u2b91 `remove_wiki_page` | `(self, page_id: int)` | 从向量库中删除指定 Wiki 页面 |
 |   \u2b91 `search_wiki` | `(self, query: str, top_k: int = 10) -> list[dict]` | 语义搜索 Wiki 页面 |
+|   \u2b91 `unified_search` | `(self, query: str, top_k: int = 5) -> list[dict]` | 统一搜索：同时查 memories + documents + wiki_pages，RRF 融合排序 |
+|   \u2b91 `get_embedding_status` | `(self) -> dict` | 返回各 collection 的 embedding 状态 |
 | `get_vector_store` | `() -> VectorStore` | - |
 
 **关键依赖：**
@@ -2808,11 +3221,12 @@ study-hub/
 - `from sentence_transformers import SentenceTransformer`
 - `from sentence_transformers import SentenceTransformer`
 - `from ai_client import ai_client`
+- `from ai_client import ai_client`
 
 ---
 ## 后端端点层 (endpoints/)
 
-#### `backend/endpoints/admin.py` (111 行)
+#### `backend/endpoints/admin.py` (217 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
 |------|------|----------|------|
@@ -2820,6 +3234,11 @@ study-hub/
 | GET | `/logs` | `admin_logs()` | lines |
 | GET | `/documents/recent` | `recent_documents()` | limit |
 | GET | `/system/info` | `system_info()` |  |
+| GET | `/monitored-urls` | `list_monitored_urls()` |  |
+| POST | `/monitored-urls` | `add_monitored_url()` | payload |
+| DELETE | `/monitored-urls/{url_id}` | `delete_monitored_url()` | url_id |
+| POST | `/monitored-urls/check` | `check_monitored_urls()` |  |
+| GET | `/monitored-urls/changes` | `get_url_changes()` |  |
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -2827,6 +3246,11 @@ study-hub/
 | `admin_logs` | `(lines: int = 100)` | 返回后端日志最后 N 行 |
 | `recent_documents` | `(limit: int = 20)` | 返回最近上传的文档列表（带预览） |
 | `system_info` | `()` | 返回运行环境信息 |
+| `list_monitored_urls` | `()` | 列出所有监控的 URL |
+| `add_monitored_url` | `(payload: dict)` | 添加监控 URL |
+| `delete_monitored_url` | `(url_id: int)` | 删除监控 URL |
+| `check_monitored_urls` | `()` | 手动触发所有 URL 的变更检查。 生产环境应在 main.py lifespan 中设置定时任务每 6 小时调用一次。 |
+| `get_url_changes` | `()` | 获取有变更的 URL 列表 |
 
 **关键依赖：**
 - `from fastapi import APIRouter`
@@ -2850,7 +3274,7 @@ study-hub/
 - `import httpx`
 
 ---
-#### `backend/endpoints/automation.py` (759 行)
+#### `backend/endpoints/automation.py` (1884 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
 |------|------|----------|------|
@@ -2859,22 +3283,35 @@ study-hub/
 | POST | `/automation/queue` | `queue_tasks()` | payload |
 | GET | `/automation/queue/status` | `queue_status()` |  |
 | GET | `/automation/queue/{task_id}` | `task_status()` | task_id |
+| POST | `/automation/queue/retry/{task_id}` | `retry_task()` | task_id |
 | DELETE | `/automation/queue/clear` | `clear_completed()` |  |
 | POST | `/automation/reparse/{doc_id}` | `reparse_document()` | doc_id |
 | GET | `/automation/reparseable` | `list_reparseable()` |  |
 | POST | `/documents/cleanup` | `cleanup_documents()` | payload |
+| POST | `/automation/extract-webpage` | `extract_webpage()` | payload |
+
+**类 `TextExtractor`** (继承 `HTMLParser`) — 行 1827
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
+| `verify_external_deps` | `() -> dict` | 启动时校验外部依赖（ffmpeg / claude 等），返回状态报告。  调用方（如 main.py lifespan）应在启动时调用此函数并将结果打印到日志 |
+| `recover_orphan_summaries` | `() -> dict` | 启动时扫描摘要目录，把有 .md 文件但未入库的自动导入。  扫描 douyin-summaries/, bilibili-summaries/, xiaoho |
+| `recover_tasks_on_startup` | `()` | 启动时恢复未完成的任务 + 孤儿 .md 文件。  在 main.py 的 lifespan 中调用。 |
 | `list_modules` | `()` | - |
 | `run_automation` | `(payload: dict)` | 同步执行（保持向后兼容）—— 单任务阻塞等待。 |
 | `queue_tasks` | `(payload: dict)` | 批量提交任务，立即返回任务 ID 列表。支持多个链接（\\n 分隔或数组）。 |
 | `queue_status` | `()` | 获取所有任务状态（最近 50 个）。 |
 | `task_status` | `(task_id: str)` | 查询单个任务状态。 |
-| `clear_completed` | `()` | 清除已完成和失败的任务。 |
-| `reparse_document` | `(doc_id: int)` | 重新解析失败的抖音摘要文档。 提取原始抖音链接 → 删除旧文档 → 重新提交自动化任务。 |
+| `retry_task` | `(task_id: str)` | 重新执行失败的任务（主要用于 API Key 更新后重试）。 如果任务是 API Key 错误导致的失败，会先检查 Key 是否已更新。 |
+| `clear_completed` | `()` | 清除已完成和失败的任务（内存 + DB）。 |
+| `reparse_document` | `(doc_id: int)` | 重新解析失败的摘要文档（支持抖音/B站/小红书）。 提取原始链接 → 删除旧文档 → 重新提交自动化任务。 |
 | `list_reparseable` | `()` | 列出可以重新解析的文档（ASR 失败或内容不完整）。 |
 | `cleanup_documents` | `(payload: dict = None)` | 批量清理测试文档、重复文档、无意义短文档。 支持模式： - test: 标题含 test/测试 的文档 - short: 少于 50 字的文档 - duplic |
+| `extract_webpage` | `(payload: dict)` | 通用网页正文提取 — 使用 Jina Reader API 作为首选，fallback 到简单抓取。 输入: {"url": "https://example. |
+|   \u2b91 `__init__` | `(self)` | - |
+|   \u2b91 `handle_starttag` | `(self, tag, attrs)` | - |
+|   \u2b91 `handle_endtag` | `(self, tag)` | - |
+|   \u2b91 `handle_data` | `(self, data)` | - |
 
 **关键依赖：**
 - `from fastapi import APIRouter`
@@ -2902,7 +3339,7 @@ study-hub/
 - `from ai_client import ai_client`
 
 ---
-#### `backend/endpoints/categories.py` (197 行)
+#### `backend/endpoints/categories.py` (247 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
 |------|------|----------|------|
@@ -2913,6 +3350,7 @@ study-hub/
 | PUT | `/documents/{doc_id}/move` | `move_document()` | doc_id, payload |
 | PUT | `/documents/batch-move` | `batch_move_documents()` | payload |
 | PUT | `/documents/{doc_id}/tags` | `update_document_tags()` | doc_id, payload |
+| POST | `/documents/{doc_id}/auto-tags` | `auto_tag_document()` | doc_id |
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -2923,6 +3361,7 @@ study-hub/
 | `move_document` | `(doc_id: int, payload: dict)` | 移动文档到指定分类，同时更新向量库 metadata |
 | `batch_move_documents` | `(payload: dict)` | 批量移动文档到指定分类 |
 | `update_document_tags` | `(doc_id: int, payload: dict)` | 更新文档标签 |
+| `auto_tag_document` | `(doc_id: int)` | AI 自动识别文档标签 |
 
 **关键依赖：**
 - `from fastapi import APIRouter`
@@ -2930,6 +3369,53 @@ study-hub/
 - `from processing.vector_store import get_vector_store`
 - `from processing.vector_store import get_vector_store`
 - `from processing.vector_store import get_vector_store`
+- `from ai_client import ai_client`
+
+---
+#### `backend/endpoints/creator.py` (117 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| GET | `/services` | `list_services()` |  |
+| GET | `/services/{service_id}` | `get_service_status()` | service_id |
+
+**类 `ServiceStatus`** (继承 `BaseModel`) — 行 31
+
+**类 `ServiceListResponse`** (继承 `BaseModel`) — 行 41
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `list_services` | `() -> ServiceListResponse` | 获取所有自托管服务的状态列表  通过 TCP 端口检测判断服务是否在线， 并发检测所有服务以提高响应速度。 |
+| `get_service_status` | `(service_id: str) -> ServiceStatus` | 获取单个服务的详细状态 |
+
+**关键依赖：**
+- `from fastapi import APIRouter`
+- `from fastapi import HTTPException`
+
+---
+#### `backend/endpoints/ddl.py` (199 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| GET | `/ddl/tasks` | `list_tasks()` | status, task_type, project_id, plan_date, plan_type |
+| POST | `/ddl/tasks` | `create_task()` | payload |
+| PUT | `/ddl/tasks/{task_id}` | `update_task()` | task_id, payload |
+| DELETE | `/ddl/tasks/{task_id}` | `delete_task()` | task_id |
+| PUT | `/ddl/tasks/reorder` | `reorder_tasks()` | payload |
+| GET | `/ddl/stats` | `ddl_stats()` |  |
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `list_tasks` | `(status: str = "", task_type: str = "", project_id: int = 0, plan_date: str = "", plan_type: str = "")` | 列出 DDL 任务，支持按状态、类型、项目、计划日期筛选 |
+| `create_task` | `(payload: dict)` | 创建 DDL 任务 |
+| `update_task` | `(task_id: int, payload: dict)` | 更新 DDL 任务 |
+| `delete_task` | `(task_id: int)` | 删除 DDL 任务 |
+| `reorder_tasks` | `(payload: dict)` | 批量更新排序 (拖拽后的顺序) |
+| `ddl_stats` | `()` | DDL 统计信息 |
+
+**关键依赖：**
+- `from fastapi import APIRouter`
+- `from database import get_db`
 
 ---
 #### `backend/endpoints/evolution.py` (212 行)
@@ -2985,6 +3471,61 @@ study-hub/
 - `from database import get_db`
 
 ---
+#### `backend/endpoints/images.py` (110 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| POST | `/images/generate-cover` | `generate_cover()` | req |
+
+**类 `GenerateCoverRequest`** (继承 `BaseModel`) — 行 18
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `generate_cover` | `(req: GenerateCoverRequest)` | - |
+
+**关键依赖：**
+- `from fastapi import APIRouter`
+- `import httpx`
+- `from database import get_db`
+
+---
+#### `backend/endpoints/journal.py` (210 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| GET | `/journal/entries` | `list_entries()` | year, month, tag, mood |
+| GET | `/journal/entries/{entry_id}` | `get_entry()` | entry_id |
+| GET | `/journal/today` | `get_today()` |  |
+| POST | `/journal/entries` | `create_entry()` | payload |
+| PUT | `/journal/entries/{entry_id}` | `update_entry()` | entry_id, payload |
+| DELETE | `/journal/entries/{entry_id}` | `delete_entry()` | entry_id |
+| GET | `/journal/stats` | `get_stats()` |  |
+| GET | `/journal/tags` | `list_tags()` |  |
+
+**类 `JournalEntryCreate`** (继承 `BaseModel`) — 行 15
+
+**类 `JournalEntryUpdate`** (继承 `BaseModel`) — 行 25
+
+**类 `JournalEntryOut`** (继承 `BaseModel`) — 行 34
+
+**类 `Config`** — 行 46
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `list_entries` | `(year: int = 0, month: int = 0, tag: str = "", mood: str = "")` | - |
+| `get_entry` | `(entry_id: int)` | - |
+| `get_today` | `()` | - |
+| `create_entry` | `(payload: JournalEntryCreate)` | - |
+| `update_entry` | `(entry_id: int, payload: JournalEntryUpdate)` | - |
+| `delete_entry` | `(entry_id: int)` | - |
+| `get_stats` | `()` | - |
+| `list_tags` | `()` | - |
+
+**关键依赖：**
+- `from fastapi import APIRouter`
+- `from database import get_db`
+
+---
 #### `backend/endpoints/links.py` (92 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
@@ -3002,6 +3543,102 @@ study-hub/
 **关键依赖：**
 - `from fastapi import APIRouter`
 - `from database import get_db`
+
+---
+#### `backend/endpoints/operations.py` (1387 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| POST | `/topics` | `create_topic()` | req |
+| GET | `/topics` | `list_topics()` | limit, unused_only |
+| POST | `/topics/ai-discover` | `ai_discover_topics()` | keyword, count |
+| POST | `/accounts` | `add_account()` | req |
+| GET | `/accounts` | `list_accounts()` | platform |
+| POST | `/projects` | `create_project()` | req |
+| GET | `/projects` | `list_projects()` | status, platform, limit |
+| GET | `/projects/{project_id}` | `get_project()` | project_id |
+| POST | `/projects/{project_id}/status` | `update_project_status()` | project_id, status |
+| POST | `/projects/{project_id}/script/generate` | `generate_script()` | project_id, req |
+| POST | `/projects/{project_id}/script/update` | `update_script()` | project_id, req |
+| POST | `/projects/{project_id}/script/polish` | `polish_script()` | project_id, style |
+| POST | `/projects/{project_id}/video/editing-plan` | `generate_editing_plan()` | project_id |
+| POST | `/projects/{project_id}/video/upload` | `upload_video_path()` | project_id, video_path |
+| POST | `/projects/{project_id}/cover/generate` | `generate_cover_for_project()` | project_id, req |
+| GET | `/images/{filename}` | `serve_cover_image()` | filename |
+| POST | `/projects/{project_id}/publish` | `publish_project()` | project_id, req |
+| POST | `/projects/{project_id}/publish/confirm` | `confirm_published()` | project_id, platform, url |
+| POST | `/projects/{project_id}/auto-edit` | `auto_edit_video()` | project_id, req |
+| GET | `/video/{filename}` | `serve_video()` | filename |
+| POST | `/projects/{project_id}/video/capcut-export` | `capcut_export_guide()` | project_id |
+| POST | `/projects/{project_id}/auto-publish` | `auto_publish()` | project_id, req |
+| GET | `/publish/config` | `get_publish_config()` |  |
+| POST | `/projects/{project_id}/tts/generate` | `generate_tts()` | project_id, req |
+| GET | `/audio/{filename}` | `serve_audio()` | filename |
+| GET | `/tts/voices` | `list_tts_voices()` |  |
+| GET | `/dashboard` | `operations_dashboard()` |  |
+
+**类 `TopicIdeaCreate`** (继承 `BaseModel`) — 行 27
+
+**类 `TopicIdeaOut`** (继承 `BaseModel`) — 行 33
+
+**类 `ProjectCreate`** (继承 `BaseModel`) — 行 42
+
+**类 `ProjectOut`** (继承 `BaseModel`) — 行 48
+
+**类 `ScriptGenerateRequest`** (继承 `BaseModel`) — 行 59
+
+**类 `ScriptUpdateRequest`** (继承 `BaseModel`) — 行 66
+
+**类 `CoverGenerateRequest`** (继承 `BaseModel`) — 行 71
+
+**类 `PublishRequest`** (继承 `BaseModel`) — 行 78
+
+**类 `PlatformAccountCreate`** (继承 `BaseModel`) — 行 84
+
+**类 `AutoEditRequest`** (继承 `BaseModel`) — 行 758
+
+**类 `AutoPublishRequest`** (继承 `BaseModel`) — 行 987
+
+**类 `TTSRequest`** (继承 `BaseModel`) — 行 1205
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `create_topic` | `(req: TopicIdeaCreate)` | 手动添加选题 |
+| `list_topics` | `(limit: int = 50, unused_only: bool = False)` | 列出选题库 |
+| `ai_discover_topics` | `(keyword: str = "", count: int = 5)` | AI 自动发现选题 |
+| `add_account` | `(req: PlatformAccountCreate)` | 添加平台账号 |
+| `list_accounts` | `(platform: str = "")` | 列出所有账号 |
+| `create_project` | `(req: ProjectCreate)` | 创建内容项目 |
+| `list_projects` | `(status: str = "", platform: str = "", limit: int = 50)` | 列出内容项目 |
+| `get_project` | `(project_id: int)` | 获取项目详情 |
+| `update_project_status` | `(project_id: int, status: str)` | 更新项目状态 |
+| `generate_script` | `(project_id: int, req: ScriptGenerateRequest = None)` | AI 生成口播稿 |
+| `update_script` | `(project_id: int, req: ScriptUpdateRequest)` | 更新口播稿（人工编辑后保存） |
+| `polish_script` | `(project_id: int, style: str = "更口语化")` | AI 润色口播稿 |
+| `generate_editing_plan` | `(project_id: int)` | 生成视频剪辑方案 |
+| `upload_video_path` | `(project_id: int, video_path: str)` | 记录视频文件路径（实际文件由用户上传到指定目录） |
+| `generate_cover_for_project` | `(project_id: int, req: CoverGenerateRequest = None)` | 为项目生成封面图 |
+| `serve_cover_image` | `(filename: str)` | 提供封面图文件 |
+| `publish_project` | `(project_id: int, req: PublishRequest = None)` | 发布到多平台（当前为模拟/记录，实际发布需对接各平台 API） |
+| `confirm_published` | `(project_id: int, platform: str, url: str = "")` | 确认已发布（用户手动发布后回填链接） |
+| `auto_edit_video` | `(project_id: int, req: AutoEditRequest = None)` | 自动剪辑视频（基于 FFmpeg + 口播稿时间轴） |
+| `serve_video` | `(filename: str)` | 提供视频文件 |
+| `capcut_export_guide` | `(project_id: int)` | 生成剪映导入指南（剪映目前没有开放 API，提供自动化脚本） |
+| `auto_publish` | `(project_id: int, req: AutoPublishRequest = None)` | 一键发布到多平台（通过 Postiz 或 n8n） |
+| `get_publish_config` | `()` | 获取发布配置状态 |
+| `generate_tts` | `(project_id: int, req: TTSRequest = None)` | 将口播稿转为语音（火山引擎 TTS） |
+| `serve_audio` | `(filename: str)` | 提供音频文件 |
+| `list_tts_voices` | `()` | 列出可用音色 |
+| `operations_dashboard` | `()` | 运营仪表盘 |
+
+**关键依赖：**
+- `from fastapi import APIRouter, HTTPException`
+- `import httpx`
+- `from database import get_db`
+- `from ai_client import ai_client`
+- `from fastapi.responses import FileResponse`
+- `from fastapi.responses import FileResponse`
+- `from fastapi.responses import FileResponse`
 
 ---
 #### `backend/endpoints/rag.py` (106 行)
@@ -3042,7 +3679,147 @@ study-hub/
 - `from processing.vector_store import get_vector_store`
 
 ---
-#### `backend/endpoints/upload.py` (224 行)
+#### `backend/endpoints/second_self.py` (624 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| GET | `/api/files` | `list_files()` |  |
+| GET | `/api/file` | `read_file()` | path, description="相对路径" |
+| POST | `/api/file` | `write_file()` | path, description="相对路径" |
+| GET | `/api/self` | `get_self_layer()` |  |
+| POST | `/api/decide` | `decide()` | body |
+| POST | `/api/chat` | `chat()` | body |
+| POST | `/api/chat/stream` | `chat_stream()` | body |
+| GET | `/api/memory/stats` | `memory_stats()` |  |
+| GET | `/api/memory` | `search_memory_api()` | q, description="搜索关键词" |
+| POST | `/api/lint` | `run_lint()` |  |
+| POST | `/api/ingest` | `ingest_api()` | body |
+| POST | `/api/ingest/enhanced` | `ingest_enhanced_api()` | body |
+| POST | `/api/self/scan-changes` | `scan_self_changes_api()` |  |
+| GET | `/api/pending-captures` | `get_pending_captures_api()` |  |
+| POST | `/api/pending-captures/confirm` | `confirm_pending_api()` | body |
+| POST | `/api/project/scan` | `scan_project_api()` |  |
+| POST | `/api/social/ingest` | `social_ingest_api()` | body |
+| POST | `/api/chat/distill` | `chat_distill_api()` | body |
+| POST | `/api/batch-import` | `batch_import_api()` | body |
+| POST | `/api/chat/batch-distill` | `()` |  |
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `list_files` | `()` | - |
+| `get_self_layer` | `()` | 返回当前 Self 层快照（ME.md + DASHBOARD.md 解析结果） |
+|   \u2b91 `generate` | `()` | - |
+| `memory_stats` | `()` | 返回记忆存储统计信息 |
+| `run_lint` | `()` | - |
+| `scan_self_changes_api` | `()` | 扫描 Self 核心文件变更，自动生成 update 记忆。 |
+| `get_pending_captures_api` | `()` | 获取待确认队列中的低置信度记忆候选。 |
+| `scan_project_api` | `()` | 扫描 DASHBOARD 项目的骨架变更，生成 milestone 记忆。 |
+
+**关键依赖：**
+- `from fastapi import APIRouter, HTTPException, Query, Body, UploadFile, File, Form`
+- `from fastapi.responses import StreamingResponse`
+
+---
+#### `backend/endpoints/skills.py` (250 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| GET | `/community` | `()` |  |
+| GET | `/community/categories` | `list_categories()` |  |
+| POST | `/community/sync` | `sync_community()` |  |
+| GET | `/community/stats` | `community_stats()` |  |
+| GET | `/local` | `list_local_skills()` |  |
+| POST | `/local/scan` | `scan_local()` |  |
+| POST | `/local/{skill_id}/toggle` | `toggle_local_skill()` | skill_id, req |
+| DELETE | `/local/{skill_id}` | `delete_local_skill()` | skill_id |
+| POST | `/local/install` | `install_skill()` | req |
+
+**类 `CommunitySkillOut`** (继承 `BaseModel`) — 行 34
+
+**类 `LocalSkillOut`** (继承 `BaseModel`) — 行 47
+
+**类 `SyncResult`** (继承 `BaseModel`) — 行 58
+
+**类 `ToggleRequest`** (继承 `BaseModel`) — 行 66
+
+**类 `ToggleResult`** (继承 `BaseModel`) — 行 70
+
+**类 `DeleteResult`** (继承 `BaseModel`) — 行 77
+
+**类 `InstallRequest`** (继承 `BaseModel`) — 行 83
+
+**类 `InstallResult`** (继承 `BaseModel`) — 行 88
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `list_categories` | `()` | 获取所有 Skill 分类 |
+| `sync_community` | `()` | 手动触发从 GitHub 同步社区 Skill 目录 |
+| `community_stats` | `()` | 获取同步统计信息 |
+| `list_local_skills` | `()` | 获取已安装的本地 Skill 列表 |
+| `scan_local` | `()` | 重新扫描本地 Skill 文件 |
+| `toggle_local_skill` | `(skill_id: str, req: ToggleRequest)` | 启用/禁用本地 Skill |
+| `delete_local_skill` | `(skill_id: str)` | 卸载本地 Skill |
+| `install_skill` | `(req: InstallRequest)` | 安装社区 Skill 到本地  当前实现：标记为已安装（实际文件操作需要 git clone，后续扩展） |
+
+**关键依赖：**
+- `from fastapi import APIRouter, Query`
+- `from database import get_db, DB_PATH`
+
+---
+#### `backend/endpoints/sop.py` (531 行)
+
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| GET | `/sop/blocks` | `list_blocks()` | search, tag |
+| GET | `/sop/blocks/{block_id}` | `get_block()` | block_id |
+| POST | `/sop/blocks` | `create_block()` | payload |
+| PUT | `/sop/blocks/{block_id}` | `update_block()` | block_id, payload |
+| DELETE | `/sop/blocks/{block_id}` | `delete_block()` | block_id |
+| GET | `/sop/chains` | `list_chains()` |  |
+| GET | `/sop/chains/{chain_id}` | `get_chain()` | chain_id |
+| POST | `/sop/chains` | `create_chain()` | payload |
+| PUT | `/sop/chains/{chain_id}` | `update_chain()` | chain_id, payload |
+| DELETE | `/sop/chains/{chain_id}` | `delete_chain()` | chain_id |
+| POST | `/sop/chains/{chain_id}/blocks` | `add_block_to_chain()` | chain_id, payload |
+| PUT | `/sop/chains/{chain_id}/blocks/{cb_id}` | `update_chain_block()` | chain_id, cb_id, payload |
+| DELETE | `/sop/chains/{chain_id}/blocks/{cb_id}` | `remove_block_from_chain()` | chain_id, cb_id |
+| PUT | `/sop/chains/{chain_id}/reorder` | `reorder_chain_blocks()` | chain_id, payload |
+| GET | `/sop/suggestions` | `list_suggestions()` | status, suggestion_type, limit |
+| GET | `/sop/suggestions/{sug_id}` | `get_suggestion()` | sug_id |
+| POST | `/sop/suggestions/{sug_id}/confirm` | `confirm_suggestion()` | sug_id |
+| POST | `/sop/suggestions/{sug_id}/reject` | `reject_suggestion()` | sug_id, payload |
+| POST | `/sop/evolution/analyze` | `trigger_analysis()` | payload |
+| GET | `/sop/wiki-unmatched` | `list_unmatched_wiki()` |  |
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `list_blocks` | `(search: str = None, tag: str = None)` | - |
+| `get_block` | `(block_id: int)` | - |
+| `create_block` | `(payload: dict)` | - |
+| `update_block` | `(block_id: int, payload: dict)` | - |
+| `delete_block` | `(block_id: int)` | - |
+| `list_chains` | `()` | - |
+| `get_chain` | `(chain_id: int)` | - |
+| `create_chain` | `(payload: dict)` | - |
+| `update_chain` | `(chain_id: int, payload: dict)` | - |
+| `delete_chain` | `(chain_id: int)` | - |
+| `add_block_to_chain` | `(chain_id: int, payload: dict)` | - |
+| `update_chain_block` | `(chain_id: int, cb_id: int, payload: dict)` | - |
+| `remove_block_from_chain` | `(chain_id: int, cb_id: int)` | - |
+| `reorder_chain_blocks` | `(chain_id: int, payload: dict)` | Batch reorder: {order: [{cb_id, sort_order}, ...]} |
+| `list_suggestions` | `(status: str = "pending", suggestion_type: str = None, limit: int = 50)` | - |
+| `get_suggestion` | `(sug_id: int)` | - |
+| `confirm_suggestion` | `(sug_id: int)` | Apply the suggestion: create block, merge content, or insert into chain. |
+| `reject_suggestion` | `(sug_id: int, payload: dict = None)` | - |
+| `trigger_analysis` | `(payload: dict = None)` | Trigger AI analysis: match wiki pages to SOP blocks/chains. |
+| `list_unmatched_wiki` | `()` | Wiki pages not yet linked to any SOP block or pending suggestion. |
+
+**关键依赖：**
+- `from fastapi import APIRouter`
+- `from database import get_db`
+
+---
+#### `backend/endpoints/upload.py` (360 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
 |------|------|----------|------|
@@ -3065,15 +3842,15 @@ study-hub/
 - `from database import get_db`
 - `from processing.processors import can_handle, process_bytes, sha256, is_duplicate`
 - `from endpoints.links import sync_document_links, parse_wiki_links`
+- `import httpx`
 - `from processing.chunker import chunk_text`
 - `from processing.vector_store import get_vector_store`
+- `from processing.vector_store import get_vector_store`
 - `from processing.chunker import chunk_text`
-- `from processing.vector_store import get_vector_store`
-- `from processing.vector_store import get_vector_store`
 - `from processing.vector_store import get_vector_store`
 
 ---
-#### `backend/endpoints/wiki.py` (957 行)
+#### `backend/endpoints/wiki.py` (1009 行)
 
 | 方法 | 路径 | 处理函数 | 参数 |
 |------|------|----------|------|
@@ -3083,6 +3860,7 @@ study-hub/
 | GET | `/wiki/graph` | `get_wiki_graph()` |  |
 | GET | `/wiki/categories` | `get_wiki_categories()` |  |
 | DELETE | `/wiki/pages/{page_id}` | `delete_wiki_page()` | page_id |
+| POST | `/wiki/pages` | `create_wiki_page()` | request |
 | PUT | `/wiki/pages/{page_id}` | `update_wiki_page()` | page_id, payload |
 | DELETE | `/wiki/pages` | `delete_all_wiki_pages()` |  |
 | POST | `/wiki/regenerate` | `regenerate_wiki()` |  |
@@ -3100,6 +3878,7 @@ study-hub/
 | `get_wiki_graph` | `()` | 返回知识图谱数据：nodes + edges |
 | `get_wiki_categories` | `()` | - |
 | `delete_wiki_page` | `(page_id: int)` | - |
+| `create_wiki_page` | `(request: Request)` | 手动创建 Wiki 页面 |
 | `update_wiki_page` | `(page_id: int, payload: dict)` | 手动编辑 Wiki 页面 |
 | `delete_all_wiki_pages` | `()` | - |
 | `regenerate_wiki` | `()` | 清空 Wiki 并重新编译所有文档 |
@@ -3109,41 +3888,80 @@ study-hub/
 | `generate_category_overviews` | `()` | 为每个分类生成综述 hub 页面 |
 
 **关键依赖：**
-- `from fastapi import APIRouter`
+- `from fastapi import APIRouter, Request`
 - `from database import get_db`
 - `from ai_client import ai_client`
 - `from processing.vector_store import get_vector_store`
 
 ---
-## MCP Server
+#### `backend/endpoints/workflow.py` (437 行)
 
-#### `social_parsers.py` (339 行)
+| 方法 | 路径 | 处理函数 | 参数 |
+|------|------|----------|------|
+| POST | `/workflow/run` | `workflow_run()` | req |
+| GET | `/workflow/status/{task_id}` | `workflow_status()` | task_id |
+| POST | `/workflow/pause/{task_id}` | `workflow_pause()` | task_id |
+| POST | `/workflow/resume/{task_id}` | `workflow_resume()` | task_id, req |
+| GET | `/workflow/templates` | `workflow_templates()` |  |
+| GET | `/workflow/templates/{filename}` | `workflow_template_get()` | filename |
+| PUT | `/workflow/templates/{filename}` | `workflow_template_save()` | filename, req |
+| DELETE | `/workflow/templates/{filename}` | `workflow_template_delete()` | filename |
+| POST | `/workflow/templates/{filename}/copy` | `workflow_template_copy()` | filename |
+| POST | `/workflow/create-from-text` | `workflow_create_from_text()` | req |
+| GET | `/workflow/queue/status` | `workflow_queue_status()` | show_archived |
+| POST | `/workflow/archive/{task_id}` | `workflow_archive()` | task_id |
+| GET | `/workflow/tools` | `workflow_tools()` |  |
+| GET | `/workflow/output/{task_id}/{filename}` | `workflow_download()` | task_id, filename |
 
-**类 `QwenASR`** — 行 33
+**类 `RunRequest`** (继承 `BaseModel`) — 行 28
 
-**类 `BilibiliParser`** — 行 86
+**类 `ResumeRequest`** (继承 `BaseModel`) — 行 33
 
-**类 `XiaohongshuParser`** — 行 218
+**类 `CreateFromTextRequest`** (继承 `BaseModel`) — 行 37
+
+**类 `TemplateSaveRequest`** (继承 `BaseModel`) — 行 42
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
-|   \u2b91 `__init__` | `(self, api_key: Optional[str] = None, model: str = DEFAULT_ASR_MODEL)` | - |
-|   \u2b91 `recognize` | `(self, audio_input, context=None, language=None, enable_lid=True, enable_itn=False) -> dict` | - |
-|   \u2b91 `extract_bvid` | `(share_text: str) -> str` | - |
-|   \u2b91 `get_video_info` | `(share_text: str) -> dict` | - |
-|   \u2b91 `get_play_url` | `(bvid: str, cid: int, quality: int = 80) -> dict` | - |
-|   \u2b91 `get_audio_url` | `(share_text: str, cid: Optional[int] = None) -> tuple` | 返回 (audio_url, video_info_dict) |
-|   \u2b91 `extract_note_id` | `(share_text: str) -> str` | - |
-|   \u2b91 `get_note_info` | `(share_text: str) -> dict` | - |
-|   \u2b91 `get_video_url` | `(share_text: str) -> tuple` | 返回 (video_url, note_info_dict) |
+| `workflow_run` | `(req: RunRequest)` | 启动一个 workflow。 |
+| `workflow_status` | `(task_id: str)` | 查询单个任务状态。 |
+| `workflow_pause` | `(task_id: str)` | 暂停一个运行中的 workflow。 |
+| `workflow_resume` | `(task_id: str, req: ResumeRequest = None)` | 恢复一个暂停的 workflow。 |
+| `workflow_templates` | `()` | 列出所有可用的 YAML 模板。 |
+| `workflow_template_get` | `(filename: str)` | 获取单个模板的 YAML 原始内容（用于编辑）。 |
+| `workflow_template_save` | `(filename: str, req: TemplateSaveRequest)` | 保存/更新 YAML 模板。 |
+| `workflow_template_delete` | `(filename: str)` | 删除一个 YAML 模板。 |
+| `workflow_template_copy` | `(filename: str)` | 复制一个模板。 |
+| `workflow_create_from_text` | `(req: CreateFromTextRequest)` | 用大白话描述创建 workflow 模板——AI 自动转译为 YAML。  示例输入： "打开百度搜猫的图片，截图保存，然后AI分析图片里什么品种"  系统会用 |
+| `workflow_queue_status` | `(show_archived: bool = False)` | 获取所有 workflow 任务状态（最近 20 个）。 |
+| `workflow_archive` | `(task_id: str)` | 切换任务的归档状态。 |
+| `workflow_tools` | `()` | 列出所有已注册的工具。 |
+| `workflow_download` | `(task_id: str, filename: str)` | 下载 workflow 输出文件（截图、报告等）。 |
+
+**关键依赖：**
+- `from fastapi import APIRouter, HTTPException`
+- `from fastapi.responses import FileResponse`
 
 ---
+## MCP Server
+
 ## 前端页面
 
-#### `extension/popup.html` (29 行)
+#### `electron/node_modules/electron/dist/LICENSES.chromium.html` (164588 行)
+
+- 0 个 `<script>` 块, 0 个 `<style>` 块
+- **关键 DOM ID：** `print-link`
+
+---
+#### `electron/node_modules/plist/examples/browser/index.html` (15 行)
+
+- 2 个 `<script>` 块, 0 个 `<style>` 块
+
+---
+#### `extension/popup.html` (52 行)
 
 - 1 个 `<script>` 块, 1 个 `<style>` 块
-- **关键 DOM ID：** `apiBase`, `saveBtn`, `captureBtn`, `status`
+- **关键 DOM ID：** `apiBase`, `saveBtn`, `captureBtn`, `clipPageBtn`, `douyinSection`, `douyinFavBtn`, `douyinStatus`, `douyinLinkList`, `status`
 
 ---
 #### `frontend/dist/admin/admin.html` (308 行)
@@ -3162,22 +3980,72 @@ study-hub/
   - `escapeHtml(str)` -> 行 291
 
 ---
-#### `frontend/dist/index.html` (15 行)
+#### `frontend/dist/index.html` (18 行)
 
 - 1 个 `<script>` 块, 0 个 `<style>` 块
 - **关键 DOM ID：** `app`
 
 ---
-#### `frontend/dist/suit/index.html` (21 行)
+#### `frontend/dist/second-self/index.html` (826 行)
 
-- 1 个 `<script>` 块, 0 个 `<style>` 块
-- **关键 DOM ID：** `root`
+- 3 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `statMemory`, `statProjects`, `statStatus`, `heroArea`, `hero-canvas`, `modeLabel`, `hintLabel`, `responseBubble`, `sidePanel`, `projectsList`, `maintList`, `memoryInfo`, `btnPanel`, `btnUpload`, `fileInput`, `btnVoice`, `btnDecide`, `btnReset`, `btnImport`, `decisionOverlay`
+- **JS 函数：**
+  - `loadDashboard()` -> 行 400
+  - `initSpeech()` -> 行 449
+  - `bindEvents()` -> 行 491
+  - `handleImportFiles(files)` -> 行 541
+  - `renderImportFileList()` -> 行 545
+  - `toggleVoice()` -> 行 629
+  - `analyzeText()` -> 行 636
+  - `processMessage(text)` -> 行 647
+  - `flushDisplay()` -> 行 664
+  - `scheduleFlush()` -> 行 673
+  - `speakText(text)` -> 行 728
+  - `setMode(mode, label)` -> 行 740
+  - `showResponse(quote, result, streaming)` -> 行 744
+  - `showResponseStreaming(quoteText, resultText)` -> 行 752
+  - `showResponseFinal(quoteText, resultText)` -> 行 772
+  - `simpleMarkdown(text)` -> 行 779
+  - `showDecision(data)` -> 行 788
+  - `togglePanel()` -> 行 804
+  - `toast(msg)` -> 行 808
+  - `calcDaysAgo(dateStr)` -> 行 813
 
 ---
-#### `frontend/index.html` (14 行)
+#### `frontend/index.html` (17 行)
 
 - 1 个 `<script>` 块, 0 个 `<style>` 块
 - **关键 DOM ID：** `app`
+
+---
+#### `frontend/node_modules/katex/contrib/auto-render/index.html` (58 行)
+
+- 3 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `test`
+
+---
+#### `frontend/node_modules/katex/contrib/copy-tex/index.html` (39 行)
+
+- 4 个 `<script>` 块, 1 个 `<style>` 块
+
+---
+#### `frontend/node_modules/mhchemparser/test/test-dist.html` (212 行)
+
+- 3 个 `<script>` 块, 0 个 `<style>` 块
+- **关键 DOM ID：** `output`
+- **JS 函数：**
+  - `test(type, input, expected)` -> 行 19
+  - `output(html)` -> 行 26
+
+---
+#### `frontend/node_modules/mhchemparser/test/test-esm.html` (209 行)
+
+- 1 个 `<script>` 块, 0 个 `<style>` 块
+- **关键 DOM ID：** `output`
+- **JS 函数：**
+  - `test(type, input, expected)` -> 行 16
+  - `output(html)` -> 行 23
 
 ---
 #### `frontend/node_modules/tslib/tslib.es6.html` (1 行)
@@ -3188,6 +4056,12 @@ study-hub/
 #### `frontend/node_modules/tslib/tslib.html` (1 行)
 
 - 1 个 `<script>` 块, 0 个 `<style>` 块
+
+---
+#### `frontend/node_modules/xss/dist/test.html` (15 行)
+
+- 3 个 `<script>` 块, 0 个 `<style>` 块
+- **关键 DOM ID：** `result`
 
 ---
 #### `frontend/public/admin/admin.html` (308 行)
@@ -3206,10 +4080,126 @@ study-hub/
   - `escapeHtml(str)` -> 行 291
 
 ---
-#### `frontend/public/suit/index.html` (21 行)
+#### `frontend/public/second-self/index.html` (826 行)
 
-- 1 个 `<script>` 块, 0 个 `<style>` 块
-- **关键 DOM ID：** `root`
+- 3 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `statMemory`, `statProjects`, `statStatus`, `heroArea`, `hero-canvas`, `modeLabel`, `hintLabel`, `responseBubble`, `sidePanel`, `projectsList`, `maintList`, `memoryInfo`, `btnPanel`, `btnUpload`, `fileInput`, `btnVoice`, `btnDecide`, `btnReset`, `btnImport`, `decisionOverlay`
+- **JS 函数：**
+  - `loadDashboard()` -> 行 400
+  - `initSpeech()` -> 行 449
+  - `bindEvents()` -> 行 491
+  - `handleImportFiles(files)` -> 行 541
+  - `renderImportFileList()` -> 行 545
+  - `toggleVoice()` -> 行 629
+  - `analyzeText()` -> 行 636
+  - `processMessage(text)` -> 行 647
+  - `flushDisplay()` -> 行 664
+  - `scheduleFlush()` -> 行 673
+  - `speakText(text)` -> 行 728
+  - `setMode(mode, label)` -> 行 740
+  - `showResponse(quote, result, streaming)` -> 行 744
+  - `showResponseStreaming(quoteText, resultText)` -> 行 752
+  - `showResponseFinal(quoteText, resultText)` -> 行 772
+  - `simpleMarkdown(text)` -> 行 779
+  - `showDecision(data)` -> 行 788
+  - `togglePanel()` -> 行 804
+  - `toast(msg)` -> 行 808
+  - `calcDaysAgo(dateStr)` -> 行 813
+
+---
+#### `frontend/test-markdown.html` (78 行)
+
+- 0 个 `<script>` 块, 1 个 `<style>` 块
+- **JS 函数：**
+  - `hello()` -> 行 41
+
+---
+#### `project-memory/ui/study-hub-dashboard-style-refresh.html` (4370 行)
+
+- 1 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `home`, `dashboard-grid`, `grid-bg`, `focus-content`, `wiki`, `kb`, `auto`, `ddl`, `journal`, `flow`, `creator`, `search`, `notifications`, `profile`, `settings`, `settings-panel`, `secondself`, `skillmarket`, `modal-overlay`, `modal-title`
+- **JS 函数：**
+  - `showPage(id)` -> 行 3157
+  - `switchFocusView(view)` -> 行 3162
+  - `swapNodes(a, b)` -> 行 3261
+  - `setupCard(card)` -> 行 3268
+  - `switchSettingsTab(el, tab)` -> 行 3310
+  - `openModal(title, body)` -> 行 3557
+  - `closeModal()` -> 行 3562
+  - `initToggleSwitches()` -> 行 3567
+
+---
+#### `project-memory/ui/test-write.html` (1 行)
+
+- 0 个 `<script>` 块, 0 个 `<style>` 块
+
+---
+#### `project-memory/ui/横屏工作台Dashboard-低保真线框图-完整版.html` (3535 行)
+
+- 1 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `home`, `dashboard-grid`, `grid-bg`, `focus-content`, `wiki`, `kb`, `auto`, `ddl`, `journal`, `flow`, `creator`, `search`, `notifications`, `profile`, `settings`, `settings-panel`, `secondself`, `skillmarket`, `modal-overlay`, `modal-title`
+- **JS 函数：**
+  - `showPage(id)` -> 行 2352
+  - `switchFocusView(view)` -> 行 2357
+  - `swapNodes(a, b)` -> 行 2456
+  - `setupCard(card)` -> 行 2463
+  - `switchSettingsTab(el, tab)` -> 行 2505
+  - `openModal(title, body)` -> 行 2752
+  - `closeModal()` -> 行 2757
+  - `initToggleSwitches()` -> 行 2762
+
+---
+#### `project-memory/ui/横屏工作台Dashboard-低保真线框图.html` (2750 行)
+
+- 1 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `home`, `dashboard-grid`, `grid-bg`, `focus-content`, `wiki`, `kb`, `auto`, `ddl`, `journal`, `flow`, `creator`, `brainstorm`, `learning`, `learning-checklist-view`, `learning-plan-view`, `learning-overview-view`, `sop`, `skills`, `skills-discover`, `skills-installed`
+- **JS 函数：**
+  - `showPage(id)` -> 行 2459
+  - `switchFocusView(view)` -> 行 2464
+  - `swapNodes(a, b)` -> 行 2563
+  - `setupCard(card)` -> 行 2570
+
+---
+#### `project-memory/ui/横屏工作台Dashboard-高保真框架图-完整版.html` (252 行)
+
+- 1 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `pg-home`, `pg-wiki`, `pg-kb`, `pg-brainstorm`, `pg-learning`, `pg-auto`, `pg-ddl`, `pg-journal`, `pg-flow`, `pg-sop`, `pg-creator`, `pg-skills`, `pg-ss`, `pg-design`, `pg-states`, `pg-settings`
+- **JS 函数：**
+  - `sp(id)` -> 行 241
+  - `tt()` -> 行 249
+
+---
+#### `second-self/app/index.html` (870 行)
+
+- 1 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `statMemory`, `statProjects`, `statStatus`, `heroArea`, `hero-canvas`, `modeLabel`, `hintLabel`, `responseBubble`, `sidePanel`, `memoryFieldPanel`, `fieldBadge`, `emotionLabel`, `emotionTuning`, `fieldLayers`, `coreLayerItems`, `activeLayerItems`, `suppressLayerItems`, `projectsList`, `maintList`, `memoryInfo`
+- **JS 函数：**
+  - `loadDashboard()` -> 行 486
+  - `showMemoryField(field)` -> 行 527
+  - `processMessage(text)` -> 行 593
+  - `flushDisplay()` -> 行 611
+  - `scheduleFlush()` -> 行 619
+  - `showResponse(quote, result, streaming)` -> 行 666
+  - `showResponseStreaming(quoteText, resultText)` -> 行 672
+  - `showResponseFinal(quoteText, resultText)` -> 行 681
+  - `simpleMarkdown(text)` -> 行 687
+  - `showDecision(data)` -> 行 691
+  - `togglePanel()` -> 行 707
+  - `toast(msg)` -> 行 711
+  - `calcDaysAgo(dateStr)` -> 行 716
+  - `esc(s)` -> 行 721
+  - `handleFiles(files)` -> 行 765
+  - `renderFileList()` -> 行 769
+  - `sendChat()` -> 行 856
+
+---
+#### `second-self.bak/app/index.html` (80 行)
+
+- 1 个 `<script>` 块, 1 个 `<style>` 块
+- **关键 DOM ID：** `stats`, `total`, `active`, `dormant`, `search`
+- **JS 函数：**
+  - `loadStats()` -> 行 63
+  - `doSearch()` -> 行 72
 
 ---
 #### `venv/Lib/site-packages/setuptools/tests/indexes/test_links_priority/external.html` (4 行)
@@ -3231,39 +4221,72 @@ study-hub/
 
 ### 扩展配置
 - **名称**: 学习中枢 - 对话采集
-- **版本**: 1.1
-- **权限**: `storage`, `tabs`, `scripting`, `activeTab`
-- **Host 权限**: `https://claude.ai/*`, `https://chat.openai.com/*`, `https://chat.deepseek.com/*`, `https://kimi.moonshot.cn/*`, `https://www.doubao.com/*`
+- **版本**: 2.1
+- **权限**: `storage`, `tabs`, `scripting`, `activeTab`, `alarms`, `contextMenus`
+- **Host 权限**: `https://*/*`, `http://localhost:8741/*`
 
-#### `extension/adapters.js` (68 行)
+#### `extension/background.js` (176 行)
 
 | 函数 | 参数 | 行号 |
 |------|------|------|
-| `getAdapter()` |  | 61 |
+| `keepAlive()` |  | 15 |
+| `getApiBase()` |  | 21 |
+| `handleApiRequest()` | request, sendResponse | 50 |
 
 ---
-#### `extension/background.js` (42 行)
+#### `extension/bing-assistant.js` (974 行)
 
 | 函数 | 参数 | 行号 |
 |------|------|------|
-| `getApiBase()` |  | 6 |
+| `main()` |  | 34 |
+| `loadSceneRules()` |  | 69 |
+| `loadState()` |  | 79 |
+| `saveState()` |  | 92 |
+| `loadPrefs()` |  | 108 |
+| `savePrefs()` |  | 130 |
+| `restoreFilterState()` | isFilterRefresh, urlScene | 147 |
+| `matchScene()` | query | 185 |
+| `showPanel()` |  | 198 |
+| `cleanupPanel()` |  | 237 |
+| `showDot()` |  | 246 |
+| `cleanupDot()` |  | 260 |
+| `closePanel()` |  | 267 |
+| `restorePosition()` |  | 283 |
+| `bindPanelEvents()` |  | 298 |
+| `handlePanelClick()` | e | 311 |
+| `startDrag()` | e | 374 |
+| `onDragMove()` | e | 389 |
+| `onDragEnd()` |  | 410 |
+| `toggleCollapse()` |  | 421 |
+| `togglePin()` |  | 437 |
+| `updatePinUI()` |  | 443 |
+| `switchScene()` | sceneId | 456 |
+| `toggleSource()` | item | 486 |
+| `resetSources()` |  | 503 |
+| `updateAIHint()` |  | 513 |
+| `applyFilter()` |  | 529 |
+| `adjustBing()` | panelVisible | 562 |
+| `watchUrl()` |  | 581 |
+| `check()` |  | 584 |
+| `bindGlobalEvents()` |  | 633 |
+| `cleanupAll()` |  | 643 |
+| `renderPanel()` |  | 651 |
+| `renderTabs()` |  | 669 |
+| `renderBody()` |  | 677 |
+| `showGuide()` |  | 744 |
+| `getCSS()` |  | 759 |
+| `isBingSearch()` |  | 871 |
+| `isDark()` |  | 875 |
+| `escape()` | text | 880 |
+| `getBuiltinRules()` |  | 886 |
 
 ---
-#### `extension/content.js` (129 行)
+#### `extension/popup.js` (172 行)
 
 | 函数 | 参数 | 行号 |
 |------|------|------|
-| `extractCurrentDialogue()` |  | 14 |
-| `scan()` |  | 31 |
-| `injectCaptureButton()` |  | 50 |
-| `getApiBase()` |  | 108 |
-
----
-#### `extension/popup.js` (82 行)
-
-| 函数 | 参数 | 行号 |
-|------|------|------|
-| `adapter()` | ( | 38 |
+| `getApiBase()` |  | 156 |
+| `checkDouyinPage()` |  | 161 |
 
 ---
 #### `frontend/node_modules/binary-extensions/index.js` (2 行)
@@ -3363,6 +4386,627 @@ study-hub/
 #### `frontend/node_modules/echarts/lib/extension.js` (110 行)
 
 ---
+#### `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/lib/input/mathml/mml3/mml3-node.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/lib/input/mathml/mml3/mml3.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/lib/mml3.js` (21 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/mml3.js` (8 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/action.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/lib/action.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/lib/input/tex/action/ActionConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/all-packages.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/all-packages.js` (25 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/input/tex/AllPackages.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/input/tex/autoload/AutoloadConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/input/tex/require/RequireConfiguration.js` (7 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/webpack.config.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/ams.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/ams.js` (23 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/input/tex/ams/AmsConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/input/tex/ams/AmsItems.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/input/tex/ams/AmsMethods.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/amscd.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/lib/amscd.js` (21 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/lib/input/tex/amscd/AmsCdConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/lib/input/tex/amscd/AmsCdMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/autoload.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/lib/autoload.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/lib/input/tex/autoload/AutoloadConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/webpack.config.js` (14 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/bbox.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/lib/bbox.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/lib/input/tex/bbox/BboxConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/boldsymbol.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/lib/boldsymbol.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/lib/input/tex/boldsymbol/BoldsymbolConfiguration.js` (7 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/braket.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/braket.js` (23 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/input/tex/braket/BraketConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/input/tex/braket/BraketItems.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/input/tex/braket/BraketMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/bussproofs.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/bussproofs.js` (25 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsItems.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsUtil.js` (10 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/cancel.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/lib/cancel.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/lib/input/tex/cancel/CancelConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/webpack.config.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/cases.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/lib/cases.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/lib/input/tex/cases/CasesConfiguration.js` (7 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/webpack.config.js` (15 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/centernot.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/lib/centernot.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/lib/input/tex/centernot/CenternotConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/color.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/color.js` (25 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorConstants.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorUtil.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/colortbl.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/lib/colortbl.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/lib/input/tex/colortbl/ColortblConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/colorv2.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/lib/colorv2.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/lib/input/tex/colorv2/ColorV2Configuration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/configmacros.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/lib/configmacros.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/lib/input/tex/configmacros/ConfigMacrosConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/webpack.config.js` (14 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/empheq.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/lib/empheq.js` (21 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/lib/input/tex/empheq/EmpheqConfiguration.js` (6 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/lib/input/tex/empheq/EmpheqUtil.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/webpack.config.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/enclose.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/lib/enclose.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/lib/input/tex/enclose/EncloseConfiguration.js` (6 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/extpfeil.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/lib/extpfeil.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/lib/input/tex/extpfeil/ExtpfeilConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/webpack.config.js` (14 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/gensymb.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/lib/gensymb.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/lib/input/tex/gensymb/GensymbConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/html.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/lib/html.js` (21 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/lib/input/tex/html/HtmlConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/lib/input/tex/html/HtmlMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsConfiguration.js` (6 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsItems.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsTags.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsUtil.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/mathtools.js` (27 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/mathtools.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/webpack.config.js` (14 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/lib/input/tex/mhchem/MhchemConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/lib/mhchem.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/mhchem.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/webpack.config.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandItems.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandUtil.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/newcommand.js` (25 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/newcommand.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/lib/input/tex/noerrors/NoErrorsConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/lib/noerrors.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/noerrors.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/lib/input/tex/noundefined/NoUndefinedConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/lib/noundefined.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/noundefined.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/input/tex/physics/PhysicsConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/input/tex/physics/PhysicsItems.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/input/tex/physics/PhysicsMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/physics.js` (23 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/physics.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/lib/input/tex/require/RequireConfiguration.js` (7 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/lib/require.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/require.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/webpack.config.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/lib/input/tex/setoptions/SetOptionsConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/lib/setoptions.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/setoptions.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/lib/input/tex/tagformat/TagFormatConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/lib/tagformat.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/tagformat.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/lib/input/tex/textcomp/TextcompConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/lib/textcomp.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/textcomp.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/webpack.config.js` (13 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/input/tex/textmacros/TextMacrosConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/input/tex/textmacros/TextMacrosMethods.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/input/tex/textmacros/TextParser.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/textmacros.js` (23 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/textmacros.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/lib/input/tex/unicode/UnicodeConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/lib/unicode.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/unicode.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/lib/input/tex/upgreek/UpgreekConfiguration.js` (4 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/lib/upgreek.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/upgreek.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/lib/input/tex/verb/VerbConfiguration.js` (5 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/lib/verb.js` (19 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/verb.js` (2 行)
+
+---
+#### `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/webpack.config.js` (12 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/mml/extensions/mml3.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/action.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/all-packages.js` (34 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/ams.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/amscd.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/autoload.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/bbox.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/boldsymbol.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/braket.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/bussproofs.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/cancel.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/cases.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/centernot.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/color.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/colortbl.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/colorv2.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/configmacros.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/empheq.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/enclose.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/extpfeil.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/gensymb.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/html.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/mathtools.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/mhchem.js` (34 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/newcommand.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/noerrors.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/noundefined.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/physics.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/require.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/setoptions.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/tagformat.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/textcomp.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/textmacros.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/unicode.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/upgreek.js` (1 行)
+
+---
+#### `frontend/node_modules/mathjax-full/es5/input/tex/extensions/verb.js` (1 行)
+
+---
 ## 配置文件
 
 ### `Dockerfile` (39 行, hash: `8ea83b65`)
@@ -3409,7 +5053,7 @@ CMD ["python", "main.py"]
 
 ```
 
-### `backend/requirements.txt` (22 行, hash: `6baea33d`)
+### `backend/requirements.txt` (26 行, hash: `9193b97c`)
 
 ```
 # ===== 核心依赖 =====
@@ -3429,6 +5073,10 @@ dashscope>=1.20.0
 
 # ===== 文档处理 =====
 PyMuPDF>=1.23.0
+jieba>=0.42.0
+
+# ===== 流程编排 =====
+pyyaml>=6.0
 
 # ===== 社交解析 =====
 douyin-mcp-server>=1.2.0
@@ -3469,6 +5117,26 @@ mcp>=1.0.0
 httpx>=0.25.0
 requests>=2.28.0
 dashscope
+
+```
+
+### `second-self/requirements.txt` (4 行, hash: `72e0c00d`)
+
+```
+# Second Self — 零依赖运行（Python 3 内置库即可）
+# 可选：安装 openai 以启用 LLM 对话功能
+# pip install openai
+
+```
+
+### `second-self.bak/requirements.txt` (6 行, hash: `59162edb`)
+
+```
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+requests>=2.31.0
+python-multipart>=0.0.6
 
 ```
 
@@ -3618,13 +5286,13 @@ include = ["bilibili_mcp_server*"]
 
 ```
 
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/__init__.py` (9 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/__init__.py` (9 行)
 
 ---
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/__main__.py` (8 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/__main__.py` (8 行)
 
 ---
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/asr_module.py` (152 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/asr_module.py` (152 行)
 
 **类 `QwenASR`** — 行 18
 
@@ -3634,7 +5302,7 @@ include = ["bilibili_mcp_server*"]
 | `create_asr_instance` | `(api_key: Optional[str] = None, model: str = "qwen3-asr-flash") -> QwenASR` | - |
 
 ---
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/server.py` (595 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/bilibili-mcp-server/bilibili_mcp_server/server.py` (595 行)
 
 **类 `BilibiliProcessor`** — 行 40
 
@@ -3689,13 +5357,13 @@ include = ["xiaohongshu_mcp_server*"]
 
 ```
 
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/xiaohongshu-mcp-server/xiaohongshu_mcp_server/__init__.py` (9 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/xiaohongshu-mcp-server/xiaohongshu_mcp_server/__init__.py` (9 行)
 
 ---
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/xiaohongshu-mcp-server/xiaohongshu_mcp_server/__main__.py` (8 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/xiaohongshu-mcp-server/xiaohongshu_mcp_server/__main__.py` (8 行)
 
 ---
-#### `/sessions/relaxed-wonderful-darwin/mnt/study web/xiaohongshu-mcp-server/xiaohongshu_mcp_server/server.py` (608 行)
+#### `/sessions/inspiring-kind-cerf/mnt/study web/xiaohongshu-mcp-server/xiaohongshu_mcp_server/server.py` (608 行)
 
 **类 `QwenASR`** — 行 38
 
@@ -3728,42 +5396,60 @@ include = ["xiaohongshu_mcp_server*"]
 | `bilibili-mcp-server/bilibili_mcp_server/asr_module.py` | `fa875c58` | 152 |
 | `bilibili-mcp-server/bilibili_mcp_server/server.py` | `6e7ae432` | 595 |
 | `backend/__init__.py` | `9e67a2e6` | 2 |
-| `backend/ai_client.py` | `4162e68b` | 49 |
-| `backend/database.py` | `25e1e94c` | 139 |
+| `backend/ai_client.py` | `9a2f8ea0` | 49 |
+| `backend/core/skills_scanner.py` | `c4a8a573` | 212 |
+| `backend/core/skills_sync.py` | `b7349010` | 244 |
+| `backend/database.py` | `12b5a077` | 421 |
 | `backend/endpoints/__init__.py` | `d41d8cd9` | 1 |
-| `backend/endpoints/admin.py` | `377129e2` | 111 |
+| `backend/endpoints/admin.py` | `f9217f12` | 217 |
 | `backend/endpoints/ai_search.py` | `b903d460` | 157 |
-| `backend/endpoints/automation.py` | `ac0d84f1` | 759 |
+| `backend/endpoints/automation.py` | `a530af05` | 1884 |
 | `backend/endpoints/brainstorm.py` | `b5bb66fc` | 279 |
-| `backend/endpoints/categories.py` | `dd0573bd` | 197 |
+| `backend/endpoints/categories.py` | `9e6cc598` | 247 |
+| `backend/endpoints/creator.py` | `d5558a07` | 117 |
+| `backend/endpoints/ddl.py` | `5729b4e2` | 199 |
 | `backend/endpoints/evolution.py` | `922a09da` | 212 |
 | `backend/endpoints/export.py` | `3b9000b4` | 123 |
+| `backend/endpoints/images.py` | `1ff3211a` | 110 |
+| `backend/endpoints/journal.py` | `a01bfd16` | 210 |
 | `backend/endpoints/links.py` | `72532e04` | 92 |
+| `backend/endpoints/operations.py` | `6770080d` | 1387 |
 | `backend/endpoints/rag.py` | `8c1a86d4` | 106 |
 | `backend/endpoints/review.py` | `66f4eda8` | 205 |
-| `backend/endpoints/upload.py` | `23ff8a59` | 224 |
-| `backend/endpoints/wiki.py` | `235fe681` | 957 |
+| `backend/endpoints/second_self.py` | `f7beec98` | 624 |
+| `backend/endpoints/skills.py` | `f5407e6e` | 250 |
+| `backend/endpoints/sop.py` | `628eb7e9` | 531 |
+| `backend/endpoints/upload.py` | `d239c3d5` | 360 |
+| `backend/endpoints/wiki.py` | `d57722e7` | 1009 |
+| `backend/endpoints/workflow.py` | `cad7ab14` | 437 |
 | `backend/evolution_files.py` | `f28b1274` | 169 |
 | `backend/evolution_pipeline.py` | `8fcc61e2` | 289 |
-| `backend/main.py` | `29068484` | 311 |
-| `backend/mcp_server.py` | `54805f0f` | 821 |
+| `backend/main.py` | `f6105628` | 458 |
+| `backend/mcp_server.py` | `f3c3695a` | 823 |
 | `backend/processing/__init__.py` | `d41d8cd9` | 1 |
 | `backend/processing/chunker.py` | `3cebfd14` | 37 |
 | `backend/processing/processors.py` | `733919b8` | 71 |
-| `backend/processing/vector_store.py` | `5c089bbc` | 163 |
-| `backend/social_parsers.py` | `5da1fae7` | 339 |
+| `backend/processing/vector_store.py` | `e3d27081` | 303 |
+| `backend/social_parsers.py` | `613f8fb5` | 352 |
+| `backend/sop_evolution.py` | `b3786b26` | 297 |
 | `backend/tests/__init__.py` | `d41d8cd9` | 1 |
 | `backend/tests/test_main.py` | `9d0d1b32` | 82 |
 | `backend/watcher.py` | `8cf30998` | 118 |
-| `extension/adapters.js` | `ae148a47` | 68 |
-| `extension/background.js` | `28d6c291` | 42 |
-| `extension/content.js` | `00de1e82` | 129 |
-| `extension/popup.html` | `df2f95d0` | 29 |
-| `extension/popup.js` | `f1d1d90a` | 82 |
+| `backend/workflow/__init__.py` | `30930bd7` | 3 |
+| `backend/workflow/engine.py` | `f0ab682e` | 343 |
+| `backend/workflow/executors.py` | `86abc681` | 362 |
+| `backend/workflow/loader.py` | `aae7dd91` | 226 |
+| `backend/workflow/registry.py` | `8c25df18` | 75 |
+| `electron/node_modules/electron/dist/LICENSES.chromium.html` | `2692689c` | 164588 |
+| `electron/node_modules/plist/examples/browser/index.html` | `c7c600b2` | 15 |
+| `extension/background.js` | `fbd0bfb1` | 176 |
+| `extension/bing-assistant.js` | `e92470f5` | 974 |
+| `extension/popup.html` | `da951c56` | 52 |
+| `extension/popup.js` | `3c3d1623` | 172 |
 | `frontend/dist/admin/admin.html` | `24d52e08` | 308 |
-| `frontend/dist/index.html` | `b7cde6b0` | 15 |
-| `frontend/dist/suit/index.html` | `5727fd6e` | 21 |
-| `frontend/index.html` | `b1f58b7f` | 14 |
+| `frontend/dist/index.html` | `82a2d8ef` | 18 |
+| `frontend/dist/second-self/index.html` | `41bf7996` | 826 |
+| `frontend/index.html` | `9a3b25b4` | 17 |
 | `frontend/node_modules/binary-extensions/index.js` | `1ccd550e` | 2 |
 | `frontend/node_modules/echarts/dist/extension/bmap.js` | `ae72dd31` | 369 |
 | `frontend/node_modules/echarts/dist/extension/bmap.min.js` | `3430781d` | 22 |
@@ -3777,11 +5463,230 @@ include = ["xiaohongshu_mcp_server*"]
 | `frontend/node_modules/echarts/extension/dataTool/index.js` | `91cd9172` | 62 |
 | `frontend/node_modules/echarts/extension/dataTool/prepareBoxplotData.js` | `e8da1db3` | 116 |
 | `frontend/node_modules/echarts/lib/extension.js` | `0f5a7753` | 110 |
+| `frontend/node_modules/katex/contrib/auto-render/index.html` | `95856723` | 58 |
+| `frontend/node_modules/katex/contrib/copy-tex/index.html` | `7f11b779` | 39 |
+| `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/lib/input/mathml/mml3/mml3-node.js` | `0653a301` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/lib/input/mathml/mml3/mml3.js` | `f641c3e9` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/lib/mml3.js` | `959eee47` | 21 |
+| `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/mml3.js` | `6180d004` | 8 |
+| `frontend/node_modules/mathjax-full/components/src/input/mml/extensions/mml3/webpack.config.js` | `4ef7c211` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/action.js` | `22a89589` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/lib/action.js` | `16f56749` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/lib/input/tex/action/ActionConfiguration.js` | `e9499f91` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/action/webpack.config.js` | `9c723d25` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/all-packages.js` | `92a54730` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/all-packages.js` | `45a10b25` | 25 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/input/tex/AllPackages.js` | `3117ec87` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/input/tex/autoload/AutoloadConfiguration.js` | `d60517c4` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/lib/input/tex/require/RequireConfiguration.js` | `a9df68e1` | 7 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/all-packages/webpack.config.js` | `1bd94c7a` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/ams.js` | `90545a50` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/ams.js` | `f7b95218` | 23 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/input/tex/ams/AmsConfiguration.js` | `29abe8b7` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/input/tex/ams/AmsItems.js` | `9c0f5f86` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/lib/input/tex/ams/AmsMethods.js` | `fd5d0b86` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/ams/webpack.config.js` | `66fa33ec` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/amscd.js` | `c9991664` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/lib/amscd.js` | `9ffb9048` | 21 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/lib/input/tex/amscd/AmsCdConfiguration.js` | `9a695477` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/lib/input/tex/amscd/AmsCdMethods.js` | `0877f377` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/amscd/webpack.config.js` | `536880f6` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/autoload.js` | `845c6cba` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/lib/autoload.js` | `cb38faaf` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/lib/input/tex/autoload/AutoloadConfiguration.js` | `d60517c4` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/autoload/webpack.config.js` | `b0f31cb7` | 14 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/bbox.js` | `9a3f6b42` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/lib/bbox.js` | `5ff155fb` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/lib/input/tex/bbox/BboxConfiguration.js` | `036e08f8` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bbox/webpack.config.js` | `d301c965` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/boldsymbol.js` | `a1aa8aef` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/lib/boldsymbol.js` | `c811741a` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/lib/input/tex/boldsymbol/BoldsymbolConfiguration.js` | `2b638b0e` | 7 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/boldsymbol/webpack.config.js` | `d1e58d3e` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/braket.js` | `07a70e10` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/braket.js` | `21852f13` | 23 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/input/tex/braket/BraketConfiguration.js` | `33e36bc9` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/input/tex/braket/BraketItems.js` | `f5c3fe98` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/lib/input/tex/braket/BraketMethods.js` | `b2705868` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/braket/webpack.config.js` | `dbadfbed` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/bussproofs.js` | `d0b36b6e` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/bussproofs.js` | `4e9ba83f` | 25 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsConfiguration.js` | `2d86b3cd` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsItems.js` | `dfd8c472` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsMethods.js` | `eec85356` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/lib/input/tex/bussproofs/BussproofsUtil.js` | `35eef457` | 10 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/bussproofs/webpack.config.js` | `8b9cd550` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/cancel.js` | `fd443419` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/lib/cancel.js` | `e41afa32` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/lib/input/tex/cancel/CancelConfiguration.js` | `3a11fa71` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cancel/webpack.config.js` | `48bd2fa0` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/cases.js` | `c5bbc493` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/lib/cases.js` | `8e4e5b0b` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/lib/input/tex/cases/CasesConfiguration.js` | `cfbf6eea` | 7 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/cases/webpack.config.js` | `3343d3e5` | 15 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/centernot.js` | `76d04500` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/lib/centernot.js` | `795614e8` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/lib/input/tex/centernot/CenternotConfiguration.js` | `be9e021c` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/centernot/webpack.config.js` | `51615849` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/color.js` | `d43dd76c` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/color.js` | `08e97111` | 25 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorConfiguration.js` | `1ce2be18` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorConstants.js` | `a1f83fa7` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorMethods.js` | `7562beaf` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/lib/input/tex/color/ColorUtil.js` | `570de40e` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/color/webpack.config.js` | `92711266` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/colortbl.js` | `baffcaaa` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/lib/colortbl.js` | `91486dd2` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/lib/input/tex/colortbl/ColortblConfiguration.js` | `feecae46` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colortbl/webpack.config.js` | `e082e917` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/colorv2.js` | `09ead5d3` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/lib/colorv2.js` | `68a63e4c` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/lib/input/tex/colorv2/ColorV2Configuration.js` | `9c202c58` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/colorv2/webpack.config.js` | `005ba8f4` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/configmacros.js` | `67daaa38` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/lib/configmacros.js` | `85523145` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/lib/input/tex/configmacros/ConfigMacrosConfiguration.js` | `22fd5f03` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/configmacros/webpack.config.js` | `37b04c05` | 14 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/empheq.js` | `810e4cf7` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/lib/empheq.js` | `f584a9ec` | 21 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/lib/input/tex/empheq/EmpheqConfiguration.js` | `9e538a6b` | 6 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/lib/input/tex/empheq/EmpheqUtil.js` | `5dc83402` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/empheq/webpack.config.js` | `15bdcee1` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/enclose.js` | `86fa100f` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/lib/enclose.js` | `21b862fd` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/lib/input/tex/enclose/EncloseConfiguration.js` | `3c23c4f1` | 6 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/enclose/webpack.config.js` | `cfed1548` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/extpfeil.js` | `71caae3a` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/lib/extpfeil.js` | `afe754c6` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/lib/input/tex/extpfeil/ExtpfeilConfiguration.js` | `4532d5c5` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/extpfeil/webpack.config.js` | `d934528e` | 14 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/gensymb.js` | `c26bb8b3` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/lib/gensymb.js` | `f60d8274` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/lib/input/tex/gensymb/GensymbConfiguration.js` | `6b9784b2` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/gensymb/webpack.config.js` | `2d2df676` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/html.js` | `18794b72` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/lib/html.js` | `332b4005` | 21 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/lib/input/tex/html/HtmlConfiguration.js` | `52083647` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/lib/input/tex/html/HtmlMethods.js` | `46faf973` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/html/webpack.config.js` | `10c9ef6a` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsConfiguration.js` | `f1608e36` | 6 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsItems.js` | `635275a5` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsMethods.js` | `fbf8c110` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsTags.js` | `b90c49f0` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/input/tex/mathtools/MathtoolsUtil.js` | `84a6317e` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/lib/mathtools.js` | `54b5d8de` | 27 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/mathtools.js` | `f9b9ef9b` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mathtools/webpack.config.js` | `a63738a9` | 14 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/lib/input/tex/mhchem/MhchemConfiguration.js` | `c545ae45` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/lib/mhchem.js` | `e9218efe` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/mhchem.js` | `001b29f7` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/mhchem/webpack.config.js` | `1229f41e` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandConfiguration.js` | `604229c0` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandItems.js` | `c7851ae4` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandMethods.js` | `3e5e61c1` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/input/tex/newcommand/NewcommandUtil.js` | `ce409b91` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/lib/newcommand.js` | `903ef7bf` | 25 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/newcommand.js` | `d05e61f2` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/newcommand/webpack.config.js` | `db1dbed3` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/lib/input/tex/noerrors/NoErrorsConfiguration.js` | `59da9a6b` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/lib/noerrors.js` | `b65ad9e2` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/noerrors.js` | `a05d1375` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noerrors/webpack.config.js` | `00ccc77f` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/lib/input/tex/noundefined/NoUndefinedConfiguration.js` | `e821d99f` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/lib/noundefined.js` | `d88a290a` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/noundefined.js` | `814e4c21` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/noundefined/webpack.config.js` | `590d3693` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/input/tex/physics/PhysicsConfiguration.js` | `4873135b` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/input/tex/physics/PhysicsItems.js` | `11a9b070` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/input/tex/physics/PhysicsMethods.js` | `9aeb2d03` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/lib/physics.js` | `872b69a5` | 23 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/physics.js` | `fb8232bf` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/physics/webpack.config.js` | `3f216997` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/lib/input/tex/require/RequireConfiguration.js` | `a9df68e1` | 7 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/lib/require.js` | `38d2025a` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/require.js` | `81d8fbf5` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/require/webpack.config.js` | `ceb55afc` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/lib/input/tex/setoptions/SetOptionsConfiguration.js` | `8aa2252a` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/lib/setoptions.js` | `eb142bad` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/setoptions.js` | `9e726df4` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/setoptions/webpack.config.js` | `b5f4b551` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/lib/input/tex/tagformat/TagFormatConfiguration.js` | `a7071acf` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/lib/tagformat.js` | `13576a86` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/tagformat.js` | `9f2cf7d5` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/tagformat/webpack.config.js` | `74132ece` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/lib/input/tex/textcomp/TextcompConfiguration.js` | `ef558e80` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/lib/textcomp.js` | `aa2e75f4` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/textcomp.js` | `b4ae2b73` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textcomp/webpack.config.js` | `43cf9ebc` | 13 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/input/tex/textmacros/TextMacrosConfiguration.js` | `c176700e` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/input/tex/textmacros/TextMacrosMethods.js` | `a56cf33d` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/input/tex/textmacros/TextParser.js` | `92929842` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/lib/textmacros.js` | `e65b6efa` | 23 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/textmacros.js` | `d72ab0cf` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/textmacros/webpack.config.js` | `be809911` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/lib/input/tex/unicode/UnicodeConfiguration.js` | `7b31d0c3` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/lib/unicode.js` | `f24bb86d` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/unicode.js` | `2be66cff` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/unicode/webpack.config.js` | `8cf0fc77` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/lib/input/tex/upgreek/UpgreekConfiguration.js` | `c83c9151` | 4 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/lib/upgreek.js` | `ebeda031` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/upgreek.js` | `f3e29bd0` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/upgreek/webpack.config.js` | `71244a81` | 12 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/lib/input/tex/verb/VerbConfiguration.js` | `39bd80a8` | 5 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/lib/verb.js` | `408ed06a` | 19 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/verb.js` | `f6473a31` | 2 |
+| `frontend/node_modules/mathjax-full/components/src/input/tex/extensions/verb/webpack.config.js` | `574ae1e7` | 12 |
+| `frontend/node_modules/mathjax-full/es5/input/mml/extensions/mml3.js` | `bd10514b` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/action.js` | `82f38dc5` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/all-packages.js` | `441050e5` | 34 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/ams.js` | `1bc2af18` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/amscd.js` | `255cca7d` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/autoload.js` | `9e5e62bc` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/bbox.js` | `f459b9ce` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/boldsymbol.js` | `d760e63e` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/braket.js` | `ec3ac028` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/bussproofs.js` | `f3adca1c` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/cancel.js` | `f58274c9` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/cases.js` | `f3e7ea5c` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/centernot.js` | `c355de00` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/color.js` | `01fa7bdb` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/colortbl.js` | `73321697` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/colorv2.js` | `e57003d4` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/configmacros.js` | `2293a193` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/empheq.js` | `646f560f` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/enclose.js` | `cdc7b8ab` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/extpfeil.js` | `1c400bd6` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/gensymb.js` | `753faef0` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/html.js` | `55035b2d` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/mathtools.js` | `6a8c3c09` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/mhchem.js` | `a9146aa6` | 34 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/newcommand.js` | `831e3679` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/noerrors.js` | `306ed70d` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/noundefined.js` | `60305544` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/physics.js` | `34ffa3cc` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/require.js` | `ddffe3c9` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/setoptions.js` | `422038bb` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/tagformat.js` | `d4442e62` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/textcomp.js` | `28742f11` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/textmacros.js` | `25e1a713` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/unicode.js` | `c95abb61` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/upgreek.js` | `05380fb5` | 1 |
+| `frontend/node_modules/mathjax-full/es5/input/tex/extensions/verb.js` | `51168d18` | 1 |
+| `frontend/node_modules/mhchemparser/test/test-dist.html` | `6f919f15` | 212 |
+| `frontend/node_modules/mhchemparser/test/test-esm.html` | `e8603004` | 209 |
 | `frontend/node_modules/tslib/tslib.es6.html` | `5b9030be` | 1 |
 | `frontend/node_modules/tslib/tslib.html` | `442aa09e` | 1 |
+| `frontend/node_modules/xss/dist/test.html` | `5cdff124` | 15 |
 | `frontend/public/admin/admin.html` | `24d52e08` | 308 |
-| `frontend/public/suit/index.html` | `5727fd6e` | 21 |
-| `social_parsers.py` | `5da1fae7` | 339 |
+| `frontend/public/second-self/index.html` | `41bf7996` | 826 |
+| `frontend/test-markdown.html` | `a9a78eef` | 78 |
+| `project-memory/ui/study-hub-dashboard-style-refresh.html` | `11886b9a` | 4370 |
+| `project-memory/ui/test-write.html` | `906f0f48` | 1 |
+| `project-memory/ui/横屏工作台Dashboard-低保真线框图-完整版.html` | `27a0d077` | 3535 |
+| `project-memory/ui/横屏工作台Dashboard-低保真线框图.html` | `724cad11` | 2750 |
+| `project-memory/ui/横屏工作台Dashboard-高保真框架图-完整版.html` | `378440ad` | 252 |
+| `second-self.bak/app/index.html` | `46e14569` | 80 |
+| `second-self/app/index.html` | `afa2b0c6` | 870 |
 | `venv/Lib/site-packages/anyio/_backends/__init__.py` | `d41d8cd9` | 1 |
 | `venv/Lib/site-packages/anyio/_backends/_asyncio.py` | `3e6d66d1` | 2997 |
 | `venv/Lib/site-packages/anyio/_backends/_trio.py` | `b0f88f54` | 1344 |
@@ -3925,5 +5830,5 @@ include = ["xiaohongshu_mcp_server*"]
 | `xiaohongshu-mcp-server/xiaohongshu_mcp_server/__main__.py` | `561aa71b` | 8 |
 | `xiaohongshu-mcp-server/xiaohongshu_mcp_server/server.py` | `a5459c88` | 608 |
 
-<!-- 文件总数: 201, 生成时间: 2026-05-19 05:59 UTC -->
+<!-- 文件总数: 438, 生成时间: 2026-06-07 01:10 UTC -->
 <!-- AUTO-GENERATED-END -->

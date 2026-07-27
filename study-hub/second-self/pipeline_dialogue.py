@@ -1,57 +1,66 @@
-"""对话管道 — 处理聊天消息"""
+"""对话蒸馏 — 从对话中提取值得保存的记忆。"""
+import json
 from datetime import datetime
+from typing import Any
 
 from memory_store import insert_entry
-from capture_gate import should_capture, classify_content, extract_summary
-from self_engine import load_self_layer, run_decision_engine, retrieve_memories
-from agent_loop import chat_completion, build_system_prompt
 
 
-def process_dialogue(message: str, session_id: str = "default") -> dict:
-    """处理单条对话消息。"""
-    # 1. 加载 Self 层
-    snapshot = load_self_layer()
+# 待确认队列（内存中，重启后清空）
+_pending_captures: list[dict] = []
+
+
+def distill_dialogue(user_message: str, agent_response: str) -> list[str]:
+    """从对话中蒸馏记忆。"""
+    if not user_message or len(user_message) < 10:
+        return []
     
-    # 2. 检索记忆
-    memories_result = retrieve_memories(message, k=5, snapshot=snapshot, message_text=message)
-    memories = memories_result.get("candidates", memories_result.get("results", []))
+    # 简单规则：用户消息中如果有"决定""选择""放弃"等词，直接捕获
+    triggers = ["决定", "选择", "放弃", "开始", "完成", "改变", "发现", "意识到"]
+    content = user_message.strip()
     
-    # 3. 决策引擎
-    decision = run_decision_engine(message, snapshot, memories)
+    if any(t in content for t in triggers):
+        entry_id = insert_entry(
+            source="chat",
+            type="capture",
+            content=content,
+            context={"trigger": "dialogue_distill", "agent_reply_preview": agent_response[:100]},
+            significance="B",
+            field="history",
+        )
+        return [entry_id]
     
-    # 4. 构建 prompt
-    system_prompt = build_system_prompt(snapshot, memories)
-    
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": message},
-    ]
-    
-    # 5. 调用 LLM
-    response = chat_completion(messages)
-    
-    # 6. 自动捕获
-    capture_result = None
-    if decision.get("should_capture_memory"):
-        capture_ok, reason = should_capture(message)
-        if capture_ok:
-            entry_id = insert_entry(
-                source="chat",
-                type=classify_content(message),
-                content=extract_summary(message),
-                context={
-                    "priority": decision.get("priority"),
-                    "linked_project": decision.get("linked_project"),
-                    "session_id": session_id,
-                },
-            )
-            capture_result = {"captured": True, "entry_id": entry_id, "reason": reason}
-    
-    return {
-        "message": message,
-        "response": response,
-        "decision": decision,
-        "memories": memories[:5],
-        "capture": capture_result,
+    # 放入待确认队列
+    _pending_captures.append({
+        "content": content,
+        "agent_reply": agent_response,
         "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-    }
+    })
+    
+    return []
+
+
+def get_pending_captures() -> list[dict]:
+    """获取待确认的记忆捕获。"""
+    return _pending_captures
+
+
+def confirm_pending(index: int, approve: bool = True) -> dict:
+    """确认或拒绝待捕获的记忆。"""
+    if index < 0 or index >= len(_pending_captures):
+        return {"error": "invalid index"}
+    
+    item = _pending_captures.pop(index)
+    
+    if approve:
+        entry_id = insert_entry(
+            source="chat",
+            type="capture",
+            content=item["content"],
+            context={"approved": True, "agent_reply_preview": item["agent_reply"][:100]},
+            significance="C",
+            field="history",
+        )
+        return {"ok": True, "entry_id": entry_id, "action": "approved"}
+    
+    return {"ok": True, "action": "rejected"}

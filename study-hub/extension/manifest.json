@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "学习中枢 - 对话采集",
   "version": "2.1",
-  "description": "自动采集 AI 网站对话，支持自定义网站配置。五层记忆系统：角色/项目/工作流/会话/世界。新增：Bing 搜索助手浮窗",
+  "description": "Study-Hub 浏览器扩展：Bing 搜索助手浮窗 + 网页剪藏 + 抖音收藏导入",
   "permissions": ["storage", "tabs", "scripting", "activeTab", "alarms", "contextMenus"],
   "host_permissions": [
     "https://*/*",
@@ -12,11 +12,6 @@
     "service_worker": "background.js"
   },
   "content_scripts": [
-    {
-      "matches": ["https://*/*"],
-      "js": ["adapters.js", "content.js"],
-      "run_at": "document_idle"
-    },
     {
       "matches": ["https://www.bing.com/search*"],
       "js": ["bing-assistant.js"],

@@ -487,6 +487,110 @@ def chat_distill_api(body: dict = Body(...)):
         raise HTTPException(500, f"聊天蒸馏失败: {str(e)}")
 
 
+@router.post("/api/batch-import")
+def batch_import_api(body: dict = Body(...)):
+    """批量导入文件内容。
+    Body: {
+        "items": [{"filename": "笔记.md", "content": "..."}, ...],
+        "format": "auto",
+        "domain": "general",
+        "field": "knowledge",
+        "significance": "B",
+        "split": "\n---\n"
+    }
+    """
+    import csv, io
+    from memory_store import insert_entry
+
+    items = body.get("items", [])
+    fmt = body.get("format", "auto")
+    domain = body.get("domain", "general")
+    field = body.get("field", "knowledge")
+    significance = body.get("significance", "B")
+    split_delim = body.get("split", "\n---\n")
+
+    if not items or not isinstance(items, list):
+        raise HTTPException(400, "缺少 items 数组")
+
+    imported = 0
+    errors = []
+    entry_ids = []
+
+    def _insert(content: str, title: str, extra_context: dict | None = None):
+        nonlocal imported
+        ctx = {"domain": domain, "title": title}
+        if extra_context:
+            ctx.update(extra_context)
+        eid = insert_entry(
+            source="batch_import",
+            type="capture",
+            content=content,
+            context=ctx,
+            significance=significance,
+            field=field,
+        )
+        imported += 1
+        entry_ids.append(eid)
+
+    for item in items:
+        filename = item.get("filename", "")
+        content = item.get("content", "")
+        if not content:
+            continue
+        try:
+            file_fmt = fmt
+            if file_fmt == "auto":
+                lower = filename.lower()
+                if lower.endswith(".md"):
+                    file_fmt = "markdown"
+                elif lower.endswith(".json"):
+                    file_fmt = "json"
+                elif lower.endswith(".csv"):
+                    file_fmt = "csv"
+                else:
+                    file_fmt = "text-split"
+
+            if file_fmt == "markdown":
+                title = filename.rsplit(".", 1)[0] if "." in filename else filename
+                _insert(content, title, {"path": filename})
+            elif file_fmt == "json":
+                data = json.loads(content)
+                if isinstance(data, dict):
+                    data = [data]
+                for entry in data:
+                    if not isinstance(entry, dict):
+                        continue
+                    text = entry.get("content") or entry.get("text") or entry.get("body")
+                    if not text:
+                        continue
+                    title = entry.get("title", entry.get("name", "未命名"))
+                    _insert(str(text), title, {"batch_source": "json"})
+            elif file_fmt == "csv":
+                f = io.StringIO(content, newline="")
+                reader = csv.DictReader(f)
+                for i, row in enumerate(reader):
+                    text = row.get("content", "").strip()
+                    if not text:
+                        continue
+                    title = row.get("title", f"csv-{i+1}")
+                    _insert(text, title, {"batch_source": "csv"})
+            elif file_fmt == "text-split":
+                parts = content.split(split_delim)
+                for idx, part in enumerate(parts):
+                    part = part.strip()
+                    if not part or len(part) < 10:
+                        continue
+                    lines = part.split("\n")
+                    title = lines[0][:50].lstrip("# ") if lines else f"段落-{idx+1}"
+                    _insert(part, title, {"part_index": idx + 1, "batch_source": "text-split"})
+            else:
+                _insert(content, filename or "未命名")
+        except Exception as e:
+            errors.append({"filename": filename, "error": str(e)})
+
+    return {"ok": True, "imported": imported, "entry_ids": entry_ids, "errors": errors}
+
+
 @router.post("/api/chat/batch-distill")
 async def chat_batch_distill_api(
     file: UploadFile = File(...),

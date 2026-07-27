@@ -1,18 +1,11 @@
 <template>
   <div class="markdown-content-outer">
-    <button
-      class="kami-theme-toggle"
-      @click.stop="cycleTheme"
-      :title="currentLabel"
-    >
-      {{ currentIcon }}
-    </button>
-    <div class="markdown-content" :data-theme="currentTheme" v-html="rendered" @click="onClick"></div>
+    <div ref="contentRef" class="markdown-content" :data-theme="currentTheme" v-html="rendered"></div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, onUpdated, nextTick } from 'vue'
 import { marked } from 'marked'
 
 const props = defineProps({
@@ -89,7 +82,7 @@ const rendered = computed(() => {
     processed = processed.replace(new RegExp(WIKILINK_PLACEHOLDER + '(\\d+)' + WIKILINK_PLACEHOLDER, 'g'), (m, idx) => {
       const wl = registry[parseInt(idx)]
       if (wl) {
-        return `<a href="/wiki/${escHtml(encodeURIComponent(wl.slug))}" class="wikilink" data-wikilink="${escHtml(encodeURIComponent(wl.slug))}">${escHtml(wl.text)}</a>`
+        return `<a href="javascript:void(0)" class="wikilink" data-wikilink="${escHtml(encodeURIComponent(wl.slug))}">${escHtml(wl.text)}</a>`
       }
       return m
     })
@@ -100,16 +93,31 @@ const rendered = computed(() => {
   }
 })
 
-function escHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const contentRef = ref(null)
+
+// 在内容渲染后，直接给每个 wikilink 绑定点击事件（避免事件委托在复杂 DOM 中失效）
+function bindWikilinkEvents() {
+  if (!contentRef.value) return
+  contentRef.value.querySelectorAll('a[data-wikilink]').forEach(a => {
+    a.onclick = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const slug = decodeURIComponent(a.getAttribute('data-wikilink'))
+      window.dispatchEvent(new CustomEvent('markdown-wikilink-click', { detail: slug }))
+      emit('link-click', slug)
+    }
+  })
 }
 
-function onClick(e) {
-  const a = e.target.closest('a[data-wikilink]')
-  if (a) {
-    e.preventDefault()
-    const slug = decodeURIComponent(a.getAttribute('data-wikilink'))
-    emit('link-click', slug)
-  }
+onUpdated(() => {
+  bindWikilinkEvents()
+})
+
+onMounted(() => {
+  nextTick(() => bindWikilinkEvents())
+})
+
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 </script>

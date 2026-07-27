@@ -1,5 +1,5 @@
 import json, re, os
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from database import get_db
 from ai_client import ai_client
 from processing.vector_store import get_vector_store
@@ -415,6 +415,67 @@ def delete_wiki_page(page_id: int):
     get_vector_store().remove_wiki_page(page_id)
     conn.close()
     return {"status": "ok"}
+
+
+@router.post("/wiki/pages")
+async def create_wiki_page(request: Request):
+    """手动创建 Wiki 页面"""
+    payload = await request.json()
+    conn = get_db()
+    title = payload.get("title", "").strip()
+    content = payload.get("content", "").strip()
+    if not title or not content:
+        conn.close()
+        return {"error": "标题和内容不能为空"}
+
+    category = payload.get("category", "")
+    tags = payload.get("tags", [])
+    tags_json = json.dumps(tags, ensure_ascii=False)
+    cover_image = payload.get("cover_image", "")
+
+    base_slug = slugify(title)
+    existing = conn.execute("SELECT id FROM wiki_pages WHERE slug = ?", (base_slug,)).fetchone()
+    slug = base_slug
+    if existing:
+        # 如果 slug 已存在，使用 title-id 格式
+        # 先插入获取 id，然后更新 slug
+        pass
+
+    try:
+        conn.execute(
+            "INSERT INTO wiki_pages (title, slug, content, summary, category, tags, cover_image, char_count, version) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)",
+            (title, base_slug, content, payload.get("summary", ""), category, tags_json, cover_image, len(content)),
+        )
+        page_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+        # 如果 slug 冲突，更新为 title-id 格式
+        if existing:
+            slug = f"{base_slug}-{page_id}"
+            conn.execute("UPDATE wiki_pages SET slug = ? WHERE id = ?", (slug, page_id))
+        else:
+            slug = base_slug
+
+        # Extract wikilinks
+        wikilinks = re.findall(r'\[\[([^\]|]+)(?:\|[^\]]+)?\]\]', content)
+        for target in set(wikilinks):
+            target = target.strip()
+            conn.execute(
+                "INSERT OR IGNORE INTO wiki_links (source_page_id, target_page_slug, link_type) "
+                "VALUES (?, ?, 'reference')",
+                (page_id, target),
+            )
+
+        conn.commit()
+
+        # Index vector store
+        get_vector_store().index_wiki_page(page_id, title, content, category, tags_json)
+
+        conn.close()
+        return {"status": "ok", "id": page_id, "slug": slug, "version": 1}
+    except Exception as e:
+        conn.close()
+        return {"error": f"创建失败: {str(e)}"}
 
 
 @router.put("/wiki/pages/{page_id}")

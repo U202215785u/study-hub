@@ -15,8 +15,15 @@ import os
 import re
 import json
 import hashlib
+import sys
 from pathlib import Path
 from datetime import datetime
+
+# Windows 控制台 UTF-8 编码修复
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 # ============================================================
 # 配置

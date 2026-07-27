@@ -1,0 +1,4369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Hub Dashboard - Style Refresh</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f0f0;
+            color: #333;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+        }
+    
+        /* ========== STYLE REFRESH: dark SaaS dashboard skin ========== */
+        :root {
+            --app-bg: #090a08;
+            --app-shell: #121311;
+            --surface-1: #1b1d1a;
+            --surface-2: #242722;
+            --surface-3: #30342d;
+            --text-strong: #f5f6ee;
+            --text: #d9dbd0;
+            --text-muted: #8f948a;
+            --line: rgba(245, 246, 238, 0.10);
+            --line-strong: rgba(211, 255, 93, 0.38);
+            --accent: #d7ff63;
+            --accent-2: #8b73ff;
+            --accent-3: #ff8655;
+            --success: #59f86d;
+            --warn: #f4e35c;
+            --danger: #ff6b6b;
+            --radius-card: 28px;
+            --radius-control: 999px;
+            --shadow-card: 0 18px 50px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        html, body {
+            background:
+                radial-gradient(circle at 12% 0%, rgba(215,255,99,0.13), transparent 30%),
+                radial-gradient(circle at 82% 14%, rgba(139,115,255,0.13), transparent 28%),
+                var(--app-bg);
+            color: var(--text);
+            font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 34px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            background: transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .top-nav-bar {
+            height: 72px;
+            margin: 18px 22px 0;
+            padding: 0 18px;
+            background: rgba(18, 19, 17, 0.88);
+            border: 1px solid var(--line);
+            border-radius: 26px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(18px);
+        }
+
+        .nav-logo {
+            color: var(--text-strong);
+            font-size: 15px;
+            letter-spacing: 0;
+        }
+
+        .nav-logo-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--accent);
+            color: #14170f;
+            border-radius: 15px;
+            box-shadow: 0 0 0 7px rgba(215,255,99,0.10);
+            font-weight: 800;
+        }
+
+        .nav-links {
+            justify-content: flex-start;
+            gap: 6px;
+            overflow: hidden;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            border-radius: var(--radius-control);
+            padding: 9px 14px;
+            transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-strong);
+            background: rgba(255,255,255,0.06);
+            border-color: var(--line);
+        }
+
+        .nav-link.active {
+            color: #10120d;
+            background: var(--accent);
+            border-color: var(--accent);
+            font-weight: 700;
+        }
+
+        .nav-search {
+            width: 268px;
+            height: 42px;
+            background: rgba(255,255,255,0.07);
+            color: var(--text-muted);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-control);
+        }
+
+        .nav-search:hover {
+            border-color: var(--line-strong);
+            color: var(--text);
+        }
+
+        .nav-action-btn,
+        .nav-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--line);
+            transition: transform .18s ease, background .18s ease, border-color .18s ease;
+        }
+
+        .nav-action-btn:hover,
+        .nav-avatar:hover {
+            transform: translateY(-1px);
+            background: var(--surface-3);
+            border-color: var(--line-strong);
+        }
+
+        .nav-avatar {
+            background: var(--accent);
+            color: #10120d;
+            font-weight: 800;
+        }
+
+        .page-content {
+            padding: 20px 22px 22px;
+        }
+
+        .dashboard-grid {
+            gap: 14px;
+        }
+
+        .grid-bg-cell {
+            border: 1px dashed rgba(215,255,99,0.11);
+            border-radius: var(--radius-card);
+            background: rgba(255,255,255,0.012);
+        }
+
+        .grid-card,
+        .sidebar,
+        .main-panel,
+        .dock-panel,
+        .chat-sidebar,
+        .chat-main,
+        .chat-dock,
+        .settings-nav,
+        .settings-panel,
+        .profile-card,
+        .skill-card,
+        .dropdown-menu {
+            background:
+                radial-gradient(circle at 0% 0%, rgba(255,255,255,0.055), transparent 34%),
+                linear-gradient(145deg, var(--surface-2), var(--surface-1));
+            border: 1px solid var(--line);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            color: var(--text);
+        }
+
+        .grid-card {
+            padding: 18px;
+            cursor: grab;
+            transform: translateZ(0);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+        }
+
+        .grid-card:hover,
+        .skill-card:hover,
+        .profile-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(215,255,99,0.34);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        .grid-card.dragging {
+            opacity: .66;
+            transform: scale(.985);
+        }
+
+        .grid-card.drag-over {
+            border-color: var(--accent);
+            background:
+                radial-gradient(circle at 24% 16%, rgba(215,255,99,0.22), transparent 40%),
+                var(--surface-2);
+        }
+
+        .grid-card.dark-card,
+        .grid-card[data-card="queue"] {
+            background:
+                radial-gradient(circle at 7% 12%, rgba(215,255,99,0.27), transparent 28%),
+                linear-gradient(145deg, #20231e, #11130f);
+            border-color: rgba(215,255,99,0.28);
+        }
+
+        .grid-card[data-card="focus"] {
+            background:
+                radial-gradient(circle at 85% 20%, rgba(139,115,255,0.20), transparent 34%),
+                linear-gradient(145deg, #242721, #141611);
+        }
+
+        .heatmap-card {
+            background:
+                radial-gradient(circle at 90% 12%, rgba(139,115,255,0.16), transparent 36%),
+                linear-gradient(145deg, #262923, #151712);
+        }
+
+        .card-header,
+        .skill-card-header {
+            margin-bottom: 14px;
+        }
+
+        .card-title,
+        .heatmap-title,
+        .page-title,
+        .skill-name,
+        .profile-card-title,
+        .settings-section-title,
+        .dock-title {
+            color: var(--text-strong);
+            letter-spacing: 0;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .card-icon,
+        .skill-icon,
+        .chat-avatar.ai {
+            background: rgba(215,255,99,0.18);
+            color: var(--accent);
+            border: 1px solid rgba(215,255,99,0.24);
+        }
+
+        .drag-handle {
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            color: var(--text-muted);
+            border: 1px solid var(--line);
+        }
+
+        .list-item,
+        .platform-list-item,
+        .dock-item,
+        .settings-row,
+        .chat-history-item,
+        .sidebar-item {
+            color: var(--text);
+            border-color: var(--line) !important;
+        }
+
+        .list-item {
+            padding: 9px 0;
+        }
+
+        .sidebar-header,
+        .profile-bio,
+        .profile-stat-label,
+        .settings-desc,
+        .skill-desc,
+        .heatmap-label,
+        .heatmap-4x2 .heatmap-row-label,
+        .heatmap-4x2 .heatmap-col-label,
+        .timeline-labels,
+        .stat-box .stat-label {
+            color: var(--text-muted);
+        }
+
+        .sidebar-item:hover,
+        .settings-nav-item:hover,
+        .chat-history-item:hover,
+        .dropdown-item:hover {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-strong);
+        }
+
+        .sidebar-item.active,
+        .settings-nav-item.active,
+        .chat-history-item.active {
+            background: rgba(215,255,99,0.16);
+            color: var(--accent);
+            border-color: rgba(215,255,99,0.28) !important;
+        }
+
+        .tag-chip,
+        .search-filter-chip,
+        .heatmap-dropdown,
+        .skill-tag,
+        .page-btn,
+        .card-tab {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: var(--radius-control);
+        }
+
+        .tag-chip:hover,
+        .search-filter-chip:hover,
+        .page-btn:hover,
+        .card-tab:hover {
+            border-color: rgba(215,255,99,0.34);
+            color: var(--text-strong);
+        }
+
+        .search-filter-chip.active,
+        .page-btn.primary,
+        .card-tab.active,
+        .dark-card .card-tab.active,
+        .skill-install-btn,
+        .chat-send-btn,
+        .chat-new-btn,
+        .platform-viewall {
+            background: var(--accent);
+            color: #10120d;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-control);
+            font-weight: 800;
+        }
+
+        .skill-install-btn.installed {
+            background: rgba(89,248,109,0.18);
+            color: var(--success);
+            border: 1px solid rgba(89,248,109,0.36);
+        }
+
+        .stat-box,
+        .placeholder-solid {
+            background: rgba(255,255,255,0.055);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            color: var(--text);
+        }
+
+        .stat-box .stat-num,
+        .profile-stat-num,
+        .profile-card-value {
+            color: var(--text-strong);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .platform-segments {
+            gap: 5px;
+        }
+
+        .platform-segment {
+            height: 8px;
+            width: 30px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.09);
+        }
+
+        .platform-segment.fill { background: var(--accent); }
+        .platform-segment.fill-done,
+        .item-dot.green,
+        .task-status.done { background: var(--success); }
+        .platform-segment.fill-warn,
+        .item-dot.yellow,
+        .task-status.pending { background: var(--warn); }
+        .platform-segment.fill-error,
+        .item-dot.red,
+        .task-status.urgent { background: var(--danger); }
+
+        .item-dot {
+            width: 8px;
+            height: 8px;
+            box-shadow: 0 0 0 5px rgba(255,255,255,0.04);
+        }
+
+        .timeline-track {
+            height: 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 999px;
+            overflow: visible;
+        }
+
+        .timeline-segment.morning { background: var(--accent); }
+        .timeline-segment.afternoon { background: var(--accent-2); }
+        .timeline-segment.evening { background: var(--accent-3); }
+        .timeline-segment.night { background: rgba(255,255,255,0.22); }
+
+        .timeline-now-label {
+            background: var(--accent);
+            color: #10120d;
+            border: none;
+            border-radius: 999px;
+            padding: 2px 8px;
+        }
+
+        .timeline-now-line {
+            background: var(--accent);
+            height: 14px;
+        }
+
+        .progress-bar {
+            height: 26px;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar .bar-label {
+            color: var(--text-muted);
+        }
+
+        .progress-bar.bar-1 { background: var(--accent); }
+        .progress-bar.bar-2 { background: var(--accent-2); }
+        .progress-bar.bar-3 { background: var(--accent-3); }
+        .progress-bar.bar-done { background: var(--success); }
+        .progress-bar.bar-warn { background: var(--warn); }
+
+        .heatmap-cell,
+        .heatmap-4x2 .heatmap-col-cell,
+        .heatmap-2x2 .heatmap-2x2-cell {
+            border-radius: 8px !important;
+        }
+
+        .heatmap-cell.empty,
+        .heatmap-4x2 .heatmap-col-cell.empty,
+        .heatmap-2x2 .heatmap-2x2-cell.empty {
+            background: rgba(255,255,255,0.08) !important;
+        }
+
+        .heatmap-cell.light,
+        .heatmap-4x2 .heatmap-col-cell.light,
+        .heatmap-2x2 .heatmap-2x2-cell.light {
+            background: rgba(139,115,255,0.72) !important;
+        }
+
+        .heatmap-cell.medium {
+            background: rgba(215,255,99,0.74) !important;
+        }
+
+        .heatmap-cell.dark,
+        .heatmap-4x2 .heatmap-col-cell.dark,
+        .heatmap-2x2 .heatmap-2x2-cell.dark {
+            background: var(--accent) !important;
+        }
+
+        .page-header {
+            padding: 10px 4px 4px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 750;
+        }
+
+        .three-col-layout,
+        .two-col-layout,
+        .chat-layout,
+        .settings-layout,
+        .profile-grid,
+        .skill-grid {
+            gap: 14px;
+        }
+
+        .modal-overlay {
+            background: rgba(0,0,0,0.70);
+            backdrop-filter: blur(12px);
+        }
+
+        .modal-box {
+            background:
+                radial-gradient(circle at 0 0, rgba(215,255,99,0.14), transparent 34%),
+                var(--surface-1);
+            color: var(--text);
+            border: 1px solid rgba(215,255,99,0.24);
+            border-radius: 28px;
+            box-shadow: 0 40px 120px rgba(0,0,0,0.58);
+        }
+
+        .modal-title {
+            color: var(--text-strong);
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            border-radius: 50%;
+            border: 1px solid var(--line);
+        }
+
+        .chat-input,
+        input {
+            background: rgba(255,255,255,0.07) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: var(--radius-control) !important;
+        }
+
+        .chat-bubble.ai {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+        }
+
+        .chat-bubble.user {
+            background: var(--accent);
+            color: #10120d;
+        }
+
+        .toggle-switch {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid var(--line);
+        }
+
+        .toggle-switch.on {
+            background: var(--accent);
+        }
+
+        .toggle-switch::after {
+            background: var(--text-strong);
+        }
+
+        .toggle-switch.on::after {
+            background: #10120d;
+        }
+
+        .breakpoint-note {
+            background: rgba(18,19,17,0.86);
+            color: var(--text-muted);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 8px 14px;
+        }
+
+        @media (max-width: 1180px) {
+            .nav-search { display: none; }
+            .nav-link { padding-inline: 10px; }
+            .top-nav-bar { gap: 12px; }
+        }
+
+        /* ========== 顶部导航栏 ========== */
+        .top-nav-bar {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            height: 56px;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+        .nav-logo {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .nav-logo-icon {
+            width: 28px;
+            height: 28px;
+            background: #e85d2e;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            justify-content: center;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            white-space: nowrap;
+        }
+        .nav-link:hover { color: #fff; background: #333; }
+        .nav-link.active {
+            color: #fff;
+            background: #333;
+            font-weight: 500;
+        }
+        .nav-search {
+            width: 240px;
+            height: 36px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            color: #888;
+            flex-shrink: 0;
+        }
+        .nav-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .nav-action-btn {
+            width: 36px;
+            height: 36px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #aaa;
+            cursor: pointer;
+            border: none;
+        }
+        .nav-action-btn:hover { background: #333; }
+        .nav-avatar {
+            width: 36px;
+            height: 36px;
+            background: #e85d2e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* ========== 页面容器 ========== */
+        .page { display: none; height: 100vh; flex-direction: column; }
+        .page.active { display: flex; }
+        .page-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 20px 24px;
+        }
+
+        /* ========== 8×4 网格系统 (Home) ========== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
+            height: 100%;
+            position: relative;
+        }
+        /* 网格背景虚线框 */
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .grid-bg-cell {
+            border: 1.5px dashed rgba(128,128,128,0.45);
+            border-radius: 16px;
+        }
+        .dashboard-grid > .grid-card {
+            position: relative;
+            z-index: 1;
+        }
+        .grid-card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 16px;
+            padding: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+        }
+        .grid-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .grid-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            z-index: 100;
+        }
+        .grid-card.drag-over {
+            border-color: #e85d2e;
+            background: #fff8f5;
+        }
+        .card-1x1 { grid-column: span 1; grid-row: span 1; }
+        .card-1x2 { grid-column: span 1; grid-row: span 2; }
+        .card-2x1 { grid-column: span 2; grid-row: span 1; }
+        .card-2x2 { grid-column: span 2; grid-row: span 2; }
+        .card-4x2 { grid-column: span 4; grid-row: span 2; }
+        .card-1x4 { grid-column: span 1; grid-row: span 4; }
+        .card-2x3 { grid-column: span 2; grid-row: span 3; }
+        .card-1x3 { grid-column: span 1; grid-row: span 3; }
+        .drag-handle {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            background: #eee;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .grid-card:hover .drag-handle { opacity: 1; }
+
+        /* ========== 通用组件 ========== */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card-icon {
+            width: 20px; height: 20px;
+            background: #ddd;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .card-badge {
+            background: #e85d2e;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .list-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .item-dot {
+            width: 6px; height: 6px;
+            background: #bbb;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .item-dot.green { background: #2ecc71; }
+        .item-dot.red { background: #e74c3c; }
+        .item-dot.yellow { background: #f39c12; }
+        .item-dot.orange { background: #e85d2e; }
+
+        /* 分段进度条 */
+        .platform-segments {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 8px;
+        }
+        .platform-segment {
+            width: 28px;
+            height: 4px;
+            border-radius: 2px;
+            background: #eee;
+        }
+        .platform-segment.fill { background: #e85d2e; }
+        .platform-segment.fill-done { background: #2ecc71; }
+        .platform-segment.fill-warn { background: #f39c12; }
+        .platform-segment.fill-error { background: #e74c3c; }
+
+        /* 深色卡片 */
+        .dark-card {
+            background: #1a1a1a;
+            border-color: #2a2a2a;
+            color: #fff;
+        }
+        .dark-card .card-title { color: #fff; }
+        .dark-card .list-item { color: #ccc; border-color: #2a2a2a; }
+
+        /* 统计数字 */
+        .stat-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .stat-box {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            background: #f8f8f8;
+            border-radius: 8px;
+        }
+        .stat-box .stat-num {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-box .stat-label {
+            font-size: 9px;
+            color: #888;
+        }
+        .dark-card .stat-box { background: #2a2a2a; }
+        .dark-card .stat-box .stat-num { color: #fff; }
+
+        /* 时间线 */
+        .timeline-track {
+            position: relative;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-bottom: 6px;
+        }
+        .timeline-fill {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            display: flex;
+            width: 100%;
+        }
+        .timeline-segment {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .timeline-segment.morning { background: #e85d2e; flex: 4; }
+        .timeline-segment.afternoon { background: #f4a261; flex: 4; }
+        .timeline-segment.evening { background: #f4d0a4; flex: 2; }
+        .timeline-segment.night { background: #fae1c8; flex: 2; }
+        .timeline-now-marker {
+            position: absolute;
+            top: -8px;
+            left: 55%;
+            transform: translateX(-50%);
+        }
+        .timeline-now-label {
+            font-size: 9px;
+            font-weight: 600;
+            color: #333;
+            background: #fff;
+            padding: 1px 4px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+        .timeline-now-line {
+            width: 2px;
+            height: 10px;
+            background: #333;
+            margin: 0 auto;
+        }
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        /* 进度条 */
+        .progress-bars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .progress-bar {
+            height: 20px;
+            border-radius: 6px;
+            flex: 1;
+            position: relative;
+        }
+        .progress-bar .bar-label {
+            position: absolute;
+            top: -14px;
+            left: 0;
+            font-size: 9px;
+            font-weight: 600;
+            color: #666;
+        }
+        .progress-bar.bar-1 { background: #e85d2e; }
+        .progress-bar.bar-2 { background: #f4a261; }
+        .progress-bar.bar-3 { background: #f4d0a4; }
+        .progress-bar.bar-done { background: #2ecc71; }
+        .progress-bar.bar-warn { background: #f39c12; }
+
+        /* 任务状态 */
+        .task-status {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+        }
+        .task-status.done { background: #e85d2e; color: #fff; }
+        .task-status.pending { background: #444; }
+        .task-status.urgent { background: #e74c3c; }
+
+        /* 底部标签 */
+        .card-tabs {
+            display: flex;
+            gap: 4px;
+            margin-top: auto;
+            padding-top: 8px;
+        }
+        .card-tab {
+            flex: 1;
+            padding: 4px 6px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+        }
+        .card-tab.active {
+            background: #333;
+            color: #fff;
+        }
+        .dark-card .card-tab {
+            background: #2a2a2a;
+            color: #888;
+        }
+        .dark-card .card-tab.active {
+            background: #e85d2e;
+            color: #fff;
+        }
+
+        /* ========== 热力图组件 (Work Activity) ========== */
+        .heatmap-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+        .heatmap-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+        .heatmap-dropdown {
+            padding: 3px 10px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #555;
+            cursor: pointer;
+        }
+        .heatmap-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-label {
+            width: 32px;
+            font-size: 10px;
+            color: #888;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .heatmap-cells {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 3px;
+            flex: 1;
+            height: 100%;
+        }
+        .heatmap-cell {
+            border-radius: 4px;
+            min-height: 0;
+        }
+        .heatmap-cell.empty { background: #e8e8e8; }
+        .heatmap-cell.light { background: #f4a4a4; }
+        .heatmap-cell.medium { background: #f4a261; }
+        .heatmap-cell.dark { background: #e86a33; }
+
+        /* 4×2 热力图专用布局 */
+        .heatmap-4x2 .heatmap-body {
+            flex-direction: row;
+            gap: 6px;
+        }
+        .heatmap-4x2 .heatmap-col {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 3px;
+            min-width: 0;
+        }
+        .heatmap-4x2 .heatmap-col-label {
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+        .heatmap-4x2 .heatmap-col-cells {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-4x2 .heatmap-col-cell {
+            flex: 1;
+            border-radius: 4px;
+            min-height: 0;
+        }
+        .heatmap-4x2 .heatmap-col-cell.empty { background: #e8e8e8; }
+        .heatmap-4x2 .heatmap-col-cell.light { background: #f4a4a4; }
+        .heatmap-4x2 .heatmap-col-cell.dark { background: #e86a33; }
+        .heatmap-4x2 .heatmap-row-labels {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        .heatmap-4x2 .heatmap-row-label {
+            flex: 1;
+            font-size: 10px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-height: 0;
+        }
+
+        /* 2×2 热力图专用布局 */
+        .heatmap-2x2 {
+            padding: 12px !important;
+        }
+        .heatmap-2x2 .heatmap-2x2-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 4px;
+            flex: 1;
+            min-height: 0;
+        }
+        .heatmap-2x2 .heatmap-2x2-cell {
+            border-radius: 6px;
+            min-height: 0;
+        }
+        .heatmap-2x2 .heatmap-2x2-cell.empty { background: #e8e8e8; }
+        .heatmap-2x2 .heatmap-2x2-cell.light { background: #f4a4a4; }
+        .heatmap-2x2 .heatmap-2x2-cell.dark { background: #e86a33; }
+
+        .placeholder-solid {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        /* ========== 其他页面通用布局 ========== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .page-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .page-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            border: none;
+            cursor: pointer;
+        }
+        .page-btn.primary {
+            background: #333;
+            color: #fff;
+        }
+
+        /* 三栏布局 */
+        .three-col-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 280px;
+            gap: 16px;
+            height: 100%;
+        }
+        .two-col-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 16px;
+            height: 100%;
+        }
+        .sidebar {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .sidebar-item {
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .sidebar-item:hover { background: #f0f0f0; }
+        .sidebar-item.active { background: #e8e8e8; font-weight: 500; }
+        .tag-chip {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #666;
+            margin: 4px 4px 0 0;
+        }
+        .main-panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .dock-panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .dock-section {
+            margin-bottom: 20px;
+        }
+        .dock-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .dock-item {
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        /* 平台列表 */
+        .platform-list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .platform-list-item:last-child { border-bottom: none; }
+        .platform-name {
+            font-size: 13px;
+            color: #fff;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        .platform-progress {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .platform-value {
+            font-size: 12px;
+            color: #aaa;
+            min-width: 60px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .platform-list-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #2a2a2a;
+        }
+        .platform-more {
+            font-size: 12px;
+            color: #888;
+        }
+        .platform-viewall {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .platform-viewall:hover { background: #333; }
+
+        /* 日历 */
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        .cal-day {
+            aspect-ratio: 1;
+            background: #f8f8f8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            position: relative;
+        }
+        .cal-day.today {
+            background: #333;
+            color: #fff;
+        }
+
+        /* 流程节点 */
+        .flow-canvas {
+            position: relative;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 16px;
+            padding: 24px;
+            overflow: hidden;
+        }
+        .flow-node {
+            position: absolute;
+            padding: 12px 20px;
+            background: #f5f5f5;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* 响应式标注 */
+        .breakpoint-note {
+            position: fixed;
+            bottom: 16px; right: 16px;
+            background: #333;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 100;
+        }
+
+        /* ========== 新增页面通用样式 ========== */
+        .settings-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 16px;
+            height: 100%;
+        }
+        .settings-nav {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .settings-nav-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-nav-item:hover { background: #f0f0f0; }
+        .settings-nav-item.active { background: #e8e8e8; font-weight: 500; }
+        .settings-panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .settings-section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .settings-section:last-child { border-bottom: none; }
+        .settings-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label {
+            font-size: 13px;
+            color: #333;
+        }
+        .settings-desc {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: #ddd;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .toggle-switch.on { background: #333; }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
+        }
+        .toggle-switch.on::after { left: 22px; }
+        
+        /* Search 页面 */
+        .search-hero {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 16px;
+        }
+        .search-input-large {
+            width: 100%;
+            padding: 14px 20px;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        .search-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .search-filter-chip {
+            padding: 6px 14px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+            border: none;
+        }
+        .search-filter-chip.active {
+            background: #333;
+            color: #fff;
+        }
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .search-result-item {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+        }
+        .search-result-item:hover { border-color: #999; }
+        .search-result-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .search-result-meta {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .search-result-snippet {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .search-highlight {
+            background: #fff3cd;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        
+        /* Notifications */
+        .notif-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .notif-item {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+        .notif-item.unread { border-left: 4px solid #e85d2e; }
+        .notif-item:hover { border-color: #999; }
+        .notif-icon {
+            width: 36px;
+            height: 36px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .notif-content { flex: 1; }
+        .notif-title {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .notif-desc {
+            font-size: 11px;
+            color: #888;
+        }
+        .notif-time {
+            font-size: 11px;
+            color: #aaa;
+            flex-shrink: 0;
+        }
+        
+        /* Profile */
+        .profile-header {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            background: #e85d2e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .profile-info { flex: 1; }
+        .profile-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .profile-bio {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .profile-stats-row {
+            display: flex;
+            gap: 24px;
+        }
+        .profile-stat {
+            text-align: center;
+        }
+        .profile-stat-num {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .profile-stat-label {
+            font-size: 11px;
+            color: #888;
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .profile-card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .profile-card-title {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .profile-card-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .achievement-item {
+            background: #f8f8f8;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .achievement-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+        .achievement-name {
+            font-size: 11px;
+            color: #555;
+        }
+        
+        /* Second Self / AI Chat */
+        .chat-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            gap: 16px;
+            height: 100%;
+        }
+        .chat-sidebar {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-new-btn {
+            padding: 10px;
+            background: #333;
+            color: #fff;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            border: none;
+        }
+        .chat-history-item {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-history-item:hover { background: #f0f0f0; }
+        .chat-history-item.active { background: #e8e8e8; font-weight: 500; }
+        .chat-main {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .chat-message.user { flex-direction: row-reverse; }
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .chat-avatar.ai { background: #e85d2e; color: #fff; }
+        .chat-avatar.user { background: #333; color: #fff; }
+        .chat-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .chat-bubble.ai { background: #f5f5f5; }
+        .chat-bubble.user { background: #333; color: #fff; }
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 8px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .chat-send-btn {
+            padding: 10px 20px;
+            background: #333;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+        }
+        .chat-dock {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        /* Skill Market */
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .skill-card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .skill-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .skill-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .skill-icon {
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .skill-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .skill-desc {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .skill-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .skill-tag {
+            padding: 3px 10px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 10px;
+            color: #666;
+        }
+        .skill-install-btn {
+            padding: 6px 14px;
+            background: #333;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 11px;
+            border: none;
+            cursor: pointer;
+        }
+        .skill-install-btn.installed {
+            background: #2ecc71;
+        }
+        
+        /* Dropdown / Popover */
+        .dropdown-menu {
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 200px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dropdown-item:hover { background: #f0f0f0; }
+        .dropdown-divider {
+            height: 1px;
+            background: #eee;
+            margin: 6px 0;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            min-width: 400px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-title { font-size: 16px; font-weight: 600; }
+        .modal-close {
+            width: 28px; height: 28px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+
+        /* ========== FINAL VISUAL OVERRIDE: keep source layout, replace skin ========== */
+        html, body {
+            background:
+                radial-gradient(circle at 12% 0%, rgba(215,255,99,0.13), transparent 30%),
+                radial-gradient(circle at 82% 14%, rgba(139,115,255,0.13), transparent 28%),
+                #090a08 !important;
+            color: var(--text) !important;
+            font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 34px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page { background: transparent !important; position: relative; z-index: 1; }
+
+        .top-nav-bar {
+            height: 72px !important;
+            margin: 18px 22px 0 !important;
+            padding: 0 18px !important;
+            background: rgba(18, 19, 17, 0.88) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 26px !important;
+            box-shadow: var(--shadow-card) !important;
+            backdrop-filter: blur(18px);
+        }
+
+        .nav-logo { color: var(--text-strong) !important; font-size: 15px !important; }
+        .nav-logo-icon {
+            width: 38px !important;
+            height: 38px !important;
+            background: var(--accent) !important;
+            color: #14170f !important;
+            border-radius: 15px !important;
+            box-shadow: 0 0 0 7px rgba(215,255,99,0.10) !important;
+            font-weight: 800;
+        }
+        .nav-links { justify-content: flex-start !important; gap: 6px !important; overflow: hidden; }
+        .nav-link {
+            color: var(--text-muted) !important;
+            border: 1px solid transparent !important;
+            border-radius: var(--radius-control) !important;
+            padding: 9px 14px !important;
+            transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease !important;
+        }
+        .nav-link:hover {
+            color: var(--text-strong) !important;
+            background: rgba(255,255,255,0.06) !important;
+            border-color: var(--line) !important;
+        }
+        .nav-link.active {
+            color: #10120d !important;
+            background: var(--accent) !important;
+            border-color: var(--accent) !important;
+            font-weight: 700 !important;
+        }
+        .nav-search {
+            width: 268px !important;
+            height: 42px !important;
+            background: rgba(255,255,255,0.07) !important;
+            color: var(--text-muted) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: var(--radius-control) !important;
+        }
+        .nav-action-btn, .nav-avatar {
+            width: 42px !important;
+            height: 42px !important;
+            border-radius: 50% !important;
+            background: var(--surface-2) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--line) !important;
+        }
+        .nav-avatar { background: var(--accent) !important; color: #10120d !important; font-weight: 800 !important; }
+        .page-content { padding: 20px 22px 22px !important; }
+        .dashboard-grid { gap: 14px !important; }
+        .grid-bg-cell {
+            border: 1px dashed rgba(215,255,99,0.11) !important;
+            border-radius: var(--radius-card) !important;
+            background: rgba(255,255,255,0.012) !important;
+        }
+
+        .grid-card, .sidebar, .main-panel, .dock-panel, .chat-sidebar, .chat-main, .chat-dock,
+        .settings-nav, .settings-panel, .profile-card, .skill-card, .dropdown-menu {
+            background:
+                radial-gradient(circle at 0% 0%, rgba(255,255,255,0.055), transparent 34%),
+                linear-gradient(145deg, var(--surface-2), var(--surface-1)) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: var(--radius-card) !important;
+            box-shadow: var(--shadow-card) !important;
+            color: var(--text) !important;
+        }
+        .grid-card {
+            padding: 18px !important;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease !important;
+        }
+        .grid-card:hover, .skill-card:hover, .profile-card:hover {
+            transform: translateY(-3px) !important;
+            border-color: rgba(215,255,99,0.34) !important;
+            box-shadow: 0 24px 70px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+        }
+        .grid-card.drag-over {
+            border-color: var(--accent) !important;
+            background: radial-gradient(circle at 24% 16%, rgba(215,255,99,0.22), transparent 40%), var(--surface-2) !important;
+        }
+        .grid-card.dark-card, .grid-card[data-card="queue"] {
+            background: radial-gradient(circle at 7% 12%, rgba(215,255,99,0.27), transparent 28%), linear-gradient(145deg, #20231e, #11130f) !important;
+            border-color: rgba(215,255,99,0.28) !important;
+        }
+        .grid-card[data-card="focus"] {
+            background: radial-gradient(circle at 85% 20%, rgba(139,115,255,0.20), transparent 34%), linear-gradient(145deg, #242721, #141611) !important;
+        }
+        .heatmap-card {
+            background: radial-gradient(circle at 90% 12%, rgba(139,115,255,0.16), transparent 36%), linear-gradient(145deg, #262923, #151712) !important;
+        }
+
+        .card-title, .heatmap-title, .page-title, .skill-name, .profile-card-title,
+        .settings-section-title, .dock-title, .modal-title {
+            color: var(--text-strong) !important;
+            letter-spacing: 0 !important;
+        }
+        .card-title { font-size: 13px !important; font-weight: 700 !important; }
+        .page-title { font-size: 28px !important; font-weight: 750 !important; }
+        .sidebar-header, .profile-bio, .profile-stat-label, .settings-desc, .skill-desc,
+        .heatmap-label, .heatmap-4x2 .heatmap-row-label, .heatmap-4x2 .heatmap-col-label,
+        .timeline-labels, .stat-box .stat-label { color: var(--text-muted) !important; }
+        .list-item, .platform-list-item, .dock-item, .settings-row, .chat-history-item, .sidebar-item {
+            color: var(--text) !important;
+            border-color: var(--line) !important;
+        }
+        .sidebar-item:hover, .settings-nav-item:hover, .chat-history-item:hover, .dropdown-item:hover {
+            background: rgba(255,255,255,0.06) !important;
+            color: var(--text-strong) !important;
+        }
+        .sidebar-item.active, .settings-nav-item.active, .chat-history-item.active {
+            background: rgba(215,255,99,0.16) !important;
+            color: var(--accent) !important;
+            border-color: rgba(215,255,99,0.28) !important;
+        }
+
+        .tag-chip, .search-filter-chip, .heatmap-dropdown, .skill-tag, .page-btn, .card-tab {
+            background: rgba(255,255,255,0.07) !important;
+            border: 1px solid var(--line) !important;
+            color: var(--text) !important;
+            border-radius: var(--radius-control) !important;
+        }
+        .search-filter-chip.active, .page-btn.primary, .card-tab.active, .dark-card .card-tab.active,
+        .skill-install-btn, .chat-send-btn, .chat-new-btn, .platform-viewall {
+            background: var(--accent) !important;
+            color: #10120d !important;
+            border: 1px solid var(--accent) !important;
+            border-radius: var(--radius-control) !important;
+            font-weight: 800 !important;
+        }
+        .skill-install-btn.installed {
+            background: rgba(89,248,109,0.18) !important;
+            color: var(--success) !important;
+            border: 1px solid rgba(89,248,109,0.36) !important;
+        }
+
+        .stat-box, .placeholder-solid {
+            background: rgba(255,255,255,0.055) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 18px !important;
+            color: var(--text) !important;
+        }
+        .stat-box .stat-num, .profile-stat-num, .profile-card-value {
+            color: var(--text-strong) !important;
+            font-variant-numeric: tabular-nums;
+        }
+        .platform-segment {
+            height: 8px !important;
+            width: 30px !important;
+            border-radius: 999px !important;
+            background: rgba(255,255,255,0.09) !important;
+        }
+        .platform-segment.fill { background: var(--accent) !important; }
+        .platform-segment.fill-done, .item-dot.green, .task-status.done { background: var(--success) !important; }
+        .platform-segment.fill-warn, .item-dot.yellow, .task-status.pending { background: var(--warn) !important; }
+        .platform-segment.fill-error, .item-dot.red, .task-status.urgent { background: var(--danger) !important; }
+        .item-dot { width: 8px !important; height: 8px !important; box-shadow: 0 0 0 5px rgba(255,255,255,0.04) !important; }
+
+        .timeline-track {
+            height: 10px !important;
+            background: rgba(255,255,255,0.08) !important;
+            border-radius: 999px !important;
+        }
+        .timeline-segment.morning, .progress-bar.bar-1 { background: var(--accent) !important; }
+        .timeline-segment.afternoon, .progress-bar.bar-2 { background: var(--accent-2) !important; }
+        .timeline-segment.evening, .progress-bar.bar-3 { background: var(--accent-3) !important; }
+        .timeline-segment.night { background: rgba(255,255,255,0.22) !important; }
+        .timeline-now-label {
+            background: var(--accent) !important;
+            color: #10120d !important;
+            border: none !important;
+            border-radius: 999px !important;
+            padding: 2px 8px !important;
+        }
+        .timeline-now-line { background: var(--accent) !important; height: 14px !important; }
+        .progress-bar { height: 26px !important; border-radius: 999px !important; overflow: hidden; }
+        .progress-bar .bar-label { color: var(--text-muted) !important; }
+        .progress-bar.bar-done { background: var(--success) !important; }
+        .progress-bar.bar-warn { background: var(--warn) !important; }
+
+        .heatmap-cell, .heatmap-4x2 .heatmap-col-cell, .heatmap-2x2 .heatmap-2x2-cell { border-radius: 8px !important; }
+        .heatmap-cell.empty, .heatmap-4x2 .heatmap-col-cell.empty, .heatmap-2x2 .heatmap-2x2-cell.empty { background: rgba(255,255,255,0.08) !important; }
+        .heatmap-cell.light, .heatmap-4x2 .heatmap-col-cell.light, .heatmap-2x2 .heatmap-2x2-cell.light { background: rgba(139,115,255,0.72) !important; }
+        .heatmap-cell.medium { background: rgba(215,255,99,0.74) !important; }
+        .heatmap-cell.dark, .heatmap-4x2 .heatmap-col-cell.dark, .heatmap-2x2 .heatmap-2x2-cell.dark { background: var(--accent) !important; }
+
+        .modal-overlay { background: rgba(0,0,0,0.70) !important; backdrop-filter: blur(12px); }
+        .modal-box {
+            background: radial-gradient(circle at 0 0, rgba(215,255,99,0.14), transparent 34%), var(--surface-1) !important;
+            color: var(--text) !important;
+            border: 1px solid rgba(215,255,99,0.24) !important;
+            border-radius: 28px !important;
+            box-shadow: 0 40px 120px rgba(0,0,0,0.58) !important;
+        }
+        .modal-close {
+            background: rgba(255,255,255,0.08) !important;
+            color: var(--text) !important;
+            border-radius: 50% !important;
+            border: 1px solid var(--line) !important;
+        }
+        .chat-input, input {
+            background: rgba(255,255,255,0.07) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: var(--radius-control) !important;
+        }
+        .chat-bubble.ai { background: rgba(255,255,255,0.08) !important; color: var(--text) !important; }
+        .chat-bubble.user { background: var(--accent) !important; color: #10120d !important; }
+        .toggle-switch { background: rgba(255,255,255,0.12) !important; border: 1px solid var(--line) !important; }
+        .toggle-switch.on { background: var(--accent) !important; }
+        .toggle-switch::after { background: var(--text-strong) !important; }
+        .toggle-switch.on::after { background: #10120d !important; }
+        .breakpoint-note {
+            background: rgba(18,19,17,0.86) !important;
+            color: var(--text-muted) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 999px !important;
+            padding: 8px 14px !important;
+        }
+        @media (max-width: 1180px) {
+            .nav-search { display: none !important; }
+            .nav-link { padding-inline: 10px !important; }
+            .top-nav-bar { gap: 12px !important; }
+        }
+    
+    </style>
+</head>
+<body>
+
+<!-- ==================== HOME 页面 (4×8 网格) ==================== -->
+<div id="home" class="page active">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link active" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search all knowledge / actions...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="dashboard-grid" id="dashboard-grid">
+            <div class="grid-bg" id="grid-bg"></div>
+            <!-- 卡片1: Queue (2×2) -->
+            <div class="grid-card dark-card card-2x2" draggable="true" data-card="queue">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title">⚡ Queue / Progress</div>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #3</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 2/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">B站同步</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 1/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">小红书导入</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-warn"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">等待中</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #2</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">已完成</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #1</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-error"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">失败</span>
+                </div>
+                <div class="platform-list-footer">
+                    <span class="platform-more">+2 more</span>
+                    <button class="platform-viewall">View all</button>
+                </div>
+            </div>
+
+            <!-- 卡片2: Today Focus / DDL (2×2) -->
+            <div class="grid-card card-2x2" draggable="true" data-card="focus">
+                <div class="drag-handle">⋮⋮</div>
+                <div style="margin-bottom:8px;">
+                    <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">📅 TODAY TIMELINE · 06-07</div>
+                    <div class="timeline-track">
+                        <div class="timeline-fill">
+                            <div class="timeline-segment morning"></div>
+                            <div class="timeline-segment afternoon"></div>
+                            <div class="timeline-segment evening"></div>
+                            <div class="timeline-segment night"></div>
+                        </div>
+                        <div class="timeline-now-marker">
+                            <div class="timeline-now-label">14:30</div>
+                            <div class="timeline-now-line"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-labels">
+                        <span>06:00</span>
+                        <span>12:00</span>
+                        <span>18:00</span>
+                        <span>24:00</span>
+                    </div>
+                </div>
+                <div id="focus-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                    <div class="card-header" style="margin-bottom:6px;">
+                        <div class="card-title">📌 Today Focus</div>
+                        <div style="font-size:16px;font-weight:bold;">60%</div>
+                    </div>
+                    <div class="progress-bars">
+                        <div class="progress-bar bar-1" style="flex:3;"><span class="bar-label">30%</span></div>
+                        <div class="progress-bar bar-2" style="flex:2;"><span class="bar-label">25%</span></div>
+                        <div class="progress-bar bar-3" style="flex:1;"><span class="bar-label">5%</span></div>
+                    </div>
+                </div>
+                <div class="card-tabs">
+                    <button class="card-tab active" onclick="switchFocusView('today')">Today Focus</button>
+                    <button class="card-tab" onclick="switchFocusView('ddl')">DDL</button>
+                </div>
+            </div>
+
+            <!-- 卡片3: Queue Mini (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="queue-mini">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>⚡ Queue</div>
+                </div>
+                <div class="platform-segments">
+                    <div class="platform-segment fill-done"></div>
+                    <div class="platform-segment fill"></div>
+                    <div class="platform-segment"></div>
+                </div>
+                <div class="list-item"><div class="item-dot green"></div>抖音 #3 · 步骤 2/3</div>
+                <div class="list-item"><div class="item-dot yellow"></div>B站同步 · 步骤 1/3</div>
+                <div class="list-item"><div class="item-dot"></div>小红书 · 等待中</div>
+            </div>
+
+            <!-- 卡片3: DDL Mini (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="ddl-mini">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>📅 DDL</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-box">
+                        <div class="stat-num" style="color:#e74c3c;">2</div>
+                        <div class="stat-label">超期</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" style="color:#f39c12;">5</div>
+                        <div class="stat-label">今日</div>
+                    </div>
+                </div>
+                <div class="list-item"><div class="item-dot red"></div>14:00 项目评审</div>
+                <div class="list-item"><div class="item-dot yellow"></div>18:00 提交周报</div>
+            </div>
+
+            <!-- 卡片4: Wiki Recent (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="wiki">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>Wiki Recent</div>
+                </div>
+                <div class="list-item"><div class="item-dot green"></div>Docker 网络模式</div>
+                <div class="list-item"><div class="item-dot"></div>Python 并发编程</div>
+                <div class="list-item"><div class="item-dot"></div>React 性能优化</div>
+                <div class="list-item"><div class="item-dot"></div>机器学习基础</div>
+            </div>
+
+            <!-- 卡片5: KB Stats (1×1) -->
+            <div class="grid-card card-1x1" draggable="true" data-card="kb-stats">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>📚 KB Stats</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-box">
+                        <div class="stat-num">128</div>
+                        <div class="stat-label">文档</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num">24</div>
+                        <div class="stat-label">标签</div>
+                    </div>
+                </div>
+                <div class="list-item"><div class="item-dot green"></div>本周新增 12 篇</div>
+            </div>
+
+            <!-- 卡片7: Creator / Workflow (2×2) -->
+            <div class="grid-card card-2x2" draggable="true" data-card="creator">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>Creator / Workflow</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;">
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">📄 文章模板</div>
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">📊 数据报告</div>
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">🔄 自动化流</div>
+                    <div class="placeholder-solid" style="padding:12px;text-align:center;font-size:11px;display:flex;align-items:center;justify-content:center;">📝 快速笔记</div>
+                </div>
+            </div>
+
+            <!-- 卡片8: Journal / Review (2×2) -->
+            <div class="grid-card card-2x2" draggable="true" data-card="journal">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header">
+                    <div class="card-title"><span class="card-icon"></span>Journal / Review</div>
+                </div>
+                <div style="display:flex;gap:12px;flex:1;">
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">今日手账</div>
+                        <div class="placeholder-solid" style="flex:1;padding:8px;font-size:11px;color:#888;display:flex;align-items:center;">早晨完成了 Wiki 编译优化...</div>
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;">随机回顾</div>
+                        <div class="placeholder-solid" style="flex:1;padding:8px;font-size:11px;color:#888;display:flex;align-items:center;">2024-03-15: 学习了 Docker...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 卡片9: Work Activity 热力图 (4×2) -->
+            <div class="grid-card card-4x2 heatmap-card heatmap-4x2" draggable="true" data-card="work-activity">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="card-header" style="margin-bottom:6px;">
+                    <div class="card-title">📊 Work Activity</div>
+                    <div style="font-size:10px;padding:2px 8px;background:#f0f0f0;border-radius:4px;color:#666;cursor:pointer;">Weekly ▼</div>
+                </div>
+                <div class="heatmap-body" style="flex-direction:row;gap:6px;flex:1;">
+                    <div class="heatmap-row-labels" style="display:flex;flex-direction:column;gap:3px;margin-right:4px;flex-shrink:0;">
+                        <div style="flex:1;font-size:10px;color:#888;display:flex;align-items:center;justify-content:flex-end;">Mon-Fri</div>
+                        <div style="flex:1;font-size:10px;color:#888;display:flex;align-items:center;justify-content:flex-end;">Sat-Sun</div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">11pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell dark" style="flex:1;border-radius:4px;min-height:0;"></div>
+                            <div class="heatmap-col-cell light" style="flex:1;border-radius:4px;min-height:0;"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">12pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell dark" style="flex:1;border-radius:4px;min-height:0;"></div>
+                            <div class="heatmap-col-cell empty" style="flex:1;border-radius:4px;min-height:0;background:#e8e8e8;"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">1pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell light" style="flex:1;border-radius:4px;min-height:0;background:#f4a4a4;"></div>
+                            <div class="heatmap-col-cell dark" style="flex:1;border-radius:4px;min-height:0;"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-col" style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:0;">
+                        <div style="font-size:10px;color:#888;text-align:center;flex-shrink:0;margin-bottom:2px;">2pm</div>
+                        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;">
+                            <div class="heatmap-col-cell empty" style="flex:1;border-radius:4px;min-height:0;background:#e8e8e8;"></div>
+                            <div class="heatmap-col-cell empty" style="flex:1;border-radius:4px;min-height:0;background:#e8e8e8;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== WIKI 页面 ==================== -->
+<div id="wiki" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link active" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search pages...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Wiki Knowledge</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ New Page</button>
+                <button class="page-btn">Compile</button>
+                <button class="page-btn">Theme</button>
+            </div>
+        </div>
+        <div class="three-col-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">Categories</div>
+                <div class="sidebar-item">📁 技术笔记</div>
+                <div class="sidebar-item active">📁 Docker & K8s</div>
+                <div class="sidebar-item">📁 Python</div>
+                <div class="sidebar-item">📁 前端开发</div>
+                <div class="sidebar-item">📁 机器学习</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Recent</div>
+                <div class="sidebar-item">📄 Docker 网络模式</div>
+                <div class="sidebar-item">📄 Compose 进阶</div>
+                <div class="sidebar-item">📄 容器安全</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Tags</div>
+                <div>
+                    <span class="tag-chip">docker</span>
+                    <span class="tag-chip">network</span>
+                    <span class="tag-chip">devops</span>
+                    <span class="tag-chip">container</span>
+                </div>
+            </div>
+            <div class="main-panel">
+                <div style="font-size:24px;font-weight:bold;margin-bottom:12px;">Docker 网络模式详解</div>
+                <div style="display:flex;gap:8px;margin-bottom:20px;">
+                    <span class="tag-chip">📅 2024-06-07</span>
+                    <span class="tag-chip">🏷️ docker</span>
+                    <span class="tag-chip">🏷️ network</span>
+                    <span class="tag-chip">✏️ 编辑中</span>
+                </div>
+                <div style="font-size:14px;line-height:1.8;color:#444;">
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## 概述</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">Docker 网络是容器化应用的核心基础设施之一...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## bridge 模式（默认）</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">bridge 是 Docker 默认的网络模式，创建一个虚拟网桥...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## host 模式</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">host 模式下容器直接使用宿主机的网络栈...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## overlay 模式</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">overlay 网络用于跨主机的容器通信...</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">## 实际应用场景</p>
+                    <p style="margin-bottom:12px;padding:8px 0;border-bottom:1px dashed #eee;">在生产环境中，我们通常需要结合多种网络模式...</p>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">🔗 Wikilink Preview</div>
+                    <div class="dock-item">bridge 模式 → 虚拟网桥</div>
+                    <div class="dock-item">overlay → Swarm 集群</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">↩️ Backlinks</div>
+                    <div class="dock-item">Docker 入门指南</div>
+                    <div class="dock-item">容器网络最佳实践</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📎 Related</div>
+                    <div class="dock-item">Kubernetes CNI</div>
+                    <div class="dock-item">Calico 网络方案</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">⚡ Actions</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <span class="tag-chip">编辑</span>
+                        <span class="tag-chip">分享</span>
+                        <span class="tag-chip">导出</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== KNOWLEDGE BASE 页面 ==================== -->
+<div id="kb" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link active" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search documents...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Knowledge Base</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ Import</button>
+                <button class="page-btn">Filter</button>
+                <button class="page-btn">Sort</button>
+            </div>
+        </div>
+        <div class="three-col-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">Sources</div>
+                <div class="sidebar-item active">📁 All Documents</div>
+                <div class="sidebar-item">📁 Imported</div>
+                <div class="sidebar-item">📁 Automation</div>
+                <div class="sidebar-item">📁 Manual</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Categories</div>
+                <div class="sidebar-item">📁 技术</div>
+                <div class="sidebar-item">📁 产品</div>
+                <div class="sidebar-item">📁 设计</div>
+                <div class="sidebar-item">📁 运营</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Tags</div>
+                <div>
+                    <span class="tag-chip">docker</span>
+                    <span class="tag-chip">python</span>
+                    <span class="tag-chip">react</span>
+                    <span class="tag-chip">ml</span>
+                </div>
+            </div>
+            <div class="sidebar" style="overflow-y:auto;">
+                <div class="sidebar-header">Documents (128)</div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#e8e8e8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">Docker 网络模式详解</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 2.3k words · 06-07</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f8f8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">Python 并发编程笔记</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 1.8k words · 06-06</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f8f8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">React 性能优化清单</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 1.2k words · 06-05</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f8f8;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                    <div style="width:40px;height:40px;background:#ddd;border-radius:6px;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:500;margin-bottom:2px;">机器学习基础概念</div>
+                        <div style="font-size:11px;color:#888;">📄 Markdown · 3.1k words · 06-04</div>
+                    </div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <div style="font-size:14px;font-weight:600;">Document Preview</div>
+                        <div style="display:flex;gap:6px;">
+                            <span class="tag-chip">Open</span>
+                            <span class="tag-chip">Edit</span>
+                        </div>
+                    </div>
+                    <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">Docker 网络模式详解</div>
+                    <div style="display:flex;gap:8px;margin-bottom:16px;">
+                        <span class="tag-chip">📄 Markdown</span>
+                        <span class="tag-chip">2.3k words</span>
+                        <span class="tag-chip">🏷️ docker</span>
+                    </div>
+                    <div style="font-size:13px;line-height:1.8;color:#555;">
+                        <p style="margin-bottom:10px;">本文详细介绍了 Docker 的四种网络模式：bridge、host、none 和 overlay...</p>
+                        <p style="margin-bottom:10px;">bridge 模式是默认模式，创建一个虚拟网桥 docker0...</p>
+                    </div>
+                    <div class="dock-section" style="margin-top:20px;">
+                        <div class="dock-title">📎 Related Documents</div>
+                        <div class="dock-item">Docker Compose 网络配置</div>
+                        <div class="dock-item">Kubernetes CNI 插件</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== AUTOMATION 页面 ==================== -->
+<div id="auto" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link active" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search tasks...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Automation</div>
+            <div class="page-actions">
+                <button class="page-btn primary">Queue (5)</button>
+                <button class="page-btn">History</button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:16px;height:calc(100% - 60px);">
+            <div style="background:#fff;border:2px solid #ddd;border-radius:16px;padding:24px;">
+                <h3 style="margin-bottom:16px;font-size:14px;color:#666;">Submit Task</h3>
+                <div style="height:100px;background:#f5f5f5;border:2px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;margin-bottom:16px;">
+                    📋 Paste URL / Batch Input<br><span style="font-size:11px;">支持抖音、B站、小红书链接</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <div style="padding:8px 16px;background:#333;color:#fff;border-radius:8px;font-size:12px;">抖音</div>
+                    <div style="padding:8px 16px;background:#f0f0f0;border-radius:8px;font-size:12px;color:#555;">B站</div>
+                    <div style="padding:8px 16px;background:#f0f0f0;border-radius:8px;font-size:12px;color:#555;">小红书</div>
+                    <div style="padding:8px 16px;background:#f0f0f0;border-radius:8px;font-size:12px;color:#555;">批量</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <div class="placeholder-solid" style="flex:1;padding:10px;font-size:12px;text-align:center;">解析视频</div>
+                    <div class="placeholder-solid" style="flex:1;padding:10px;font-size:12px;text-align:center;">提取文本</div>
+                    <div class="placeholder-solid" style="flex:1;padding:10px;font-size:12px;text-align:center;">生成笔记</div>
+                </div>
+                <button style="padding:10px 24px;background:#333;color:#fff;border-radius:8px;font-size:13px;border:none;cursor:pointer;width:100%;">Submit Task →</button>
+            </div>
+            <div class="dark-card" style="border-radius:16px;padding:20px;">
+                <div class="sidebar-header" style="color:#888;">Queue / Progress</div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #3</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 2/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">B站同步</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">步骤 1/3</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">小红书导入</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-warn"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">等待中</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #2</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                            <div class="platform-segment fill-done"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">已完成</span>
+                </div>
+                <div class="platform-list-item">
+                    <span class="platform-name">抖音 #1</span>
+                    <div class="platform-progress">
+                        <div class="platform-segments">
+                            <div class="platform-segment fill-error"></div>
+                            <div class="platform-segment"></div>
+                            <div class="platform-segment"></div>
+                        </div>
+                    </div>
+                    <span class="platform-value">失败</span>
+                </div>
+                <div class="platform-list-footer">
+                    <span class="platform-more">+2 more</span>
+                    <button class="platform-viewall">View all</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DDL 页面 ==================== -->
+<div id="ddl" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link active" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search tasks...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">DDL Timeline</div>
+            <div class="page-actions">
+                <button class="page-btn">Today</button>
+                <button class="page-btn">Day</button>
+                <button class="page-btn">Week</button>
+                <button class="page-btn">Month</button>
+                <button class="page-btn primary">+ New Task</button>
+            </div>
+        </div>
+        <div class="two-col-layout">
+            <div style="background:#fff;border:2px solid #ddd;border-radius:16px;padding:24px;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div style="font-size:18px;font-weight:bold;">2024年 6月</div>
+                    <div style="display:flex;gap:8px;">
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;">←</div>
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;">Today</div>
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;">→</div>
+                    </div>
+                </div>
+                <div class="cal-grid">
+                    <div class="cal-day" style="color:#888;">26</div>
+                    <div class="cal-day" style="color:#888;">27</div>
+                    <div class="cal-day" style="color:#888;">28</div>
+                    <div class="cal-day" style="color:#888;">29</div>
+                    <div class="cal-day" style="color:#888;">30</div>
+                    <div class="cal-day" style="color:#888;">31</div>
+                    <div class="cal-day">1</div>
+                    <div class="cal-day">2</div>
+                    <div class="cal-day">3</div>
+                    <div class="cal-day">4</div>
+                    <div class="cal-day">5</div>
+                    <div class="cal-day">6</div>
+                    <div class="cal-day today">7</div>
+                    <div class="cal-day">8</div>
+                    <div class="cal-day">9</div>
+                    <div class="cal-day">10</div>
+                    <div class="cal-day">11</div>
+                    <div class="cal-day">12</div>
+                    <div class="cal-day">13</div>
+                    <div class="cal-day">14</div>
+                    <div class="cal-day">15</div>
+                    <div class="cal-day">16</div>
+                    <div class="cal-day">17</div>
+                    <div class="cal-day">18</div>
+                    <div class="cal-day">19</div>
+                    <div class="cal-day">20</div>
+                    <div class="cal-day">21</div>
+                    <div class="cal-day">22</div>
+                    <div class="cal-day">23</div>
+                    <div class="cal-day">24</div>
+                    <div class="cal-day">25</div>
+                    <div class="cal-day">26</div>
+                    <div class="cal-day">27</div>
+                    <div class="cal-day">28</div>
+                    <div class="cal-day">29</div>
+                    <div class="cal-day">30</div>
+                </div>
+                <div style="margin-top:20px;">
+                    <div class="sidebar-header">今日任务</div>
+                    <div class="list-item"><div class="item-dot red"></div>14:00 项目评审会议 <span style="margin-left:auto;color:#e74c3c;font-size:11px;">超期 2h</span></div>
+                    <div class="list-item"><div class="item-dot yellow"></div>18:00 提交周报</div>
+                    <div class="list-item"><div class="item-dot green"></div>20:00 学习 Docker 网络</div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📋 Selected Task</div>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:8px;">项目评审会议</div>
+                    <div style="font-size:12px;color:#888;margin-bottom:12px;">14:00 · 会议室 A · 高优先级</div>
+                    <div class="dock-item">状态: <span style="color:#e74c3c;">已超期</span></div>
+                    <div class="dock-item">关联: 项目文档 v2</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📊 本周概览</div>
+                    <div style="display:flex;gap:8px;margin-bottom:10px;">
+                        <div style="flex:1;text-align:center;padding:8px;background:#2ecc7122;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#2ecc71;">8</div>
+                            <div style="font-size:10px;">已完成</div>
+                        </div>
+                        <div style="flex:1;text-align:center;padding:8px;background:#f39c1222;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#d4a017;">5</div>
+                            <div style="font-size:10px;">进行中</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <div style="flex:1;text-align:center;padding:8px;background:#e74c3c22;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#e74c3c;">2</div>
+                            <div style="font-size:10px;">超期</div>
+                        </div>
+                        <div style="flex:1;text-align:center;padding:8px;background:#f0f0f0;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;">3</div>
+                            <div style="font-size:10px;">待开始</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== JOURNAL 页面 ==================== -->
+<div id="journal" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link active" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search entries...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Journal</div>
+            <div class="page-actions">
+                <button class="page-btn">📅 2024-06-07</button>
+                <button class="page-btn">🎲 Random Review</button>
+                <button class="page-btn primary">Save</button>
+            </div>
+        </div>
+        <div class="three-col-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">June 2024</div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;font-size:11px;text-align:center;">
+                    <div style="color:#888;">S</div><div style="color:#888;">M</div><div style="color:#888;">T</div><div style="color:#888;">W</div><div style="color:#888;">T</div><div style="color:#888;">F</div><div style="color:#888;">S</div>
+                    <div></div><div></div><div></div><div></div><div></div><div></div><div style="padding:4px;">1</div>
+                    <div style="padding:4px;">2</div><div style="padding:4px;">3</div><div style="padding:4px;">4</div><div style="padding:4px;">5</div><div style="padding:4px;background:#e0e0e0;border-radius:4px;">6</div><div style="padding:4px;background:#333;color:#fff;border-radius:4px;">7</div>
+                </div>
+                <div class="sidebar-header">Past Entries</div>
+                <div class="sidebar-item">06-06 周四 · 完成了 Wiki...</div>
+                <div class="sidebar-item">06-05 周三 · 学习了 Docker...</div>
+                <div class="sidebar-item">06-04 周二 · 整理了自动化...</div>
+                <div class="sidebar-item">06-03 周一 · 制定了本周...</div>
+            </div>
+            <div class="main-panel">
+                <div style="font-size:20px;font-weight:bold;margin-bottom:8px;">2024年6月7日 星期五</div>
+                <div style="display:flex;gap:8px;margin-bottom:24px;">
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😊</div>
+                    <div style="width:32px;height:32px;background:#e0e0e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😐</div>
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😔</div>
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">😤</div>
+                    <div style="width:32px;height:32px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">🤩</div>
+                </div>
+                <div style="height:300px;background:#fafafa;border:1px solid #eee;border-radius:12px;padding:16px;font-size:14px;line-height:1.8;color:#666;">
+                    今天早晨完成了 Wiki 编译优化的文档整理，感觉很有成就感。<br><br>
+                    下午处理了 3 个自动化队列任务，其中 1 个失败了需要重试。<br><br>
+                    晚上计划学习 Docker 的网络模式，为下周的项目做准备...
+                </div>
+                <div style="margin-top:16px;">
+                    <span class="tag-chip">#学习</span>
+                    <span class="tag-chip">#Docker</span>
+                    <span class="tag-chip">#Wiki</span>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📊 Mood Stats</div>
+                    <div style="height:80px;background:#f0f0f0;border-radius:8px;margin-bottom:10px;display:flex;align-items:flex-end;justify-content:space-around;padding:8px;">
+                        <div style="width:20px;height:40px;background:#ddd;border-radius:4px;"></div>
+                        <div style="width:20px;height:60px;background:#ddd;border-radius:4px;"></div>
+                        <div style="width:20px;height:30px;background:#333;border-radius:4px;"></div>
+                        <div style="width:20px;height:50px;background:#ddd;border-radius:4px;"></div>
+                        <div style="width:20px;height:20px;background:#ddd;border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:11px;color:#888;text-align:center;">本周心情分布</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🏷️ Tags</div>
+                    <div>
+                        <span class="tag-chip">学习 (12)</span>
+                        <span class="tag-chip">Docker (5)</span>
+                        <span class="tag-chip">Wiki (8)</span>
+                        <span class="tag-chip">自动化 (3)</span>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🎲 Random Memory</div>
+                    <div class="dock-item" style="font-size:11px;">
+                        <div style="font-weight:500;margin-bottom:4px;">2024-03-15</div>
+                        <div style="color:#888;">第一次配置成功 Docker Compose，激动了一整天...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== WORKFLOW 页面 ==================== -->
+<div id="flow" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link active" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search flows...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Workflow / SOP</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ Create</button>
+                <button class="page-btn">Templates</button>
+                <button class="page-btn">Run</button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;height:calc(100% - 60px);">
+            <div class="sidebar">
+                <div class="sidebar-header">Templates</div>
+                <div class="sidebar-item active">📄 文章发布流程</div>
+                <div class="sidebar-item">📊 数据报告生成</div>
+                <div class="sidebar-item">🔄 定时备份</div>
+                <div class="sidebar-item">📝 日报生成</div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">SOP Blocks</div>
+                <div class="sidebar-item">▶️ 开始节点</div>
+                <div class="sidebar-item">⏸️ 等待节点</div>
+                <div class="sidebar-item">✅ 判断节点</div>
+                <div class="sidebar-item">📧 通知节点</div>
+                <div class="sidebar-item">🔄 循环节点</div>
+            </div>
+            <div class="flow-canvas">
+                <div class="flow-node" style="top:40px;left:200px;">▶️ 开始</div>
+                <div class="flow-node" style="top:120px;left:200px;">📝 获取素材</div>
+                <div class="flow-node" style="top:200px;left:120px;">✅ 内容审核?</div>
+                <div class="flow-node" style="top:280px;left:80px;">❌ 退回修改</div>
+                <div class="flow-node" style="top:280px;left:280px;">✅ 生成文档</div>
+                <div class="flow-node" style="top:360px;left:280px;">📧 发布通知</div>
+                <div class="flow-node" style="top:440px;left:280px;">🏁 结束</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CREATOR HUB 页面 ==================== -->
+<div id="creator" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link active" onclick="showPage('creator')">Creator Hub</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search templates...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">Creator Hub</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ New Project</button>
+                <button class="page-btn">Import</button>
+                <button class="page-btn">Export</button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:240px 1fr 280px;gap:16px;height:calc(100% - 60px);">
+            <div class="sidebar">
+                <div class="sidebar-header">Templates</div>
+                <div style="padding:14px;background:#e8e8e8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;border:2px solid #333;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">📄 技术文章</div>
+                    <div style="font-size:11px;color:#888;">结构化技术写作模板</div>
+                </div>
+                <div style="padding:14px;background:#f8f8f8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">📊 数据报告</div>
+                    <div style="font-size:11px;color:#888;">自动图表 + 分析结论</div>
+                </div>
+                <div style="padding:14px;background:#f8f8f8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">🎬 视频脚本</div>
+                    <div style="font-size:11px;color:#888;">分镜 + 台词 + 素材清单</div>
+                </div>
+                <div style="padding:14px;background:#f8f8f8;border-radius:10px;margin-bottom:10px;font-size:13px;cursor:pointer;">
+                    <div style="width:32px;height:32px;background:#ddd;border-radius:8px;margin-bottom:8px;"></div>
+                    <div style="font-weight:600;margin-bottom:2px;">📝 学习笔记</div>
+                    <div style="font-size:11px;color:#888;">知识卡片 + 思维导图</div>
+                </div>
+                <div style="height:1px;background:#ddd;margin:12px 0;"></div>
+                <div class="sidebar-header">Materials</div>
+                <div class="sidebar-item">📁 素材库</div>
+                <div class="sidebar-item">📁 引用文献</div>
+                <div class="sidebar-item">📁 代码片段</div>
+                <div class="sidebar-item">📁 图片资源</div>
+            </div>
+            <div style="background:#fff;border:2px solid #ddd;border-radius:16px;padding:24px;position:relative;">
+                <div style="display:flex;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee;">
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">📝 Text</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">📊 Chart</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">🖼 Image</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">📎 Link</div>
+                    <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">🤖 AI Assist</div>
+                    <div style="margin-left:auto;display:flex;gap:6px;">
+                        <div style="padding:6px 12px;background:#f0f0f0;border-radius:6px;font-size:12px;color:#555;">Preview</div>
+                        <div style="padding:6px 12px;background:#333;color:#fff;border-radius:6px;font-size:12px;">Publish</div>
+                    </div>
+                </div>
+                <div style="min-height:300px;background:#fafafa;border:2px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px;">
+                    <div style="text-align:center;">
+                        <div style="font-size:16px;font-weight:bold;margin-bottom:8px;">🎨 Creator Workspace</div>
+                        <div style="font-size:13px;color:#aaa;">拖拽组件开始创作 · 支持 Markdown / 图表 / 多媒体</div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div class="placeholder-solid" style="padding:12px;font-size:12px;text-align:center;">📄 大纲视图</div>
+                    <div class="placeholder-solid" style="padding:12px;font-size:12px;text-align:center;">📊 数据面板</div>
+                    <div class="placeholder-solid" style="padding:12px;font-size:12px;text-align:center;">🤖 AI 建议</div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📋 Project Info</div>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:8px;">Docker 网络模式详解</div>
+                    <div style="font-size:12px;color:#888;margin-bottom:12px;">技术文章 · 草稿 · 30%</div>
+                    <div style="height:6px;background:#eee;border-radius:3px;margin-bottom:12px;overflow:hidden;">
+                        <div style="height:100%;width:30%;background:#333;border-radius:3px;"></div>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🏷️ Properties</div>
+                    <div class="dock-item">类型: 技术文章</div>
+                    <div class="dock-item">目标: Wiki + KB</div>
+                    <div class="dock-item">字数: 1,200 / 3,000</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🤖 AI Assistant</div>
+                    <div class="dock-item" style="font-size:11px;">建议补充 overlay 模式的实际案例...</div>
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <span class="tag-chip">续写</span>
+                        <span class="tag-chip">润色</span>
+                        <span class="tag-chip">查错</span>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📎 References</div>
+                    <div class="dock-item">Docker 官方文档</div>
+                    <div class="dock-item">Kubernetes 网络</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="breakpoint-note">Desktop 1280px+ · Top Nav · 4×8 Grid</div>
+
+<script>
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function switchFocusView(view) {
+    const content = document.getElementById('focus-content');
+    const tabs = document.querySelectorAll('[data-card="focus"] .card-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (view === 'ddl') {
+        content.innerHTML = `
+            <div class="card-header" style="margin-bottom:8px;">
+                <div class="card-title">📅 DDL 日程</div>
+                <div style="font-size:18px;font-weight:bold;">67%</div>
+            </div>
+            <div class="progress-bars">
+                <div class="progress-bar bar-done" style="flex:2;"><span class="bar-label">2</span></div>
+                <div class="progress-bar bar-warn" style="flex:1;"><span class="bar-label">1</span></div>
+            </div>
+            <div style="background:#1a1a1a;border-radius:12px;padding:12px;margin-top:8px;flex:1;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-size:12px;font-weight:600;color:#fff;">今日日程</span>
+                    <span style="background:#e85d2e;color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">3</span>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status urgent"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">14:00 项目评审会议</div>
+                        <div style="font-size:10px;color:#888;">超期 2h · 高优先级</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status pending"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">18:00 提交周报</div>
+                        <div style="font-size:10px;color:#888;">Due in 4h</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status done">✓</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">20:00 学习 Docker</div>
+                        <div style="font-size:10px;color:#888;">已完成 · 1h ago</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        content.innerHTML = `
+            <div class="card-header" style="margin-bottom:8px;">
+                <div class="card-title">📌 Today Focus</div>
+                <div style="font-size:18px;font-weight:bold;">60%</div>
+            </div>
+            <div class="progress-bars">
+                <div class="progress-bar bar-1" style="flex:3;"><span class="bar-label">30%</span></div>
+                <div class="progress-bar bar-2" style="flex:2;"><span class="bar-label">25%</span></div>
+                <div class="progress-bar bar-3" style="flex:1;"><span class="bar-label">5%</span></div>
+            </div>
+            <div style="background:#1a1a1a;border-radius:12px;padding:12px;margin-top:8px;flex:1;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-size:12px;font-weight:600;color:#fff;">待处理任务</span>
+                    <span style="background:#e85d2e;color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">5</span>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status done">✓</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">完成 Wiki 编译优化</div>
+                        <div style="font-size:10px;color:#888;">2h ago · 高优先级</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status done">✓</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">Review 自动化队列</div>
+                        <div style="font-size:10px;color:#888;">1h ago</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status pending"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">整理 KB 分类</div>
+                        <div style="font-size:10px;color:#888;">Due 18:00</div>
+                    </div>
+                </div>
+                <div class="list-item" style="border-color:#2a2a2a;padding:6px 0;">
+                    <div class="task-status urgent"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#fff;">提交项目周报</div>
+                        <div style="font-size:10px;color:#888;">超期 2h · 紧急</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// 拖拽功能 — 交换 DOM 节点位置（保留事件监听器和尺寸类）
+(function initDragAndDrop() {
+    const grid = document.getElementById('dashboard-grid');
+    if (!grid) return;
+    let draggedCard = null;
+
+    function swapNodes(a, b) {
+        const parent = a.parentNode;
+        const siblingA = a.nextSibling === b ? a : a.nextSibling;
+        b.parentNode.insertBefore(a, b);
+        parent.insertBefore(b, siblingA);
+    }
+
+    function setupCard(card) {
+        card.addEventListener('dragstart', function(e) {
+            draggedCard = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.grid-card').forEach(c => c.classList.remove('drag-over'));
+            draggedCard = null;
+        });
+        card.addEventListener('dragover', function(e) {
+            if (this === draggedCard) return;
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        card.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        card.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            if (this === draggedCard || !draggedCard) return;
+            // 真正交换 DOM 节点位置，保留各自的尺寸类和事件监听
+            swapNodes(draggedCard, this);
+        });
+    }
+
+    document.querySelectorAll('.grid-card').forEach(setupCard);
+
+    // 生成 8×4 网格背景虚线框
+    const gridBg = document.getElementById('grid-bg');
+    if (gridBg) {
+        for (let i = 0; i < 32; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-bg-cell';
+            gridBg.appendChild(cell);
+        }
+    }
+})();
+
+// Settings tab switching
+function switchSettingsTab(el, tab) {
+    document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    
+    const panel = document.getElementById('settings-panel');
+    const contents = {
+        appearance: `
+            <div class="settings-section">
+                <div class="settings-section-title">Theme</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Dark Mode</div><div class="settings-desc">使用深色主题保护眼睛</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Accent Color</div><div class="settings-desc">选择主色调</div></div>
+                    <div style="display:flex;gap:6px;">
+                        <div style="width:24px;height:24px;background:#e85d2e;border-radius:50%;border:2px solid #333;"></div>
+                        <div style="width:24px;height:24px;background:#2ecc71;border-radius:50%;"></div>
+                        <div style="width:24px;height:24px;background:#8b5cf6;border-radius:50%;"></div>
+                        <div style="width:24px;height:24px;background:#f39c12;border-radius:50%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Layout</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Left Rail Navigation</div><div class="settings-desc">使用左侧导航栏代替顶部导航</div></div>
+                    <div class="toggle-switch"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Compact Mode</div><div class="settings-desc">减小卡片间距，显示更多内容</div></div>
+                    <div class="toggle-switch"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Show Grid Background</div><div class="settings-desc">在 Dashboard 显示网格虚线</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Language</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Interface Language</div><div class="settings-desc">当前：简体中文</div></div>
+                    <button class="page-btn">Change</button>
+                </div>
+            </div>`,
+        notifications: `
+            <div class="settings-section">
+                <div class="settings-section-title">Notification Channels</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Desktop Notifications</div><div class="settings-desc">浏览器桌面通知</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Sound Alerts</div><div class="settings-desc">任务完成/失败时播放提示音</div></div>
+                    <div class="toggle-switch"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Email Digest</div><div class="settings-desc">每日/每周摘要邮件</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Notification Types</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Automation Tasks</div><div class="settings-desc">任务状态变更</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">DDL Reminders</div><div class="settings-desc">截止日期提醒</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Wiki Updates</div><div class="settings-desc">文档编译、链接更新</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">System Updates</div><div class="settings-desc">版本更新、功能发布</div></div>
+                    <div class="toggle-switch"></div>
+                </div>
+            </div>`,
+        automation: `
+            <div class="settings-section">
+                <div class="settings-section-title">Default Platforms</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Default Video Platform</div><div class="settings-desc">粘贴链接时的默认解析平台</div></div>
+                    <button class="page-btn">抖音</button>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Auto-start Queue</div><div class="settings-desc">提交后自动开始处理</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Output Settings</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Auto-save to KB</div><div class="settings-desc">任务完成后自动保存到 Knowledge Base</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Generate Summary</div><div class="settings-desc">自动生成内容摘要</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+            </div>`,
+        editor: `
+            <div class="settings-section">
+                <div class="settings-section-title">Editor Preferences</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Default Editor</div><div class="settings-desc">Markdown / Rich Text / Code</div></div>
+                    <button class="page-btn">Markdown</button>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Auto-save</div><div class="settings-desc">每 30 秒自动保存</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Spell Check</div><div class="settings-desc">实时拼写检查</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Line Numbers</div><div class="settings-desc">显示行号</div></div>
+                    <div class="toggle-switch"></div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Preview</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Live Preview</div><div class="settings-desc">编辑时实时预览</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Math Rendering</div><div class="settings-desc">LaTeX 公式渲染</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+            </div>`,
+        shortcuts: `
+            <div class="settings-section">
+                <div class="settings-section-title">Keyboard Shortcuts</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Quick Search</div><div class="settings-desc">全局搜索</div></div>
+                    <div style="padding:4px 10px;background:#f0f0f0;border-radius:4px;font-size:12px;font-family:monospace;">Ctrl + K</div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">New Page</div><div class="settings-desc">新建 Wiki 页面</div></div>
+                    <div style="padding:4px 10px;background:#f0f0f0;border-radius:4px;font-size:12px;font-family:monospace;">Ctrl + N</div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Save</div><div class="settings-desc">保存当前内容</div></div>
+                    <div style="padding:4px 10px;background:#f0f0f0;border-radius:4px;font-size:12px;font-family:monospace;">Ctrl + S</div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Toggle Sidebar</div><div class="settings-desc">显示/隐藏侧边栏</div></div>
+                    <div style="padding:4px 10px;background:#f0f0f0;border-radius:4px;font-size:12px;font-family:monospace;">Ctrl + B</div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Command Palette</div><div class="settings-desc">命令面板</div></div>
+                    <div style="padding:4px 10px;background:#f0f0f0;border-radius:4px;font-size:12px;font-family:monospace;">Ctrl + Shift + P</div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">AI Assist</div><div class="settings-desc">唤起 AI 助手</div></div>
+                    <div style="padding:4px 10px;background:#f0f0f0;border-radius:4px;font-size:12px;font-family:monospace;">Ctrl + /</div>
+                </div>
+            </div>`,
+        account: `
+            <div class="settings-section">
+                <div class="settings-section-title">Account Info</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Username</div><div class="settings-desc">alex-chen</div></div>
+                    <button class="page-btn">Edit</button>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Email</div><div class="settings-desc">alex@example.com</div></div>
+                    <button class="page-btn">Change</button>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">API Key</div><div class="settings-desc">用于第三方集成</div></div>
+                    <button class="page-btn">Regenerate</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Security</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Two-Factor Auth</div><div class="settings-desc">增强账户安全性</div></div>
+                    <div class="toggle-switch"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Session Management</div><div class="settings-desc">管理已登录设备</div></div>
+                    <button class="page-btn">View</button>
+                </div>
+            </div>`,
+        data: `
+            <div class="settings-section">
+                <div class="settings-section-title">Backup</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Auto Backup</div><div class="settings-desc">每日自动备份到云端</div></div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Last Backup</div><div class="settings-desc">2024-06-07 03:00</div></div>
+                    <button class="page-btn">Backup Now</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Export</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Export All Data</div><div class="settings-desc">下载所有知识库数据</div></div>
+                    <button class="page-btn">Export</button>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">Export Format</div><div class="settings-desc">Markdown / JSON / HTML</div></div>
+                    <button class="page-btn">Markdown</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Danger Zone</div>
+                <div class="settings-row">
+                    <div><div class="settings-label" style="color:#e74c3c;">Clear All Data</div><div class="settings-desc">删除所有知识库数据（不可恢复）</div></div>
+                    <button class="page-btn" style="background:#e74c3c;color:#fff;">Clear</button>
+                </div>
+            </div>`,
+        about: `
+            <div class="settings-section">
+                <div class="settings-section-title">Study Hub</div>
+                <div style="font-size:13px;color:#666;line-height:1.8;margin-bottom:16px;">
+                    <p>版本：v2.1.0</p>
+                    <p>构建时间：2024-06-07</p>
+                    <p>许可证：MIT</p>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="page-btn">GitHub</button>
+                    <button class="page-btn">Documentation</button>
+                    <button class="page-btn">Report Issue</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title">Credits</div>
+                <div style="font-size:12px;color:#888;line-height:1.8;">
+                    <p>• OpenAI GPT-4 / Claude API</p>
+                    <p>• Markdown-it / KaTeX</p>
+                    <p>• D3.js / Chart.js</p>
+                    <p>• Vue.js 3 / Tailwind CSS</p>
+                </div>
+            </div>`
+    };
+    panel.innerHTML = contents[tab] || contents.appearance;
+}
+
+// Modal functions
+function openModal(title, body) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// Toggle switch interaction
+function initToggleSwitches() {
+    document.querySelectorAll('.toggle-switch').forEach(t => {
+        t.addEventListener('click', function() {
+            this.classList.toggle('on');
+        });
+    });
+}
+
+// Initialize after DOM ready
+setTimeout(initToggleSwitches, 100);
+
+// Lightweight interaction polish: preserve existing page logic, add richer feedback.
+document.addEventListener('click', function(e) {
+    const card = e.target.closest('.grid-card, .skill-card, .profile-card');
+    if (card && !e.target.closest('button, input, .card-tab, .drag-handle')) {
+        card.animate([
+            { transform: 'translateY(-3px) scale(1)' },
+            { transform: 'translateY(-3px) scale(0.992)' },
+            { transform: 'translateY(-3px) scale(1)' }
+        ], { duration: 180, easing: 'ease-out' });
+    }
+
+    const chip = e.target.closest('.search-filter-chip');
+    if (chip) {
+        chip.parentElement.querySelectorAll('.search-filter-chip').forEach(item => item.classList.remove('active'));
+        chip.classList.add('active');
+    }
+});
+
+document.querySelectorAll('.page-btn, .nav-action-btn, .platform-viewall, .skill-install-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', function() {
+        this.style.transform = 'translateY(1px) scale(0.98)';
+    });
+    btn.addEventListener('pointerup', function() {
+        this.style.transform = '';
+    });
+    btn.addEventListener('pointerleave', function() {
+        this.style.transform = '';
+    });
+});
+
+</script>
+
+
+<!-- ==================== SEARCH 页面 ==================== -->
+<div id="search" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search all knowledge / actions...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="search-hero">
+            <div style="font-size:24px;font-weight:bold;margin-bottom:16px;">🔍 Global Search</div>
+            <div class="search-input-large">Docker 网络模式...</div>
+            <div class="search-filters">
+                <button class="search-filter-chip active">All</button>
+                <button class="search-filter-chip">Wiki</button>
+                <button class="search-filter-chip">Knowledge Base</button>
+                <button class="search-filter-chip">Journal</button>
+                <button class="search-filter-chip">Automation</button>
+                <button class="search-filter-chip">Workflow</button>
+                <button class="search-filter-chip">Skills</button>
+            </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-size:13px;color:#888;">找到 12 个结果 · 耗时 0.3s</div>
+            <div style="display:flex;gap:8px;">
+                <button class="page-btn">Relevance</button>
+                <button class="page-btn">Date</button>
+            </div>
+        </div>
+        <div class="search-results">
+            <div class="search-result-item">
+                <div class="search-result-title">Docker <span class="search-highlight">网络模式</span>详解</div>
+                <div class="search-result-meta">📄 Wiki · 2024-06-07 · 2.3k words</div>
+                <div class="search-result-snippet">本文详细介绍了 Docker 的四种<span class="search-highlight">网络模式</span>：bridge、host、none 和 overlay。bridge 模式是默认模式，创建一个虚拟网桥 docker0...</div>
+            </div>
+            <div class="search-result-item">
+                <div class="search-result-title">Kubernetes CNI 插件与 <span class="search-highlight">网络</span>方案</div>
+                <div class="search-result-meta">📄 Knowledge Base · 2024-06-05 · 1.8k words</div>
+                <div class="search-result-snippet">CNI（Container Network Interface）是 Kubernetes 中容器<span class="search-highlight">网络</span>的标准接口。Flannel、Calico、Cilium 是常用的 CNI 插件...</div>
+            </div>
+            <div class="search-result-item">
+                <div class="search-result-title">容器<span class="search-highlight">网络</span>最佳实践笔记</div>
+                <div class="search-result-meta">📝 Journal · 2024-06-03 · 手写笔记</div>
+                <div class="search-result-snippet">今天整理了容器<span class="search-highlight">网络</span>的相关知识，发现 bridge 模式和 host 模式的使用场景有很大区别...</div>
+            </div>
+            <div class="search-result-item">
+                <div class="search-result-title">自动化任务：解析 Docker 文档</div>
+                <div class="search-result-meta">⚡ Automation · 2024-06-02 · 已完成</div>
+                <div class="search-result-snippet">从 Docker 官方文档提取了 <span class="search-highlight">网络</span> 相关章节，生成了结构化笔记并导入 Knowledge Base...</div>
+            </div>
+            <div class="search-result-item">
+                <div class="search-result-title">Docker Compose <span class="search-highlight">网络</span>配置</div>
+                <div class="search-result-meta">📄 Wiki · 2024-06-01 · 1.2k words</div>
+                <div class="search-result-snippet">Compose 文件中可以通过 networks 字段自定义<span class="search-highlight">网络</span>，支持 bridge、overlay 等类型...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== NOTIFICATIONS 页面 ==================== -->
+<div id="notifications" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">🔔 Notifications</div>
+            <div class="page-actions">
+                <button class="page-btn">Mark all read</button>
+                <button class="page-btn">Settings</button>
+            </div>
+        </div>
+        <div class="two-col-layout">
+            <div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <button class="page-btn primary">All (8)</button>
+                    <button class="page-btn">Unread (3)</button>
+                    <button class="page-btn">System (2)</button>
+                    <button class="page-btn">Tasks (3)</button>
+                </div>
+                <div class="notif-list">
+                    <div class="notif-item unread">
+                        <div class="notif-icon">⚡</div>
+                        <div class="notif-content">
+                            <div class="notif-title">自动化任务失败：抖音 #1 解析超时</div>
+                            <div class="notif-desc">任务在步骤 1 超时，建议检查网络连接后重试</div>
+                        </div>
+                        <div class="notif-time">2m ago</div>
+                    </div>
+                    <div class="notif-item unread">
+                        <div class="notif-icon">📅</div>
+                        <div class="notif-content">
+                            <div class="notif-title">DDL 提醒：项目评审会议即将开始</div>
+                            <div class="notif-desc">14:00 项目评审会议 · 会议室 A</div>
+                        </div>
+                        <div class="notif-time">15m ago</div>
+                    </div>
+                    <div class="notif-item unread">
+                        <div class="notif-icon">🤖</div>
+                        <div class="notif-content">
+                            <div class="notif-title">AI 助手完成了 Wiki 编译</div>
+                            <div class="notif-desc">3 篇新文档已编译并添加到 Knowledge Base</div>
+                        </div>
+                        <div class="notif-time">1h ago</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-icon">📚</div>
+                        <div class="notif-content">
+                            <div class="notif-title">Knowledge Base 导入完成</div>
+                            <div class="notif-desc">5 篇文档已成功导入并分类</div>
+                        </div>
+                        <div class="notif-time">3h ago</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-icon">✅</div>
+                        <div class="notif-content">
+                            <div class="notif-title">自动化任务完成：B站同步</div>
+                            <div class="notif-desc">所有步骤已完成，生成报告已保存</div>
+                        </div>
+                        <div class="notif-time">5h ago</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-icon">📝</div>
+                        <div class="notif-content">
+                            <div class="notif-title">Journal 每日提醒</div>
+                            <div class="notif-desc">今天还没有写手账哦，记得记录今天的学习收获</div>
+                        </div>
+                        <div class="notif-time">8h ago</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-icon">🔄</div>
+                        <div class="notif-content">
+                            <div class="notif-title">系统更新：Study Hub v2.1.0</div>
+                            <div class="notif-desc">新增 Skill Market 和 Second Self 模块，点击查看更新日志</div>
+                        </div>
+                        <div class="notif-time">1d ago</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-icon">🏆</div>
+                        <div class="notif-content">
+                            <div class="notif-title">获得成就：知识收藏家</div>
+                            <div class="notif-desc">Knowledge Base 文档数达到 100 篇！</div>
+                        </div>
+                        <div class="notif-time">2d ago</div>
+                    </div>
+                </div>
+            </div>
+            <div class="dock-panel">
+                <div class="dock-section">
+                    <div class="dock-title">📊 Notification Stats</div>
+                    <div style="display:flex;gap:8px;margin-bottom:10px;">
+                        <div style="flex:1;text-align:center;padding:10px;background:#e74c3c22;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;color:#e74c3c;">3</div>
+                            <div style="font-size:10px;">未读</div>
+                        </div>
+                        <div style="flex:1;text-align:center;padding:10px;background:#f0f0f0;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:bold;">8</div>
+                            <div style="font-size:10px;">总计</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">🔔 Notification Settings</div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">自动化任务通知</div>
+                            <div class="settings-desc">任务完成、失败、队列更新</div>
+                        </div>
+                        <div class="toggle-switch on"></div>
+                    </div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">DDL 提醒</div>
+                            <div class="settings-desc">任务到期前 30 分钟提醒</div>
+                        </div>
+                        <div class="toggle-switch on"></div>
+                    </div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">系统更新</div>
+                            <div class="settings-desc">新版本、功能更新</div>
+                        </div>
+                        <div class="toggle-switch"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PROFILE 页面 ==================== -->
+<div id="profile" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="profile-header">
+            <div class="profile-avatar-large">A</div>
+            <div class="profile-info">
+                <div class="profile-name">Alex Chen</div>
+                <div class="profile-bio">终身学习者 · 全栈开发者 · 知识管理爱好者</div>
+                <div class="profile-stats-row">
+                    <div class="profile-stat">
+                        <div class="profile-stat-num">128</div>
+                        <div class="profile-stat-label">文档</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-num">45</div>
+                        <div class="profile-stat-label">Wiki 页面</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-num">32</div>
+                        <div class="profile-stat-label">自动化任务</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-num">156</div>
+                        <div class="profile-stat-label">手账天数</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-num">12</div>
+                        <div class="profile-stat-label">成就</div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="page-btn primary">Edit Profile</button>
+                <button class="page-btn">Share</button>
+            </div>
+        </div>
+        <div class="profile-grid">
+            <div class="profile-card">
+                <div class="profile-card-title">本周活跃</div>
+                <div class="profile-card-value" style="color:#e85d2e;">42h</div>
+                <div style="font-size:11px;color:#888;margin-top:4px;">比上周 +12%</div>
+            </div>
+            <div class="profile-card">
+                <div class="profile-card-title">知识产出</div>
+                <div class="profile-card-value" style="color:#2ecc71;">18</div>
+                <div style="font-size:11px;color:#888;margin-top:4px;">篇新文档</div>
+            </div>
+            <div class="profile-card">
+                <div class="profile-card-title">连续记录</div>
+                <div class="profile-card-value" style="color:#f39c12;">23</div>
+                <div style="font-size:11px;color:#888;margin-top:4px;">天</div>
+            </div>
+        </div>
+        <div style="margin-top:16px;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px;">🏆 Achievements</div>
+            <div class="achievement-grid">
+                <div class="achievement-item">
+                    <div class="achievement-icon">📚</div>
+                    <div class="achievement-name">知识收藏家</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">✍️</div>
+                    <div class="achievement-name">笔耕不辍</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">⚡</div>
+                    <div class="achievement-name">自动化大师</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">🎯</div>
+                    <div class="achievement-name">DDL 克星</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">🔗</div>
+                    <div class="achievement-name">知识链接者</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">🌙</div>
+                    <div class="achievement-name">夜猫子学者</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">🤖</div>
+                    <div class="achievement-name">AI 协作者</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">🎨</div>
+                    <div class="achievement-name">创作者</div>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="profile-card">
+                <div class="profile-card-title">最近活动</div>
+                <div class="list-item"><div class="item-dot green"></div>编辑了 Docker 网络模式</div>
+                <div class="list-item"><div class="item-dot"></div>提交了自动化任务</div>
+                <div class="list-item"><div class="item-dot"></div>完成了今日手账</div>
+                <div class="list-item"><div class="item-dot"></div>安装了 2 个新 Skill</div>
+            </div>
+            <div class="profile-card">
+                <div class="profile-card-title">技能分布</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:80px;font-size:11px;">技术</div>
+                        <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;">
+                            <div style="width:60%;height:100%;background:#e85d2e;border-radius:4px;"></div>
+                        </div>
+                        <div style="width:30px;font-size:11px;text-align:right;">60%</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:80px;font-size:11px;">产品</div>
+                        <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;">
+                            <div style="width:25%;height:100%;background:#f4a261;border-radius:4px;"></div>
+                        </div>
+                        <div style="width:30px;font-size:11px;text-align:right;">25%</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:80px;font-size:11px;">设计</div>
+                        <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;">
+                            <div style="width:15%;height:100%;background:#2ecc71;border-radius:4px;"></div>
+                        </div>
+                        <div style="width:30px;font-size:11px;text-align:right;">15%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SETTINGS 页面 ==================== -->
+<div id="settings" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">⚙️ Settings</div>
+        </div>
+        <div class="settings-layout">
+            <div class="settings-nav">
+                <div class="settings-nav-item active" onclick="switchSettingsTab(this, 'appearance')">🎨 Appearance</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'notifications')">🔔 Notifications</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'automation')">⚡ Automation</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'editor')">📝 Editor</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'shortcuts')">⌨️ Shortcuts</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'account')">👤 Account</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'data')">💾 Data & Backup</div>
+                <div class="settings-nav-item" onclick="switchSettingsTab(this, 'about')">ℹ️ About</div>
+            </div>
+            <div class="settings-panel" id="settings-panel">
+                <div class="settings-section">
+                    <div class="settings-section-title">Theme</div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Dark Mode</div>
+                            <div class="settings-desc">使用深色主题保护眼睛</div>
+                        </div>
+                        <div class="toggle-switch on"></div>
+                    </div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Accent Color</div>
+                            <div class="settings-desc">选择主色调</div>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <div style="width:24px;height:24px;background:#e85d2e;border-radius:50%;border:2px solid #333;"></div>
+                            <div style="width:24px;height:24px;background:#2ecc71;border-radius:50%;"></div>
+                            <div style="width:24px;height:24px;background:#8b5cf6;border-radius:50%;"></div>
+                            <div style="width:24px;height:24px;background:#f39c12;border-radius:50%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">Layout</div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Left Rail Navigation</div>
+                            <div class="settings-desc">使用左侧导航栏代替顶部导航</div>
+                        </div>
+                        <div class="toggle-switch"></div>
+                    </div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Compact Mode</div>
+                            <div class="settings-desc">减小卡片间距，显示更多内容</div>
+                        </div>
+                        <div class="toggle-switch"></div>
+                    </div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Show Grid Background</div>
+                            <div class="settings-desc">在 Dashboard 显示网格虚线</div>
+                        </div>
+                        <div class="toggle-switch on"></div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">Language</div>
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">Interface Language</div>
+                            <div class="settings-desc">当前：简体中文</div>
+                        </div>
+                        <button class="page-btn">Change</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SECOND SELF 页面 ==================== -->
+<div id="secondself" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link active" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="chat-layout">
+            <div class="chat-sidebar">
+                <button class="chat-new-btn">+ New Chat</button>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;text-transform:uppercase;">Today</div>
+                <div class="chat-history-item active">Docker 网络模式问题</div>
+                <div class="chat-history-item">帮我整理本周学习笔记</div>
+                <div style="font-size:11px;color:#888;margin:12px 0 8px;text-transform:uppercase;">Yesterday</div>
+                <div class="chat-history-item">自动化任务配置建议</div>
+                <div class="chat-history-item">Journal 写作灵感</div>
+                <div style="font-size:11px;color:#888;margin:12px 0 8px;text-transform:uppercase;">Previous</div>
+                <div class="chat-history-item">Wiki 编译优化方案</div>
+                <div class="chat-history-item">Python 并发编程答疑</div>
+                <div class="chat-history-item">React 性能优化建议</div>
+            </div>
+            <div class="chat-main">
+                <div style="padding:12px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:14px;font-weight:600;">Docker 网络模式问题</div>
+                    <div style="display:flex;gap:6px;">
+                        <span class="tag-chip">🤖 GPT-4</span>
+                        <span class="tag-chip">📚 KB Connected</span>
+                    </div>
+                </div>
+                <div class="chat-messages">
+                    <div class="chat-message user">
+                        <div class="chat-avatar user">A</div>
+                        <div class="chat-bubble user">帮我解释一下 Docker 的 bridge 和 host 网络模式有什么区别？</div>
+                    </div>
+                    <div class="chat-message ai">
+                        <div class="chat-avatar ai">🤖</div>
+                        <div class="chat-bubble ai">
+                            <div style="font-weight:600;margin-bottom:6px;">Docker 网络模式对比</div>
+                            <div style="margin-bottom:8px;"><b>bridge 模式（默认）：</b></div>
+                            <div style="margin-bottom:8px;">• 创建独立的虚拟网桥 docker0</div>
+                            <div style="margin-bottom:8px;">• 容器间通过网桥通信，与宿主机隔离</div>
+                            <div style="margin-bottom:8px;">• 需要端口映射才能外部访问</div>
+                            <div style="margin-bottom:8px;"><b>host 模式：</b></div>
+                            <div style="margin-bottom:8px;">• 直接使用宿主机网络栈</div>
+                            <div style="margin-bottom:8px;">• 无需端口映射，性能更好</div>
+                            <div>• 但端口可能冲突，安全性较低</div>
+                        </div>
+                    </div>
+                    <div class="chat-message user">
+                        <div class="chat-avatar user">A</div>
+                        <div class="chat-bubble user">那生产环境一般推荐用哪种？</div>
+                    </div>
+                    <div class="chat-message ai">
+                        <div class="chat-avatar ai">🤖</div>
+                        <div class="chat-bubble ai">
+                            <div style="margin-bottom:8px;">生产环境推荐根据场景选择：</div>
+                            <div style="margin-bottom:8px;">• <b>微服务架构：</b>使用 bridge + 自定义网络，配合服务发现</div>
+                            <div style="margin-bottom:8px;">• <b>高性能场景：</b>host 模式（如 Nginx、负载均衡）</div>
+                            <div style="margin-bottom:8px;">• <b>跨主机通信：</b>overlay 模式（Swarm/K8s）</div>
+                            <div>• <b>安全隔离：</b>bridge + 网络策略</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input class="chat-input" placeholder="Ask anything about your knowledge..." />
+                    <button class="chat-send-btn">Send</button>
+                </div>
+            </div>
+            <div class="chat-dock">
+                <div class="dock-section">
+                    <div class="dock-title">🧠 AI Model</div>
+                    <div style="padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:8px;font-size:13px;">
+                        <div style="font-weight:500;margin-bottom:4px;">GPT-4</div>
+                        <div style="font-size:11px;color:#888;">上下文：8k tokens</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <span class="tag-chip">GPT-4</span>
+                        <span class="tag-chip">Claude</span>
+                        <span class="tag-chip">Local</span>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📚 Knowledge Context</div>
+                    <div class="dock-item">Docker 网络模式详解</div>
+                    <div class="dock-item">Kubernetes CNI</div>
+                    <div class="dock-item">容器网络最佳实践</div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">⚡ Quick Actions</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <span class="tag-chip">总结</span>
+                        <span class="tag-chip">翻译</span>
+                        <span class="tag-chip">解释</span>
+                        <span class="tag-chip">续写</span>
+                        <span class="tag-chip">润色</span>
+                    </div>
+                </div>
+                <div class="dock-section">
+                    <div class="dock-title">📝 Session Info</div>
+                    <div style="font-size:11px;color:#888;">
+                        <div>Messages: 4</div>
+                        <div>Tokens: 1,234</div>
+                        <div>Started: 14:32</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SKILL MARKET 页面 ==================== -->
+<div id="skillmarket" class="page">
+    <div class="top-nav-bar">
+        <div class="nav-logo"><div class="nav-logo-icon">S</div>Study Hub</div>
+        <div class="nav-links">
+            <button class="nav-link" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('wiki')">Wiki</button>
+            <button class="nav-link" onclick="showPage('kb')">Knowledge Base</button>
+            <button class="nav-link" onclick="showPage('auto')">Automation</button>
+            <button class="nav-link" onclick="showPage('ddl')">DDL</button>
+            <button class="nav-link" onclick="showPage('journal')">Journal</button>
+            <button class="nav-link" onclick="showPage('flow')">Workflow</button>
+            <button class="nav-link" onclick="showPage('creator')">Creator Hub</button>
+            <button class="nav-link active" onclick="showPage('skillmarket')">Skill Market</button>
+            <button class="nav-link" onclick="showPage('secondself')">Second Self</button>
+        </div>
+        <div class="nav-search" onclick="showPage('search')">🔍 Search skills...</div>
+        <div class="nav-actions">
+            <button class="nav-action-btn" onclick="showPage('notifications')">🔔</button>
+            <button class="nav-action-btn" onclick="showPage('settings')">⚙️</button>
+            <div class="nav-avatar" onclick="showPage('profile')">A</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="page-header">
+            <div class="page-title">🛠 Skill Market</div>
+            <div class="page-actions">
+                <button class="page-btn primary">+ Install Local</button>
+                <button class="page-btn">Sync</button>
+                <button class="page-btn">Filter</button>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button class="search-filter-chip active">All Skills</button>
+            <button class="search-filter-chip">Installed (12)</button>
+            <button class="search-filter-chip">Community</button>
+            <button class="search-filter-chip">Official</button>
+            <button class="search-filter-chip">Automation</button>
+            <button class="search-filter-chip">Analysis</button>
+            <button class="search-filter-chip">Writing</button>
+        </div>
+        <div class="skill-grid">
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">📊</div>
+                    <div class="skill-name">Data Analyzer</div>
+                </div>
+                <div class="skill-desc">自动分析数据并生成可视化图表和洞察报告，支持 CSV、JSON、Excel 格式。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Analysis</span>
+                    <button class="skill-install-btn installed">✓ Installed</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">📝</div>
+                    <div class="skill-name">Smart Writer</div>
+                </div>
+                <div class="skill-desc">AI 辅助写作，支持续写、润色、翻译、总结等多种写作场景。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Writing</span>
+                    <button class="skill-install-btn installed">✓ Installed</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">⚡</div>
+                    <div class="skill-name">Auto Import</div>
+                </div>
+                <div class="skill-desc">自动从抖音、B站、小红书导入内容并生成结构化笔记。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Automation</span>
+                    <button class="skill-install-btn installed">✓ Installed</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">🔍</div>
+                    <div class="skill-name">Deep Research</div>
+                </div>
+                <div class="skill-desc">多源深度调研，自动收集、交叉验证信息并生成研究报告。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Research</span>
+                    <button class="skill-install-btn">Install</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">📅</div>
+                    <div class="skill-name">DDL Manager</div>
+                </div>
+                <div class="skill-desc">智能时间管理，自动识别任务优先级，提供DDL提醒和进度追踪。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Productivity</span>
+                    <button class="skill-install-btn installed">✓ Installed</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">🎨</div>
+                    <div class="skill-name">Visual Creator</div>
+                </div>
+                <div class="skill-desc">生成图表、思维导图、流程图等可视化内容，支持多种导出格式。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Design</span>
+                    <button class="skill-install-btn">Install</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">🌐</div>
+                    <div class="skill-name">Web Scraper</div>
+                </div>
+                <div class="skill-desc">智能网页抓取，自动提取文章、数据、图片并保存到 Knowledge Base。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Automation</span>
+                    <button class="skill-install-btn">Install</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">🧠</div>
+                    <div class="skill-name">Memory Boost</div>
+                </div>
+                <div class="skill-desc">基于间隔重复算法，自动安排复习计划，帮助巩固知识记忆。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Learning</span>
+                    <button class="skill-install-btn">Install</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">📧</div>
+                    <div class="skill-name">Email Digest</div>
+                </div>
+                <div class="skill-desc">定期生成学习周报和知识摘要，自动发送到指定邮箱。</div>
+                <div class="skill-meta">
+                    <span class="skill-tag">Automation</span>
+                    <button class="skill-install-btn">Install</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL 组件 ==================== -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title" id="modal-title">Modal Title</div>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div id="modal-body">
+            <p style="font-size:13px;color:#666;">Modal content goes here...</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

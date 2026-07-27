@@ -13,8 +13,15 @@ Study-Hub 已装工具扫描器 v7.0
 import os
 import re
 import json
+import sys
 from pathlib import Path
 from typing import Optional
+
+# Windows 控制台 UTF-8 编码修复
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_FILE = PROJECT_ROOT / "project-memory" / ".tool-index.json"

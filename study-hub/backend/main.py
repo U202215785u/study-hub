@@ -25,7 +25,6 @@ from endpoints.wiki import router as wiki_router
 from endpoints.ai_search import router as ai_search_router
 from endpoints.brainstorm import router as brainstorm_router
 from endpoints.admin import router as admin_router
-from endpoints.memory import router as memory_router
 from endpoints.images import router as images_router
 from endpoints.second_self import router as second_self_router
 from endpoints.workflow import router as workflow_router
@@ -47,8 +46,6 @@ async def lifespan(app: FastAPI):
     init_db()
     from watcher import start_watcher
     start_watcher()
-    # 启动文件注入器定时任务
-    asyncio.create_task(_file_injector_loop())
     # 校验外部依赖（ffmpeg / Claude Code）
     _verify_startup_deps()
     # 恢复未完成的任务 + 孤儿 .md 文件（防止重启丢失）
@@ -78,25 +75,6 @@ async def _url_monitor_loop():
         except Exception as e:
             logger.error(f"[url_monitor] 定时任务异常: {e}")
         await asyncio.sleep(21600)  # 6 小时
-
-
-async def _file_injector_loop():
-    """文件注入器定时任务：每5分钟检查并更新记忆文件"""
-    import logging
-    logger = logging.getLogger("studyhub")
-    # 首次启动延迟30秒，避免与启动过程竞争
-    await asyncio.sleep(30)
-    while True:
-        try:
-            from core.file_injector import generate_memory_files
-            result = generate_memory_files()
-            if result.get("errors"):
-                logger.warning(f"[file_injector] 部分文件生成失败: {result['errors']}")
-            else:
-                logger.info(f"[file_injector] 记忆文件已更新: {result['stats']}")
-        except Exception as e:
-            logger.error(f"[file_injector] 定时任务异常: {e}")
-        await asyncio.sleep(300)  # 5分钟
 
 
 def _sanitize_pid_file():
@@ -232,7 +210,6 @@ app.include_router(wiki_router)
 app.include_router(ai_search_router)
 app.include_router(brainstorm_router)
 app.include_router(admin_router)
-app.include_router(memory_router)
 app.include_router(images_router)
 app.include_router(second_self_router)
 app.include_router(workflow_router)
@@ -439,13 +416,16 @@ if os.path.isdir(LEARNING_DIR):
 if os.path.isdir(FRONTEND_DIR):
     INDEX_PATH = os.path.abspath(os.path.join(FRONTEND_DIR, "index.html")).replace("\\", "/")
 
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        path = full_path
-        file_path = os.path.abspath(os.path.join(FRONTEND_DIR, path)).replace("\\", "/")
-        if path and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse(INDEX_PATH, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+    if os.path.isfile(INDEX_PATH):
+        @app.get("/{full_path:path}")
+        async def serve_spa(full_path: str):
+            path = full_path
+            file_path = os.path.abspath(os.path.join(FRONTEND_DIR, path)).replace("\\", "/")
+            if path and os.path.isfile(file_path):
+                return FileResponse(file_path)
+            return FileResponse(INDEX_PATH, headers={"Cache-Control": "no-store, no-cache, must-revalidate"})
+    else:
+        print(f"[WARN] Frontend dist/index.html not found at {INDEX_PATH}, SPA routing disabled")
 
 if __name__ == "__main__":
     import uvicorn

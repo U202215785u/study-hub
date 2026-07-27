@@ -1,97 +1,63 @@
-"""捕获门 — 判断什么值得记住
-
-不是所有内容都值得进记忆库。捕获门做第一层过滤。
-"""
+"""捕获闸门 — 评估记忆是否值得保存。"""
+import json
 import re
-from datetime import datetime
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from gateway_paths import ROOT
 
 
-def should_capture(text: str, source: str = "chat") -> tuple[bool, str]:
-    """判断文本是否值得捕获。
+@dataclass
+class CaptureConfig:
+    """捕获配置。"""
+    min_significance: str = "auto"  # auto / A / B / C
+    dedup_window: int = 7  # 去重窗口（天）
     
-    Returns:
-        (should_capture, reason)
-    """
-    text = text.strip()
-    if len(text) < 10:
-        return False, "太短"
-    
-    if len(text) > 5000:
-        return False, "太长"
-    
-    # 过滤常见无意义内容
-    noise_patterns = [
-        r'^\d+$',  # 纯数字
-        r'^[okOK]+$',
-        r'^谢谢*$',
-        r'^好的*$',
-        r'^明白*$',
-        r'^哈哈+$',
-    ]
-    for pattern in noise_patterns:
-        if re.match(pattern, text):
-            return False, "无意义内容"
-    
-    # 高价值信号
-    value_signals = [
-        "决定", "结论", "发现", "学到", "意识到",
-        "问题", "方案", "计划", "目标", "原则",
-        "因为", "所以", "导致", "结果是",
-        "错误", "教训", "经验", "反思",
-    ]
-    
-    for signal in value_signals:
-        if signal in text:
-            return True, f"包含价值信号: {signal}"
-    
-    # 知识密度检查
-    if _knowledge_density(text) < 0.3:
-        return False, "知识密度低"
-    
-    return True, "通过默认检查"
+    @property
+    def projects(self) -> list[dict]:
+        """从 DASHBOARD 加载项目列表。"""
+        dash_path = ROOT / "DASHBOARD.md"
+        if not dash_path.exists():
+            return []
+        text = dash_path.read_text(encoding="utf-8")
+        projects = []
+        pattern = r'### 项目\s*\d*\s*[:：]\s*(.+?)\n'
+        for match in re.finditer(pattern, text):
+            projects.append({"name": match.group(1).strip()})
+        return projects
 
 
-def _knowledge_density(text: str) -> float:
-    """计算文本的知识密度。"""
-    # 有信息量的词
-    info_words = len(re.findall(r'[\u4e00-\u9fff]{2,}', text))
-    info_words += len(re.findall(r'[a-zA-Z]{3,}', text))
-    
-    total_chars = len(text.strip())
-    if total_chars == 0:
-        return 0.0
-    
-    return min(1.0, info_words / (total_chars / 5))
+@dataclass
+class CaptureDecision:
+    """捕获决策结果。"""
+    should_capture: bool
+    significance: str  # A / B / C / drop
+    reason: str
+    entry_type: str = "capture"
 
 
-def extract_summary(text: str, max_length: int = 200) -> str:
-    """提取摘要。"""
-    text = text.strip()
-    if len(text) <= max_length:
-        return text
+def evaluate_capture(content: str, source: str, config: CaptureConfig | None = None) -> CaptureDecision:
+    """评估内容是否值得捕获。"""
+    if config is None:
+        config = CaptureConfig()
     
-    # 尝试在第一句结束处截断
-    first_sentence = re.split(r'[。！？]', text)[0]
-    if len(first_sentence) >= 20:
-        return first_sentence[:max_length]
+    content_lower = content.lower()
     
-    return text[:max_length] + "..."
-
-
-def classify_content(text: str) -> str:
-    """分类内容类型。"""
-    text_lower = text.lower()
+    # A 级：决策、原则、身份相关
+    a_signals = ["决定", "原则", "优先级", "目标", "里程碑", "复盘"]
+    for s in a_signals:
+        if s in content_lower:
+            return CaptureDecision(True, "A", f"命中 A 级信号「{s}」")
     
-    if any(w in text_lower for w in ["决定", "选择", "选", "要不要", "是否"]):
-        return "decision"
+    # B 级：项目进展、方法、知识
+    b_signals = ["完成", "进度", "方法", "知识", "技巧", "经验"]
+    for s in b_signals:
+        if s in content_lower:
+            return CaptureDecision(True, "B", f"命中 B 级信号「{s}」")
     
-    if any(w in text_lower for w in ["学到", "发现", "原理", "概念", "方法"]):
-        return "knowledge"
+    # C 级：一般记录
+    if len(content) > 50:
+        return CaptureDecision(True, "C", "长度达标，作为一般记录")
     
-    if any(w in text_lower for w in ["完成", "做了", "实现", "部署", "发布"]):
-        return "action"
-    
-    if any(w in text_lower for w in ["觉得", "感觉", "认为", "想法", "思考"]):
-        return "thought"
-    
-    return "fact"
+    return CaptureDecision(False, "drop", "内容过短且无价值信号")

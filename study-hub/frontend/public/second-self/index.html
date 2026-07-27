@@ -189,11 +189,47 @@
   }
   .toast.show { opacity: 1; }
 
+  .import-overlay {
+    position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
+    width: 420px; max-height: 80vh; overflow-y: auto;
+    background: rgba(10,16,24,0.97);
+    border: 1px solid var(--cyan); border-radius: var(--radius);
+    padding: 16px; z-index: 50; font-size: 11px;
+    box-shadow: 0 0 30px rgba(0,180,255,0.2);
+    display: none;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .import-overlay.show { display: block; }
+  .import-overlay h4 { color: var(--cyan); font-size: 11px; letter-spacing: 3px; margin-bottom: 10px; }
+  .import-tabs { display: flex; gap: 4px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .import-tab { background: transparent; border: none; color: var(--text2); cursor: pointer; padding: 4px 10px; font-size: 11px; border-radius: 3px; }
+  .import-tab.active { color: var(--cyan); background: rgba(0,180,255,0.12); }
+  .import-panel { display: none; }
+  .import-panel.active { display: block; }
+  .import-settings { display: flex; gap: 6px; margin-bottom: 10px; }
+  .import-settings select { background: rgba(0,20,40,0.6); border: 1px solid var(--border); color: #aaccee; padding: 4px 8px; font-size: 11px; border-radius: var(--radius); }
+  .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--text2); cursor: pointer; margin-bottom: 8px; transition: border-color 0.2s; }
+  .drop-zone.dragover { border-color: var(--cyan); color: var(--cyan); }
+  .import-options { display: flex; gap: 10px; margin: 8px 0; align-items: center; }
+  .import-options label { color: var(--text2); display: flex; align-items: center; gap: 4px; }
+  .import-options input, .import-options select { background: rgba(0,20,40,0.6); border: 1px solid var(--border); color: #aaccee; padding: 3px 6px; font-size: 11px; border-radius: var(--radius); }
+  #importResult { margin-top: 8px; font-size: 11px; }
+  #importResult .ok { color: #4caf7d; }
+  #importResult .err { color: #e05555; }
+  .import-btn { width: 100%; padding: 8px; margin-top: 8px; background: rgba(0,180,255,0.15); border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; border-radius: var(--radius); font-size: 12px; letter-spacing: 2px; }
+  .import-btn:hover { background: rgba(0,180,255,0.3); }
+  .import-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .import-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 14px; }
+  .import-close:hover { color: var(--cyan); }
+  #pasteInput, #chatInputImport { width: 100%; height: 120px; background: rgba(0,20,40,0.6); border: 1px solid var(--border); color: #aaccee; padding: 8px; font-size: 12px; border-radius: var(--radius); resize: vertical; }
+  .file-chip { display: inline-block; background: rgba(0,180,255,0.1); border: 1px solid var(--border); border-radius: 3px; padding: 2px 8px; margin: 2px; font-size: 10px; color: #aaccee; }
   @media (max-width: 768px) {
     .side-panel { width: 260px; }
     .side-panel.hidden { transform: translateX(260px); }
     .ctrl-btn { width: 40px; height: 40px; font-size: 15px; }
     .ctrl-btn.voice-btn { width: 52px; height: 52px; font-size: 22px; }
+    .import-overlay { width: 90vw; right: 5vw; }
   }
 </style>
 </head>
@@ -273,12 +309,57 @@
     <button class="ctrl-btn" id="btnReset" title="重置头像">⟳</button>
     <div class="ctrl-label">重置</div>
   </div>
+  <div style="text-align:center">
+    <button class="ctrl-btn" id="btnImport" title="批量导入">📥</button>
+    <div class="ctrl-label">导入</div>
+  </div>
 </div>
 
 <!-- ═══════════ 决策浮层 ═══════════ -->
 <div class="decision-overlay" id="decisionOverlay">
   <h4>◈ 决策分析</h4>
   <div id="decisionContent"></div>
+</div>
+
+<!-- ═══════════ 导入面板 ═══════════ -->
+<div class="import-overlay" id="importOverlay">
+  <button class="import-close" id="btnCloseImport">✕</button>
+  <h4>◈ 批量导入</h4>
+  <div class="import-tabs">
+    <button class="import-tab active" data-tab="file">📁 文件导入</button>
+    <button class="import-tab" data-tab="paste">📋 粘贴导入</button>
+    <button class="import-tab" data-tab="chat">💬 聊天记录</button>
+  </div>
+  <div class="import-settings">
+    <select id="importDomain"><option value="general">通用</option><option value="ai-learning">AI学习</option><option value="design">设计</option><option value="work">工作</option><option value="reading">阅读</option><option value="life">生活</option></select>
+    <select id="importField"><option value="knowledge">知识场</option><option value="history">历史场</option></select>
+    <select id="importSignificance"><option value="B">B级</option><option value="A">A级</option><option value="C">C级</option></select>
+  </div>
+  <div class="import-body">
+    <div id="tab-file" class="import-panel active">
+      <div class="drop-zone" id="dropZone">拖拽文件到此处 或 点击选择文件<br><small style="color:#556677">支持 .md .txt .json .csv</small></div>
+      <input type="file" id="fileInputImport" multiple accept=".md,.txt,.json,.csv" style="display:none">
+      <div id="fileList"></div>
+      <div class="import-options">
+        <label>格式 <select id="importFormat"><option value="auto">自动识别</option><option value="markdown">Markdown</option><option value="text-split">文本切分</option><option value="json">JSON</option><option value="csv">CSV</option></select></label>
+        <label>分隔符 <input type="text" id="importSplit" value="\n---\n" style="width:80px"></label>
+      </div>
+    </div>
+    <div id="tab-paste" class="import-panel">
+      <textarea id="pasteInput" placeholder="直接粘贴内容...&#10;文本切分：用 --- 分隔多段&#10;JSON：贴 [{&quot;content&quot;:&quot;...&quot;,&quot;title&quot;:&quot;...&quot;}]&#10;CSV：第一行是表头，必须含 content 列"></textarea>
+      <div class="import-options">
+        <label>格式 <select id="pasteFormat"><option value="text-split">文本切分</option><option value="markdown">整条</option><option value="json">JSON</option><option value="csv">CSV</option></select></label>
+        <label>分隔符 <input type="text" id="pasteSplit" value="\n---\n" style="width:80px"></label>
+      </div>
+    </div>
+    <div id="tab-chat" class="import-panel">
+      <textarea id="chatInputImport" placeholder="粘贴导出的聊天记录...&#10;每行一条，包含「说话人：内容」格式"></textarea>
+      <input type="text" id="chatHint" placeholder="来源描述（如：工作群）" style="width:100%;margin-top:6px;background:rgba(0,20,40,0.6);border:1px solid var(--border);color:#aaccee;padding:6px;font-size:12px;border-radius:var(--radius);">
+      <input type="text" id="chatAliases" placeholder="你的昵称，多个用逗号分隔（如：L,小明）" style="width:100%;margin-top:6px;background:rgba(0,20,40,0.6);border:1px solid var(--border);color:#aaccee;padding:6px;font-size:12px;border-radius:var(--radius);">
+    </div>
+    <button class="import-btn" id="btnDoImport">开始导入</button>
+    <div id="importResult"></div>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -413,6 +494,8 @@ function bindEvents() {
   document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('btnReset').addEventListener('click', () => { heroAPI.resetAvatar(); toast('头像已重置'); });
   document.getElementById('btnPanel').addEventListener('click', togglePanel);
+  document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importOverlay').classList.toggle('show'));
+  document.getElementById('btnCloseImport').addEventListener('click', () => document.getElementById('importOverlay').classList.remove('show'));
 
   document.getElementById('fileInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -431,8 +514,114 @@ function bindEvents() {
   heroAPI._onClick = () => heroAPI.pulse();
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === ' ' && !e.target.closest('input')) { e.preventDefault(); toggleVoice(); }
-    if (e.key === 'Enter' && !e.target.closest('input')) { e.preventDefault(); analyzeText(); }
+    if (e.key === ' ' && !e.target.closest('input') && !e.target.closest('textarea') && !e.target.closest('.import-overlay')) { e.preventDefault(); toggleVoice(); }
+    if (e.key === 'Enter' && !e.target.closest('input') && !e.target.closest('textarea')) { e.preventDefault(); analyzeText(); }
+  });
+
+  // 导入面板 Tab 切换
+  document.querySelectorAll('.import-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.import-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.import-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // 文件拖拽/选择
+  const dropZone = document.getElementById('dropZone');
+  const fileInputImport = document.getElementById('fileInputImport');
+  let selectedFiles = [];
+  dropZone.addEventListener('click', () => fileInputImport.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleImportFiles(e.dataTransfer.files); });
+  fileInputImport.addEventListener('change', () => handleImportFiles(fileInputImport.files));
+
+  function handleImportFiles(files) {
+    for (const f of files) selectedFiles.push(f);
+    renderImportFileList();
+  }
+  function renderImportFileList() {
+    const el = document.getElementById('fileList');
+    el.innerHTML = selectedFiles.map((f, i) => `<span class="file-chip">${esc(f.name)} <a href="#" style="color:#e05555;text-decoration:none" onclick="event.preventDefault();selectedFiles.splice(${i},1);renderImportFileList();">✕</a></span>`).join('');
+  }
+  window.selectedFiles = selectedFiles;
+  window.renderImportFileList = renderImportFileList;
+
+  // 开始导入
+  document.getElementById('btnDoImport').addEventListener('click', async () => {
+    const btn = document.getElementById('btnDoImport');
+    const resultEl = document.getElementById('importResult');
+    const activeTab = document.querySelector('.import-tab.active').dataset.tab;
+    const domain = document.getElementById('importDomain').value;
+    const field = document.getElementById('importField').value;
+    const significance = document.getElementById('importSignificance').value;
+
+    btn.disabled = true; btn.textContent = '导入中...';
+    resultEl.innerHTML = '';
+
+    try {
+      if (activeTab === 'chat') {
+        const chatText = document.getElementById('chatInputImport').value.trim();
+        const contextHint = document.getElementById('chatHint').value.trim();
+        const aliases = document.getElementById('chatAliases').value.trim();
+        if (!chatText) { toast('请输入聊天记录'); btn.disabled = false; btn.textContent = '开始导入'; return; }
+
+        // 聊天记录走 multipart 上传（后端 chat/batch-distill 接收 UploadFile）
+        const formData = new FormData();
+        const blob = new Blob([chatText], { type: 'text/plain' });
+        formData.append('file', blob, 'chat.txt');
+        formData.append('context_hint', contextHint);
+        formData.append('my_aliases', aliases);
+
+        const resp = await fetch(`${API}/chat/batch-distill`, { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        resultEl.innerHTML = `<div class="ok">✓ 成功提取 ${data.extracted} 条记忆</div>`;
+        toast(`导入完成：${data.extracted} 条`);
+      } else {
+        let items = [];
+        if (activeTab === 'file') {
+          if (selectedFiles.length === 0) { toast('请选择文件'); btn.disabled = false; btn.textContent = '开始导入'; return; }
+          for (const f of selectedFiles) {
+            const text = await f.text();
+            items.push({ filename: f.name, content: text });
+          }
+        } else {
+          const text = document.getElementById('pasteInput').value.trim();
+          if (!text) { toast('请输入内容'); btn.disabled = false; btn.textContent = '开始导入'; return; }
+          const fmt = document.getElementById('pasteFormat').value;
+          items.push({ filename: `paste.${fmt === 'text-split' ? 'txt' : fmt === 'markdown' ? 'md' : fmt}`, content: text });
+        }
+
+        const resp = await fetch(`${API}/batch-import`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items,
+            format: activeTab === 'file' ? document.getElementById('importFormat').value : document.getElementById('pasteFormat').value,
+            domain, field, significance,
+            split: activeTab === 'file' ? document.getElementById('importSplit').value : document.getElementById('pasteSplit').value,
+          }),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+
+        let html = `<div class="ok">✓ 成功导入 ${data.imported} 条</div>`;
+        if (data.errors && data.errors.length) {
+          html += `<div class="err">失败 ${data.errors.length} 条：</div>`;
+          html += data.errors.slice(0, 5).map(e => `<div style="color:#e05555;padding:2px 0;border-bottom:1px solid rgba(0,30,60,0.3)">${esc(e.filename)}: ${esc(e.error)}</div>`).join('');
+        }
+        resultEl.innerHTML = html;
+        toast(`导入完成：${data.imported} 条`);
+        selectedFiles.length = 0; renderImportFileList();
+      }
+      loadDashboard();
+    } catch (e) {
+      resultEl.innerHTML = `<div class="err">✗ ${esc(e.message)}</div>`;
+      toast('导入失败');
+    }
+    btn.disabled = false; btn.textContent = '开始导入';
   });
 }
 

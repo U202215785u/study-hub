@@ -11,8 +11,11 @@
 | 路径空格 | Windows 路径带空格导致命令解析错误。用引号包裹路径。 |
 | **Windows GBK 编码崩溃** | Python 在 Windows 终端（GBK 编码）下 print 特殊字符（如 ✓、🚀、📋）会导致 `UnicodeEncodeError`，服务启动直接崩溃。解决方法：(1) 用 ASCII 字符替代 emoji，如 `[OK]` 代替 `✓`；(2) 或在入口文件强制 `sys.stdout` 使用 UTF-8 wrapper。 |
 | **Windows venv python.exe GUI 子系统** | 在 Windows 上创建 venv 时，`python.exe` 可能被编译为 GUI 子系统（`PE32 executable ... (GUI)`），终端下无任何 stdout/stderr 输出。即使 Python 脚本报错也完全静默，排查极其困难。验证方法：`file venv/Scripts/python.exe`。解决：(1) 用系统 Python（console 子系统）启动，`PYTHONPATH` 指向 venv site-packages；(2) 或重建 venv 时确保 python.exe 是 console 子系统。 |
+| **Windows Python Store 重定向器（exit code 49）** | Windows 将 `python`/`python3` 命令关联到 Microsoft Store 重定向器（`WindowsApps/python.exe`），执行任何脚本都返回 exit code 49，完全不运行。Git Bash 下尤其隐蔽。解决：用 PowerShell 或完整路径调用真实 Python（如 `C:\Users\...\Python312\python.exe`），或从 Microsoft Store 安装 Python 后首次通过 GUI 启动完成初始化。 |
 | **SQLite WAL 并发锁** | WAL 模式下多进程/多线程同时写 SQLite 会出现 `database is locked`。解决：连接时设置 `PRAGMA busy_timeout=10000`（10秒），并给 `sqlite3.connect()` 传 `timeout=30.0`。 |
 | **SQLite ALTER TABLE 不支持 CHECK** | `ALTER TABLE ... ADD COLUMN ... CHECK(...)` 在 SQLite 中会报错 `Cannot add a column with non-constant default`。迁移时应先加无约束的列，再用 `UPDATE` 修正数据，或在应用层做校验。 |
+| **SQLite 文件锁导致目录无法删除** | 当 Python 进程持有 SQLite 数据库连接（尤其是 WAL 模式的 `entries.db` + `db-shm` + `db-wal`）时，`rm -rf` 会报 "Device or resource busy"。解决：先终止持有数据库连接的 Python 进程（可用 PowerShell `Get-Process python | Stop-Process -Force`），再删除目录。 |
+| **Python 模块缓存不感知文件替换** | Python 进程启动后会将导入的模块缓存到 `sys.modules`，即使源 `.py` 文件被替换/删除，运行中的进程仍使用内存中的旧版本。迁移代码后必须重启服务，否则 API 可能返回旧数据或 `ImportError`。 |
 
 ## Git 类
 

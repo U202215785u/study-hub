@@ -10,6 +10,9 @@
       <router-view />
       <SystemStatus />
     </div>
+    <!-- 全局反馈组件 -->
+    <AppToast />
+    <AppConfirm />
   </div>
 </template>
 
@@ -18,6 +21,8 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import SystemStatus from './components/SystemStatus.vue'
+import AppToast from './components/AppToast.vue'
+import AppConfirm from './components/AppConfirm.vue'
 
 const route = useRoute()
 const isFullScreenRoute = computed(() =>
