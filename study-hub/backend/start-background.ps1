@@ -7,9 +7,12 @@ param(
 $ErrorActionPreference = "Stop"
 $ProjectDir = $PSScriptRoot
 $MainPy = [System.IO.Path]::GetFullPath((Join-Path $ProjectDir "main.py"))
+$RunnerPy = [System.IO.Path]::GetFullPath((Join-Path $ProjectDir "startup_runner.py"))
 $DataDir = Join-Path $ProjectDir "data"
-$PidFile = Join-Path $DataDir "server.pid"
-$AppLog = Join-Path $DataDir "app.log"
+$PidName = if ($Port -eq 8741) { "server.pid" } else { "server.$Port.pid" }
+$PidFile = Join-Path $DataDir $PidName
+$StartupStdoutLog = Join-Path $DataDir "startup.stdout.log"
+$StartupStderrLog = Join-Path $DataDir "startup.stderr.log"
 
 function Get-Listener {
     Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
@@ -27,6 +30,18 @@ function Test-StudyHubProcess([int]$ProcessId) {
     }
     return $ProcessInfo.CommandLine.IndexOf(
         $MainPy,
+        [System.StringComparison]::OrdinalIgnoreCase
+    ) -ge 0
+}
+
+function Test-StudyHubProcessForPort([int]$ProcessId) {
+    $ProcessInfo = Get-ProcessInfo $ProcessId
+    if (-not $ProcessInfo -or -not (Test-StudyHubProcess $ProcessId)) {
+        return $false
+    }
+    $PortMarker = "--port $Port "
+    return $ProcessInfo.CommandLine.IndexOf(
+        $PortMarker,
         [System.StringComparison]::OrdinalIgnoreCase
     ) -ge 0
 }
@@ -108,21 +123,16 @@ try {
 Write-Host "[INFO] Starting Study Hub with $PythonExe" -ForegroundColor Cyan
 Write-Host "[INFO] Working directory: $ProjectDir" -ForegroundColor Gray
 
-$PreviousPort = $env:PORT
-$PreviousUnbuffered = $env:PYTHONUNBUFFERED
-try {
-    $env:PORT = [string]$Port
-    $env:PYTHONUNBUFFERED = "1"
-    $LaunchArguments = '/d /c start "" /min "{0}" -u "{1}"' -f $PythonExe, $MainPy
-    Start-Process `
-        -FilePath "cmd.exe" `
-        -ArgumentList $LaunchArguments `
-        -WorkingDirectory $ProjectDir `
-        -WindowStyle Hidden | Out-Null
-} finally {
-    $env:PORT = $PreviousPort
-    $env:PYTHONUNBUFFERED = $PreviousUnbuffered
-}
+Remove-Item -LiteralPath $StartupStdoutLog -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $StartupStderrLog -Force -ErrorAction SilentlyContinue
+
+$LaunchArguments = '/d /c start "" /min "{0}" -u "{1}" --main "{2}" --port {3} --stdout "{4}" --stderr "{5}"' -f `
+    $PythonExe, $RunnerPy, $MainPy, $Port, $StartupStdoutLog, $StartupStderrLog
+Start-Process `
+    -FilePath "cmd.exe" `
+    -ArgumentList $LaunchArguments `
+    -WorkingDirectory $ProjectDir `
+    -WindowStyle Hidden | Out-Null
 
 $Healthy = $false
 $ActualProcessId = 0
@@ -130,6 +140,18 @@ for ($Attempt = 0; $Attempt -lt 60; $Attempt++) {
     Start-Sleep -Milliseconds 500
     $CurrentListener = Get-Listener
     if (-not $CurrentListener) {
+        if ($Attempt -ge 4 -and
+            ((Test-Path -LiteralPath $StartupStdoutLog) -or
+             (Test-Path -LiteralPath $StartupStderrLog))) {
+            $OwnedProcess = Get-CimInstance Win32_Process `
+                -Filter "Name='python.exe' OR Name='pythonw.exe'" `
+                -ErrorAction SilentlyContinue |
+                Where-Object { Test-StudyHubProcessForPort ([int]$_.ProcessId) } |
+                Select-Object -First 1
+            if (-not $OwnedProcess) {
+                break
+            }
+        }
         continue
     }
     $CurrentProcessId = [int]$CurrentListener.OwningProcess
@@ -159,13 +181,18 @@ if ($Healthy) {
 }
 
 Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='pythonw.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { Test-StudyHubProcess ([int]$_.ProcessId) } |
+    Where-Object { Test-StudyHubProcessForPort ([int]$_.ProcessId) } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 if (Test-Path -LiteralPath $PidFile) {
     Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
 }
 Write-Host "[ERROR] Study Hub did not become healthy on port $Port." -ForegroundColor Red
-if (Test-Path -LiteralPath $AppLog) {
-    Get-Content -LiteralPath $AppLog -Tail 20 -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $StartupStderrLog) {
+    Write-Host "[STARTUP STDERR]" -ForegroundColor Yellow
+    Get-Content -LiteralPath $StartupStderrLog -Encoding UTF8 -Tail 20 -ErrorAction SilentlyContinue
+}
+if (Test-Path -LiteralPath $StartupStdoutLog) {
+    Write-Host "[STARTUP STDOUT]" -ForegroundColor Yellow
+    Get-Content -LiteralPath $StartupStdoutLog -Encoding UTF8 -Tail 20 -ErrorAction SilentlyContinue
 }
 exit 4
