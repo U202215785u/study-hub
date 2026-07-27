@@ -1,6 +1,4 @@
 @echo off
-chcp 65001 >nul
-echo Stopping Study Hub backend...
-powershell -ExecutionPolicy Bypass -File "%~dp0stop-background.ps1"
-echo.
-pause
+setlocal
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0backend\stop-background.ps1"
+exit /b %errorlevel%

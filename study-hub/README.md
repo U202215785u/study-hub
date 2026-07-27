@@ -95,16 +95,19 @@ docker compose up -d
 
 ### Windows（推荐）
 
-双击运行项目根目录的 **`start.bat`**，或 PowerShell 执行：
+项目根目录只保留一套推荐入口：双击 **`后台启动.bat`** 启动，双击
+**`后台停止.bat`** 停止；也可以在 PowerShell 中执行：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File start.ps1
+后台启动.bat
+后台停止.bat
 ```
 
 脚本会自动：
-- 检测原始 Python（避开 GamePP 等注入的 `HD_python.exe`）
-- 检查并安装依赖
-- 启动服务并打印访问地址
+- 通过系统 `py -3` 定位并验证 Python 的绝对路径，不使用项目 venv
+- 拒绝占用 8741 的非本项目进程，清理无效或陈旧 PID
+- 等待健康检查成功后写入有效数字 PID
+- 停止时只终止当前目录启动的 Study Hub，并清理 PID 文件
 
 ### macOS / Linux
 
@@ -232,7 +235,8 @@ study-hub/
 │   ├── database.py            # SQLite 数据库初始化
 │   ├── watcher.py             # 收件箱文件夹监听
 │   ├── requirements.txt       # Python 依赖
-│   ├── start.bat              # Windows 启动脚本
+│   ├── start-background.ps1   # Windows 后台启动实现
+│   ├── stop-background.ps1    # Windows 后台停止实现
 │   ├── endpoints/
 │   │   ├── upload.py          # 文件上传 / 文本存入
 │   │   ├── rag.py             # RAG 语义搜索
@@ -253,7 +257,8 @@ study-hub/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .env.example
-├── 启动.bat
+├── 后台启动.bat               # Windows 唯一推荐启动入口
+├── 后台停止.bat               # Windows 唯一推荐停止入口
 └── README.md
 ```
 

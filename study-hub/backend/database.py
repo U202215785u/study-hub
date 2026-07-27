@@ -27,11 +27,10 @@ def _migrate_ddl_tasks(conn):
 
 
 def init_db():
-    # 防重置：如果数据库文件已存在且有数据，不再执行 CREATE TABLE（DEC-023）
-    db_exists = os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0
     conn = get_db()
-    if not db_exists:
-        conn.executescript("""
+    # CREATE TABLE IF NOT EXISTS 不会重置已有数据，也能修复只写入了 SQLite
+    # 文件头、但核心表尚未创建的中断初始化。
+    conn.executescript("""
             CREATE TABLE IF NOT EXISTS categories (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
@@ -127,7 +126,7 @@ def init_db():
                 patch_ids_applied TEXT DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-        """)
+    """)
     conn.commit()
 
     # 兼容旧表：categories 新增 tag_rules 字段
