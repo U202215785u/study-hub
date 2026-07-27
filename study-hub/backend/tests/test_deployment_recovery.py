@@ -136,11 +136,17 @@ def test_windows_scripts_avoid_known_unsafe_process_patterns():
     assert "Test-StudyHubProcess" in combined
 
 
-def test_batch_launchers_only_delegate_to_canonical_scripts():
+def test_windows_launchers_only_delegate_to_canonical_scripts():
     launchers = {
         STUDY_HUB_DIR / "后台启动.bat": "backend\\start-background.ps1",
         STUDY_HUB_DIR / "后台停止.bat": "backend\\stop-background.ps1",
         STUDY_HUB_DIR / "启动.bat": "后台启动.bat",
+        STUDY_HUB_DIR / "start-background.ps1": "backend\\start-background.ps1",
+        STUDY_HUB_DIR / "start-direct.ps1": "backend\\start-background.ps1",
+        STUDY_HUB_DIR / "start_server.ps1": "backend\\start-background.ps1",
+        STUDY_HUB_DIR / "start-temp.bat": "backend\\start-background.ps1",
+        STUDY_HUB_DIR / "stop-background.ps1": "backend\\stop-background.ps1",
+        BACKEND_DIR / "start.bat": "start-background.ps1",
         BACKEND_DIR / "后台启动.bat": "start-background.ps1",
         BACKEND_DIR / "后台停止.bat": "stop-background.ps1",
     }
@@ -151,6 +157,33 @@ def test_batch_launchers_only_delegate_to_canonical_scripts():
         assert "venv" not in content
         assert "main.py" not in content
         assert "python.exe" not in content
+
+
+def test_stale_second_port_pid_does_not_kill_first_instance(tmp_path):
+    backend_dir = _make_script_sandbox(tmp_path)
+    start_script = backend_dir / "start-background.ps1"
+    stop_script = backend_dir / "stop-background.ps1"
+    first_port = _free_port()
+    second_port = _free_port()
+
+    try:
+        first = _run_powershell(start_script, "-Port", first_port)
+        assert first.returncode == 0, first.stdout + first.stderr
+        _wait_for_health(first_port)
+        first_pid = _pid_file(backend_dir, first_port).read_text(
+            encoding="utf-8"
+        )
+
+        stale_pid_file = _pid_file(backend_dir, second_port)
+        stale_pid_file.write_text(first_pid, encoding="utf-8")
+        second = _run_powershell(start_script, "-Port", second_port)
+
+        assert second.returncode == 0, second.stdout + second.stderr
+        _wait_for_health(first_port, timeout=3)
+        _wait_for_health(second_port, timeout=3)
+    finally:
+        _run_powershell(stop_script, "-Port", first_port, timeout=15)
+        _run_powershell(stop_script, "-Port", second_port, timeout=15)
 
 
 def test_start_and_stop_work_from_a_path_with_spaces(tmp_path):

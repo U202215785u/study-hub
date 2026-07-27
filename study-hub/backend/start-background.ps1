@@ -104,7 +104,7 @@ if ($Listener) {
 }
 
 $FileProcessId = Read-PidFile
-if ($FileProcessId -gt 0 -and (Test-StudyHubProcess $FileProcessId)) {
+if ($FileProcessId -gt 0 -and (Test-StudyHubProcessForPort $FileProcessId)) {
     Write-Host "[INFO] Stopping an owned process that no longer listens (PID=$FileProcessId)." -ForegroundColor Cyan
     Stop-Process -Id $FileProcessId -Force -ErrorAction SilentlyContinue
     Wait-Process -Id $FileProcessId -Timeout 5 -ErrorAction SilentlyContinue
