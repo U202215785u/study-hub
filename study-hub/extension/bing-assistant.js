@@ -81,7 +81,7 @@
       const data = await chrome.storage.local.get([CONFIG.STORAGE_STATE]);
       const s = data[CONFIG.STORAGE_STATE];
       if (s) {
-        app.pinned = s.pinned !== false;  // 默认 true
+        app.pinned = s.pinned === true;
         app.collapsed = !!s.collapsed;
         app.closed = !!s.closed;
         // 位置在 showPanel 中恢复

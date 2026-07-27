@@ -65,7 +65,7 @@
           <div
             v-for="entry in filteredEntries.slice(0, 15)"
             :key="entry.id"
-            @click="loadEntry(entry)"
+            @click="selectEntry(entry)"
             :class="[
               'relative pl-5 py-1.5 cursor-pointer transition-colors rounded-[6px] mb-0.5',
               selectedEntryId === entry.id ? 'bg-accent-glow' : 'hover:bg-white/[0.02]'
@@ -228,7 +228,7 @@
       <!-- 随机回顾 -->
       <div class="px-4 py-3 border-b border-border flex-1 overflow-y-auto">
         <div class="text-[10px] text-text-secondary uppercase tracking-[2px] mb-3">随机回顾</div>
-        <div v-if="randomEntry" @click="loadEntry(randomEntry)"
+        <div v-if="randomEntry" @click="selectEntry(randomEntry)"
           class="p-3 bg-bg border border-border rounded-[10px] cursor-pointer hover:border-accent transition-colors">
           <div class="flex items-center justify-between mb-1">
             <span class="text-[11px] text-text-secondary">{{ formatDateShort(randomEntry.date) }}</span>
@@ -265,6 +265,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useSettingsStore } from '../stores/settings.js'
+import { useConfirm } from '../composables/useConfirm.js'
+import { toast } from '../composables/useToast.js'
 
 const store = useSettingsStore()
 
@@ -436,19 +438,20 @@ function nextMonth() {
 
 const { confirm } = useConfirm()
 
+async function canSwitchEntry() {
+  if (!hasUnsavedChanges()) return true
+
+  const save = await confirm({
+    title: '未保存的修改',
+    message: '当前日记有未保存的内容，是否保存后再切换？\n\n"确认" = 保存并切换\n"取消" = 留在此页'
+  })
+  if (!save) return false
+  return await saveEntry()
+}
+
 async function selectDate(dateStr) {
-  // 检查是否有未保存的修改
-  if (hasUnsavedChanges()) {
-    const save = await confirm({
-      title: '未保存的修改',
-      message: '当前日记有未保存的内容，是否保存后再切换？\n\n"确认" = 保存并切换\n"取消" = 留在此页'
-    })
-    if (save) {
-      await saveEntry()
-    } else {
-      return  // 留在此页，不切换
-    }
-  }
+  if (dateStr === selectedDate.value) return
+  if (!await canSwitchEntry()) return
 
   selectedDate.value = dateStr
   const found = entries.value.find(e => e.date === dateStr)
@@ -468,6 +471,12 @@ async function selectDate(dateStr) {
     selectedEntryId.value = 0
     lastSavedSnapshot.value = captureSnapshot()
   }
+}
+
+async function selectEntry(entry) {
+  if (entry.id === selectedEntryId.value) return
+  if (!await canSwitchEntry()) return
+  loadEntry(entry)
 }
 
 function createToday() {
@@ -517,7 +526,7 @@ async function saveEntry() {
     const result = await store.apiPost('/journal/entries', payload)
     if (result.error) {
       toast.error('保存失败：' + result.error)
-      return
+      return false
     }
     currentEntry.value = { ...result, tags: [...(result.tags || [])] }
     selectedEntryId.value = result.id
@@ -526,6 +535,10 @@ async function saveEntry() {
     await fetchStats()
     await fetchTags()
     refreshRandom()
+    return true
+  } catch (error) {
+    toast.error('保存失败：' + (error?.message || '未知错误'))
+    return false
   } finally {
     saving.value = false
   }

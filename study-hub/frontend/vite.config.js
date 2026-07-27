@@ -9,6 +9,20 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  test: {
+    environment: 'jsdom',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true
+      }
+    },
+    environmentOptions: {
+      jsdom: {
+        url: 'https://www.bing.com/search?q=test'
+      }
+    }
+  },
   server: {
     port: 5173,
     proxy: {

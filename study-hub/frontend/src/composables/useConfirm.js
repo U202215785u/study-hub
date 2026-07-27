@@ -6,7 +6,35 @@ const visible = ref(false)
 const title = ref('确认操作')
 const message = ref('')
 const danger = ref(false)
-let resolvePromise = null
+const requestId = ref(0)
+const pendingRequests = []
+let activeRequest = null
+
+function showNextRequest() {
+  if (activeRequest || pendingRequests.length === 0) return
+
+  activeRequest = pendingRequests.shift()
+  const options = activeRequest.options
+  title.value = options.title ?? '确认操作'
+  message.value = options.message ?? ''
+  danger.value = options.danger ?? false
+  requestId.value++
+  visible.value = true
+}
+
+function settleActiveRequest(result) {
+  if (!activeRequest) return
+
+  const request = activeRequest
+  activeRequest = null
+  request.resolve(result)
+
+  if (pendingRequests.length > 0) {
+    showNextRequest()
+  } else {
+    visible.value = false
+  }
+}
 
 export function useConfirm() {
   if (!instance) {
@@ -15,28 +43,18 @@ export function useConfirm() {
       title,
       message,
       danger,
+      requestId,
       confirm(options = {}) {
-        title.value = options.title ?? '确认操作'
-        message.value = options.message ?? ''
-        danger.value = options.danger ?? false
-        visible.value = true
         return new Promise((resolve) => {
-          resolvePromise = resolve
+          pendingRequests.push({ options, resolve })
+          showNextRequest()
         })
       },
       onConfirm() {
-        visible.value = false
-        if (resolvePromise) {
-          resolvePromise(true)
-          resolvePromise = null
-        }
+        settleActiveRequest(true)
       },
       onCancel() {
-        visible.value = false
-        if (resolvePromise) {
-          resolvePromise(false)
-          resolvePromise = null
-        }
+        settleActiveRequest(false)
       }
     }
   }
