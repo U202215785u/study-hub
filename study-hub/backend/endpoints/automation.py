@@ -1,4 +1,4 @@
-import os, sys, json, subprocess, re, tempfile, time, requests, uuid, threading, hashlib, base64
+import os, sys, json, subprocess, re, tempfile, time, requests, uuid, threading, hashlib, base64, asyncio
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, Future
 from fastapi import APIRouter
@@ -6,6 +6,7 @@ from database import get_db
 from processing.chunker import chunk_text
 from processing.vector_store import get_vector_store
 from social_parsers import BilibiliParser, XiaohongshuParser, QwenASR, HEADERS_BILIBILI
+from services.douyin_content import acquire_content, finalize_replacement, LocalFileRequired
 # douyin_mcp_server 模块可能未安装，延迟导入
 try:
     from douyin_mcp_server.server import DouyinProcessor
@@ -480,6 +481,93 @@ def _extract_douyin_raw(user_input: str) -> dict:
     return raw
 
 
+def _extract_preflight_douyin_raw(item_id: str) -> dict:
+    """Build the existing raw contract from a previously resolved Douyin item."""
+    conn = get_db()
+    item = conn.execute(
+        "SELECT * FROM douyin_preflight_items WHERE item_id = ?", (item_id,)
+    ).fetchone()
+    conn.close()
+    if not item:
+        raise RuntimeError("抖音预检项目不存在")
+    resolver_data = json.loads(item["resolver_data"] or "{}")
+    resolver_data["local_file_path"] = item["local_file_path"] or ""
+
+    async def load_subtitle(url):
+        response = await asyncio.to_thread(requests.get, url, timeout=30)
+        response.raise_for_status()
+        return response.text
+
+    async def transcribe(source, kind):
+        use_volc = bool(os.getenv("VOLC_APP_KEY", "").strip())
+        if kind == "audio" and not use_volc:
+            api_key = os.getenv("DASHSCOPE_API_KEY", "")
+            if not api_key:
+                raise RuntimeError("语音识别未配置")
+            result = await asyncio.to_thread(
+                QwenASR(api_key).recognize, source, language="zh"
+            )
+            if result.get("success") and result.get("text"):
+                return result["text"]
+            raise RuntimeError(result.get("error") or "语音识别失败")
+
+        video_path = source if kind == "local" else None
+        downloaded = None
+        audio_path = os.path.join(tempfile.gettempdir(), f"douyin_preflight_{uuid.uuid4().hex}.mp3")
+        try:
+            if kind != "local":
+                downloaded = os.path.join(tempfile.gettempdir(), f"douyin_preflight_{uuid.uuid4().hex}.video")
+                response = await asyncio.to_thread(requests.get, source, timeout=120)
+                response.raise_for_status()
+                with open(downloaded, "wb") as target:
+                    target.write(response.content)
+                video_path = downloaded
+            import ffmpeg as ffmpeg_mod
+            await asyncio.to_thread(
+                lambda: ffmpeg_mod.input(video_path).output(
+                    audio_path, vn=None, acodec="libmp3lame", audio_bitrate="64k",
+                    **({} if use_volc else {"t": "55"}),
+                ).run(cmd=FFMPEG_CMD, capture_stdout=True, capture_stderr=True, overwrite_output=True)
+            )
+            if use_volc:
+                result = await asyncio.to_thread(_volcengine_asr, audio_path)
+            else:
+                result = await asyncio.to_thread(
+                    QwenASR(os.getenv("DASHSCOPE_API_KEY", "")).recognize,
+                    audio_path,
+                    language="zh",
+                )
+            if result.get("success") and result.get("text"):
+                return result["text"]
+            raise RuntimeError(result.get("error") or "语音识别失败")
+        finally:
+            for path in (downloaded, audio_path):
+                if path and os.path.exists(path):
+                    os.remove(path)
+
+    try:
+        acquired = asyncio.run(
+            acquire_content(
+                resolver_data,
+                subtitle_loader=load_subtitle,
+                transcriber=transcribe,
+            )
+        )
+    except LocalFileRequired as exc:
+        raise RuntimeError(exc.code) from exc
+    return {
+        "platform": "抖音",
+        "type": "视频",
+        "url": item["canonical_url"] or item["input_url"],
+        "title": item["title"] or f"抖音作品 {item['work_id']}",
+        "author": item["author"] or "",
+        "video_id": item["work_id"] or "",
+        "duration": f"{int(item['duration_seconds'] or 0)}秒",
+        "asr_text": acquired.text,
+        "content_source": acquired.source,
+    }
+
+
 # ====== Deep Summary Prompt ======
 
 def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
@@ -812,6 +900,7 @@ def _load_pending_tasks_from_db() -> list[dict]:
                 "api_key_error": bool(r["api_key_error"]),
                 "api_key_error_msg": r["api_key_error_msg"],
                 "replace_doc_id": r["replace_doc_id"],
+                "preflight_item_id": r["preflight_item_id"],
             })
         return tasks
     except Exception as e:
@@ -895,7 +984,9 @@ def _process_single_task(task_id: str):
             elif module_id == "xiaohongshu-summary":
                 raw = _extract_xiaohongshu_raw(user_input)
             elif module_id == "douyin-summary":
-                raw = _extract_douyin_raw(user_input)
+                preflight_item_id = task.get("preflight_item_id")
+                raw = (_extract_preflight_douyin_raw(preflight_item_id)
+                       if preflight_item_id else _extract_douyin_raw(user_input))
             else:
                 raise ValueError(f"未知 deep 模块: {module_id}")
         else:
@@ -1002,7 +1093,8 @@ def _process_single_task(task_id: str):
                     pass
             conn.close()
             # 删除被替换的旧文档（如果是重新解析任务）
-            _delete_replaced_doc(task_id)
+            if not _delete_replaced_doc(task_id, doc_id):
+                raise RuntimeError("新文档质量检查未通过，原文档已保留")
             with _lock:
                 _tasks[task_id]["status"] = "done"
                 _tasks[task_id]["progress"] = "完成（已存在）"
@@ -1046,7 +1138,8 @@ def _process_single_task(task_id: str):
         conn.close()
 
         # 删除被替换的旧文档（如果是重新解析任务）
-        _delete_replaced_doc(task_id)
+        if not _delete_replaced_doc(task_id, doc_id):
+            raise RuntimeError("新文档质量检查未通过，原文档已保留")
 
         with _lock:
             _tasks[task_id]["status"] = "done"
@@ -1081,6 +1174,26 @@ def _process_single_task(task_id: str):
                     if s["key"] == t["current_step"] and s["status"] == "running":
                         s["status"] = "error"
         _task_to_db(_tasks[task_id])
+    finally:
+        preflight_item_id = task.get("preflight_item_id")
+        if preflight_item_id:
+            cleanup_conn = get_db()
+            cleanup_row = cleanup_conn.execute(
+                "SELECT local_file_path FROM douyin_preflight_items WHERE item_id = ?",
+                (preflight_item_id,),
+            ).fetchone()
+            local_path = cleanup_row["local_file_path"] if cleanup_row else ""
+            if local_path:
+                try:
+                    os.remove(local_path)
+                except FileNotFoundError:
+                    pass
+                cleanup_conn.execute(
+                    "UPDATE douyin_preflight_items SET local_file_path='' WHERE item_id=?",
+                    (preflight_item_id,),
+                )
+                cleanup_conn.commit()
+            cleanup_conn.close()
 
 
 def _check_api_key_error(raw: dict) -> bool:
@@ -1774,15 +1887,28 @@ def cleanup_documents(payload: dict = None):
     return {"dry_run": False, "deleted": deleted_count}
 
 
-def _delete_replaced_doc(task_id: str):
-    """如果是重新解析任务，删除被替换的旧文档。"""
+def _delete_replaced_doc(task_id: str, new_doc_id: int):
+    """新文档回读和质量检查通过后，才删除被替换的旧文档。"""
     with _lock:
         old_doc_id = _tasks.get(task_id, {}).get("replace_doc_id")
-    if old_doc_id:
-        try:
-            _delete_document_full(old_doc_id)
-        except Exception as e:
-            print(f"[WARN] 删除被替换旧文档失败 (doc_id={old_doc_id}): {e}")
+    if not old_doc_id:
+        return True
+    try:
+        conn = get_db()
+        replaced = finalize_replacement(conn, task_id, old_doc_id, new_doc_id)
+        conn.close()
+        if replaced:
+            try:
+                vs = get_vector_store()
+                existing = vs.collection.get(where={"doc_id": old_doc_id})
+                if existing and existing["ids"]:
+                    vs.collection.delete(ids=existing["ids"])
+            except Exception as exc:
+                print(f"[WARN] 清理旧文档向量失败 (doc_id={old_doc_id}): {exc}")
+        return replaced
+    except Exception as e:
+        print(f"[WARN] 安全替换旧文档失败 (doc_id={old_doc_id}): {e}")
+        return False
 
 
 @router.post("/automation/extract-webpage")
