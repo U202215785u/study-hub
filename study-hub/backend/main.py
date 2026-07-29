@@ -34,6 +34,7 @@ from endpoints.creator import router as creator_router
 from endpoints.skills import router as skills_router
 from endpoints.journal import router as journal_router
 from endpoints.operations import router as operations_router
+from endpoints.douyin import router as douyin_router
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 INBOX_DIR = os.path.join(os.path.dirname(__file__), "data", "inbox")
@@ -206,6 +207,7 @@ app.include_router(rag_router)
 app.include_router(review_router)
 app.include_router(categories_router)
 app.include_router(automation_router)
+app.include_router(douyin_router)
 app.include_router(wiki_router)
 app.include_router(ai_search_router)
 app.include_router(brainstorm_router)

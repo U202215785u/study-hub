@@ -750,15 +750,17 @@ def _task_to_db(task: dict):
             INSERT INTO task_queue (task_id, module_id, module_name, input_text, input_hash,
                 status, progress, error, result_doc_id, result_title,
                 steps_json, current_step, api_key_error, api_key_error_msg,
-                replace_doc_id, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                replace_doc_id, preflight_item_id, error_code, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(task_id) DO UPDATE SET
                 status=excluded.status, progress=excluded.progress,
                 error=excluded.error, result_doc_id=excluded.result_doc_id,
                 result_title=excluded.result_title, steps_json=excluded.steps_json,
                 current_step=excluded.current_step, api_key_error=excluded.api_key_error,
                 api_key_error_msg=excluded.api_key_error_msg,
-                replace_doc_id=excluded.replace_doc_id, updated_at=datetime('now')
+                replace_doc_id=excluded.replace_doc_id,
+                preflight_item_id=excluded.preflight_item_id,
+                error_code=excluded.error_code, updated_at=datetime('now')
         """, (
             task.get("task_id", ""),
             task.get("module_id", ""),
@@ -775,6 +777,8 @@ def _task_to_db(task: dict):
             1 if task.get("api_key_error") else 0,
             task.get("api_key_error_msg", ""),
             task.get("replace_doc_id"),
+            task.get("preflight_item_id"),
+            task.get("error_code", ""),
         ))
         conn.commit()
         conn.close()

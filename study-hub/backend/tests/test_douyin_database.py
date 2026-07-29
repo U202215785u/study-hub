@@ -100,3 +100,8 @@ def test_task_queue_migration_preserves_rows_and_accepts_new_states(tmp_path, mo
             "WHERE task_id = 'legacy-task'"
         )
 
+
+def test_database_connections_enforce_foreign_keys():
+    conn = database.get_db()
+    assert conn.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+    conn.close()
