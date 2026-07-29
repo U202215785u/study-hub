@@ -1,0 +1,3 @@
+# Install with --no-deps into .vendor. F2's declared exact dependency pins are
+# obsolete and must not replace Study Hub's audited runtime environment.
+f2==0.0.1.7
