@@ -138,6 +138,28 @@ async def test_local_file_accepts_mp4_signature_without_exposing_path():
 
 
 @pytest.mark.asyncio
+async def test_local_file_recovers_a_blocked_item():
+    conn = database.get_db()
+    conn.execute(
+        "INSERT OR IGNORE INTO douyin_preflight_batches (batch_id, raw_input, status) VALUES ('batch-blocked-file', 'x', 'blocked')"
+    )
+    conn.execute(
+        """INSERT OR REPLACE INTO douyin_preflight_items
+           (item_id, batch_id, input_url, title, status, error_code)
+           VALUES ('blocked-file', 'batch-blocked-file', 'https://v.douyin.com/x', 'title', 'blocked', 'cookie_required')"""
+    )
+    conn.commit()
+    conn.close()
+    async with await _client() as client:
+        response = await client.post(
+            "/automation/douyin/items/blocked-file/local-file",
+            files={"file": ("real.mp4", b"\x00\x00\x00\x18ftypmp42payload", "video/mp4")},
+        )
+    assert response.status_code == 200
+    assert response.json()["status"] == "ready"
+
+
+@pytest.mark.asyncio
 async def test_local_file_rejects_invalid_signature():
     conn = database.get_db()
     conn.execute(

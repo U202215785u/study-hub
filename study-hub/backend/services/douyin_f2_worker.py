@@ -76,6 +76,8 @@ def _classify(exc, has_cookie):
         return "risk_verification", True
     if any(token in message for token in ("cookie", "login", "unauthorized")):
         return ("cookie_expired" if has_cookie else "cookie_required"), False
+    if "响应内容为空" in message or "response content is empty" in message:
+        return ("cookie_expired" if has_cookie else "cookie_required"), False
     if status == 404:
         return "work_unavailable", False
     if isinstance(exc, (KeyError, AttributeError, ValueError)):

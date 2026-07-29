@@ -14,6 +14,33 @@ from services.douyin_resolver import (
 )
 
 
+def test_worker_output_ignores_f2_console_warnings():
+    from services.douyin_resolver import _decode_worker_output
+
+    payload = _decode_worker_output(
+        b'WARNING request returned empty\r\n{"error_code":"network_error","error_message":"failed"}\r\n'
+    )
+    assert payload["error_code"] == "network_error"
+
+    windows_output = '警告 请求为空\r\n{"error_code":"network_error","error_message":"抖音解析失败"}\r\n'.encode("gb18030")
+    payload = _decode_worker_output(windows_output)
+    assert payload["error_message"] == "抖音解析失败"
+
+
+def test_empty_f2_response_is_classified_as_cookie_required():
+    from services.douyin_f2_worker import _classify
+
+    code, opens_circuit = _classify(RuntimeError("第 1 次请求响应内容为空"), False)
+    assert (code, opens_circuit) == ("cookie_required", False)
+
+
+def test_anonymous_worker_network_failure_requests_cookie():
+    from services.douyin_resolver import _worker_error_code
+
+    assert _worker_error_code("network_error", has_cookie=False) == "cookie_required"
+    assert _worker_error_code("network_error", has_cookie=True) == "network_error"
+
+
 def test_f2_runtime_check_does_not_pollute_main_process_imports():
     before = list(sys.path)
 

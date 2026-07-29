@@ -222,15 +222,36 @@ async def _fetch_with_f2_worker(work_id: str, cookie: str, timeout: float):
     if process.returncode != 0:
         raise DouyinResolveError("network_error")
     try:
-        payload = json.loads(stdout.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        payload = _decode_worker_output(stdout)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         raise DouyinResolveError("contract_changed") from exc
     if payload.get("error_code"):
+        code = _worker_error_code(payload["error_code"], has_cookie=bool(cookie.strip()))
         raise DouyinResolveError(
-            payload["error_code"], payload.get("error_message"),
+            code, None if code != payload["error_code"] else payload.get("error_message"),
             opens_circuit=bool(payload.get("opens_circuit")),
         )
     return payload.get("detail")
+
+
+def _decode_worker_output(stdout: bytes):
+    try:
+        text = stdout.decode("utf-8")
+    except UnicodeDecodeError:
+        text = stdout.decode("gb18030")
+    for line in reversed(text.splitlines()):
+        line = line.strip()
+        if line.startswith("{"):
+            payload = json.loads(line)
+            if isinstance(payload, dict):
+                return payload
+    raise ValueError("worker returned no structured result")
+
+
+def _worker_error_code(code: str, *, has_cookie: bool):
+    if code == "network_error" and not has_cookie:
+        return "cookie_required"
+    return code
 
 
 class F2DouyinResolver:

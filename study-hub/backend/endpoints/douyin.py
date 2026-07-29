@@ -149,7 +149,7 @@ async def upload_local_file(item_id: str, file: UploadFile = File(...)):
         ).fetchone()
         if not item:
             raise HTTPException(status_code=404, detail=_detail("item_not_found", "预检项目不存在"))
-        if item["status"] not in ("needs_local_file", "ready"):
+        if item["status"] not in ("needs_local_file", "blocked", "failed", "ready"):
             raise HTTPException(status_code=409, detail=_detail("item_not_uploadable", "当前项目不能上传本地视频"))
         UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
         path = UPLOAD_DIR / f"{uuid.uuid4()}.video"
