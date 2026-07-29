@@ -211,31 +211,17 @@
               <div class="text-xs text-text-secondary">{{ mod.desc }}</div>
             </div>
           </div>
+          <DouyinImportPanel v-if="mod.id === 'douyin-summary'" :api="settings" @queued="onDouyinQueued(mod, $event)" />
           <input
+            v-else
             v-model="mod.input"
             :placeholder="mod.placeholder"
             @input="mod.inputError = false"
             class="px-3.5 py-2.5 bg-bg border rounded-[8px] text-text text-sm outline-none focus:border-accent transition-colors"
             :class="mod.inputError ? 'border-danger' : 'border-border'"
           >
-          <!-- 抖音模块：额外的批量导入区 -->
-          <div v-if="mod.id === 'douyin-summary'" class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] text-text-secondary">📥 批量导入（每行一个链接）</span>
-              <button @click="mod.showBatch = !mod.showBatch" class="text-[11px] text-accent hover:underline">{{ mod.showBatch ? '收起' : '展开' }}</button>
-            </div>
-            <textarea
-            v-if="mod.showBatch"
-            v-model="mod.batchInput"
-            @input="mod.inputError = false"
-            placeholder="粘贴多个抖音分享链接，每行一个…&#10;例如：&#10;https://v.douyin.com/xxxxx/&#10;https://v.douyin.com/yyyyy/"
-            rows="4"
-            class="px-3.5 py-2.5 bg-bg border rounded-[8px] text-text text-sm outline-none focus:border-accent resize-none transition-colors"
-            :class="mod.batchInputError ? 'border-danger' : 'border-border'"
-          ></textarea>
-          </div>
           <!-- 细粒度进度指示器 -->
-          <div v-if="mod.activeTaskId && taskSteps[mod.activeTaskId]" class="flex flex-col gap-1.5">
+          <div v-if="mod.id !== 'douyin-summary' && mod.activeTaskId && taskSteps[mod.activeTaskId]" class="flex flex-col gap-1.5">
             <div class="flex items-center gap-2 text-xs">
               <span class="text-text-secondary">{{ taskProgressText[mod.activeTaskId] || '处理中…' }}</span>
               <span v-if="taskSteps[mod.activeTaskId].some(s => s.status === 'running')" class="inline-block w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin"></span>
@@ -253,7 +239,7 @@
               ></div>
             </div>
           </div>
-          <div class="flex gap-2.5 items-center">
+          <div v-if="mod.id !== 'douyin-summary'" class="flex gap-2.5 items-center">
             <button @click="runAutomation(mod)" :disabled="mod.loading" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-50">开始解析</button>
             <span class="text-[13px] min-h-[20px]" :class="mod.statusClass">{{ mod.status }}</span>
           </div>
@@ -409,6 +395,7 @@ import { toast } from '../composables/useToast.js'
 import { useConfirm } from '../composables/useConfirm.js'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
 import TaskStatusBadge from '../components/TaskStatusBadge.vue'
+import DouyinImportPanel from '../components/DouyinImportPanel.vue'
 
 const settings = useSettingsStore()
 
@@ -868,6 +855,11 @@ async function runAutomation(mod) {
     mod.statusClass = 'text-danger'
     toast.error('请求失败')
   } finally { mod.loading = false }
+}
+
+function onDouyinQueued(mod, taskIds) {
+  if (taskIds.length) mod.activeTaskId = taskIds[0]
+  startQueuePoll()
 }
 
 
