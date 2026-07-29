@@ -159,6 +159,17 @@ def test_windows_launchers_only_delegate_to_canonical_scripts():
         assert "python.exe" not in content
 
 
+def test_desktop_launcher_calls_the_canonical_service_then_opens_the_page():
+    launcher = STUDY_HUB_DIR / "打开 Study Hub.bat"
+
+    assert launcher.is_file()
+    content = launcher.read_text(encoding="utf-8").lower()
+    assert "backend\\start-background.ps1" in content
+    assert "后台启动.bat" not in content
+    assert "http://127.0.0.1:8741/" in content
+    assert "start \"\"" in content
+
+
 def test_stale_second_port_pid_does_not_kill_first_instance(tmp_path):
     backend_dir = _make_script_sandbox(tmp_path)
     start_script = backend_dir / "start-background.ps1"

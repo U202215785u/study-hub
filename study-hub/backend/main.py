@@ -128,7 +128,7 @@ async def _async_recover_automation_state():
     await asyncio.sleep(3)  # 等数据库和文件系统就绪
     try:
         from endpoints.automation import recover_tasks_on_startup
-        recover_tasks_on_startup()
+        await asyncio.to_thread(recover_tasks_on_startup)
     except Exception as e:
         import logging
         logger = logging.getLogger("studyhub")

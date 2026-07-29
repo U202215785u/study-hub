@@ -1,9 +1,13 @@
+import asyncio
+import time
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import main
 from main import app
 
 
@@ -14,6 +18,21 @@ async def test_health():
         resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_startup_recovery_does_not_block_the_event_loop(monkeypatch):
+    from endpoints import automation
+
+    def slow_recovery():
+        time.sleep(0.5)
+
+    monkeypatch.setattr(automation, "recover_tasks_on_startup", slow_recovery)
+    recovery = asyncio.create_task(main._async_recover_automation_state())
+
+    await asyncio.sleep(3.1)
+    assert not recovery.done()
+    await recovery
 
 
 @pytest.mark.asyncio
