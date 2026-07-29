@@ -26,6 +26,73 @@ def _migrate_ddl_tasks(conn):
     conn.commit()
 
 
+TASK_STATUSES = (
+    "pending", "extracting", "transcribing", "summarizing", "importing",
+    "validating", "done", "error", "cancelled",
+)
+
+
+def _create_task_queue(conn, table_name="task_queue"):
+    statuses = ",".join(f"'{status}'" for status in TASK_STATUSES)
+    conn.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            task_id TEXT PRIMARY KEY,
+            module_id TEXT NOT NULL,
+            module_name TEXT DEFAULT '',
+            input_text TEXT NOT NULL,
+            input_hash TEXT DEFAULT '',
+            status TEXT DEFAULT 'pending' CHECK(status IN ({statuses})),
+            progress TEXT DEFAULT '',
+            error TEXT DEFAULT '',
+            error_code TEXT DEFAULT '',
+            result_doc_id INTEGER DEFAULT NULL,
+            result_title TEXT DEFAULT '',
+            steps_json TEXT DEFAULT '[]',
+            current_step TEXT DEFAULT '',
+            api_key_error INTEGER DEFAULT 0,
+            api_key_error_msg TEXT DEFAULT '',
+            replace_doc_id INTEGER DEFAULT NULL,
+            preflight_item_id TEXT DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (preflight_item_id)
+                REFERENCES douyin_preflight_items(item_id) ON DELETE SET NULL
+        )
+    """)
+
+
+def _migrate_task_queue(conn):
+    """Expand task states without losing rows from the existing queue."""
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='task_queue'"
+    ).fetchone()
+    if not row:
+        _create_task_queue(conn)
+        return
+    table_sql = row[0] or ""
+    columns = {r[1] for r in conn.execute("PRAGMA table_info(task_queue)")}
+    if (
+        "transcribing" in table_sql
+        and "validating" in table_sql
+        and {"error_code", "preflight_item_id"} <= columns
+    ):
+        return
+
+    conn.execute("DROP TABLE IF EXISTS task_queue_new")
+    _create_task_queue(conn, "task_queue_new")
+    new_columns = {
+        r[1] for r in conn.execute("PRAGMA table_info(task_queue_new)")
+    }
+    shared = [column for column in columns if column in new_columns]
+    column_sql = ", ".join(shared)
+    conn.execute(
+        f"INSERT INTO task_queue_new ({column_sql}) "
+        f"SELECT {column_sql} FROM task_queue"
+    )
+    conn.execute("DROP TABLE task_queue")
+    conn.execute("ALTER TABLE task_queue_new RENAME TO task_queue")
+
+
 def init_db():
     conn = get_db()
     # CREATE TABLE IF NOT EXISTS 不会重置已有数据，也能修复只写入了 SQLite
@@ -193,27 +260,83 @@ def init_db():
     _migrate_ddl_tasks(conn)
     conn.commit()
 
-    # 任务队列持久化（防止重启丢失解析任务）
+    # 抖音预检、敏感设置、访问状态与替换审计（全部为增量表）。
     conn.executescript("""
-        CREATE TABLE IF NOT EXISTS task_queue (
-            task_id TEXT PRIMARY KEY,
-            module_id TEXT NOT NULL,
-            module_name TEXT DEFAULT '',
-            input_text TEXT NOT NULL,
-            input_hash TEXT DEFAULT '',
-            status TEXT DEFAULT 'pending' CHECK(status IN ('pending','extracting','summarizing','importing','done','error')),
-            progress TEXT DEFAULT '',
-            error TEXT DEFAULT '',
-            result_doc_id INTEGER DEFAULT NULL,
-            result_title TEXT DEFAULT '',
-            steps_json TEXT DEFAULT '[]',
-            current_step TEXT DEFAULT '',
-            api_key_error INTEGER DEFAULT 0,
-            api_key_error_msg TEXT DEFAULT '',
-            replace_doc_id INTEGER DEFAULT NULL,
+        CREATE TABLE IF NOT EXISTS secure_settings (
+            name TEXT PRIMARY KEY,
+            encrypted_value TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS douyin_preflight_batches (
+            batch_id TEXT PRIMARY KEY,
+            raw_input TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN (
+                'preflighting','ready','blocked','failed','cancelled'
+            )),
+            error_code TEXT DEFAULT '',
+            error_message TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS douyin_preflight_items (
+            item_id TEXT PRIMARY KEY,
+            batch_id TEXT NOT NULL,
+            input_url TEXT NOT NULL,
+            canonical_url TEXT DEFAULT '',
+            work_id TEXT DEFAULT NULL,
+            title TEXT DEFAULT '',
+            author TEXT DEFAULT '',
+            duration_seconds REAL DEFAULT 0,
+            status TEXT NOT NULL CHECK(status IN (
+                'preflighting','ready','duplicate','needs_local_file',
+                'blocked','failed','cancelled','confirmed'
+            )),
+            content_sources TEXT DEFAULT '[]',
+            resolver_data TEXT DEFAULT '{}',
+            local_file_path TEXT DEFAULT '',
+            replace_doc_id INTEGER DEFAULT NULL,
+            task_id TEXT DEFAULT NULL,
+            error_code TEXT DEFAULT '',
+            error_message TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (batch_id) REFERENCES douyin_preflight_batches(batch_id)
+                ON DELETE CASCADE,
+            FOREIGN KEY (replace_doc_id) REFERENCES documents(id) ON DELETE SET NULL,
+            UNIQUE(batch_id, work_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS automation_runtime_state (
+            name TEXT PRIMARY KEY,
+            value_json TEXT NOT NULL DEFAULT '{}',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS document_replacement_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_id TEXT NOT NULL,
+            old_doc_id INTEGER,
+            new_doc_id INTEGER,
+            decision TEXT NOT NULL CHECK(decision IN ('replaced','retained')),
+            reason TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_douyin_batch_status
+            ON douyin_preflight_batches(status);
+        CREATE INDEX IF NOT EXISTS idx_douyin_item_status
+            ON douyin_preflight_items(status);
+        CREATE INDEX IF NOT EXISTS idx_douyin_item_work
+            ON douyin_preflight_items(work_id);
+    """)
+    conn.commit()
+
+    # 任务队列持久化（防止重启丢失解析任务）
+    _migrate_task_queue(conn)
+    conn.executescript("""
         CREATE INDEX IF NOT EXISTS idx_task_status ON task_queue(status);
         CREATE INDEX IF NOT EXISTS idx_task_input_hash ON task_queue(input_hash);
         CREATE INDEX IF NOT EXISTS idx_task_created ON task_queue(created_at);
