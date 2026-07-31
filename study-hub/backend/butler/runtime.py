@@ -9,9 +9,11 @@ from .models import TASK_TYPES, ButlerStateError, validate_transition
 from .storage import (
     append_event,
     create_approval,
+    create_evidence,
     create_memory_draft as persist_memory_draft,
     create_task,
     list_events,
+    list_evidence,
     list_memory_drafts as persisted_memory_drafts,
     list_tasks,
     pending_approvals,
@@ -108,7 +110,10 @@ class ButlerRuntime:
 
         def handoff(conn):
             case = self._case(conn, case_id)
-            validate_transition(case["status"], "investigating")
+            if case["status"] == "located":
+                validate_transition(case["status"], "investigating")
+            elif case["status"] != "investigating":
+                raise ButlerStateError("roles can only be assigned after context is located")
             ordered_experts = tuple(dict.fromkeys(experts))
             case = update_task(
                 conn,
@@ -131,6 +136,9 @@ class ButlerRuntime:
 
     def events(self, case_id: str) -> list[dict]:
         return self._with_connection(lambda conn: (self._case(conn, case_id), list_events(conn, case_id))[1])
+
+    def evidence(self, case_id: str) -> list[dict]:
+        return self._with_connection(lambda conn: (self._case(conn, case_id), list_evidence(conn, case_id))[1])
 
     def request_approval(self, case_id: str, *, risk_kind: str, summary: str) -> dict:
         if not risk_kind or not summary.strip():
@@ -243,6 +251,70 @@ class ButlerRuntime:
 
         return self._with_connection(continue_case)
 
+    def block(self, case_id: str, *, reason: str) -> dict:
+        if not reason.strip():
+            raise ButlerStateError("blocking a case needs a human-readable reason")
+
+        def stop(conn):
+            case = self._case(conn, case_id)
+            validate_transition(case["status"], "blocked")
+            case = update_task(conn, case_id, status="blocked")
+            append_event(conn, case_id, "blocked", "任务已停止，等待新的用户决定", payload={"reason": reason.strip()})
+            return case
+
+        return self._with_connection(stop)
+
+    def cancel(self, case_id: str, *, reason: str) -> dict:
+        if not reason.strip():
+            raise ButlerStateError("cancelling a case needs a human-readable reason")
+
+        def stop(conn):
+            case = self._case(conn, case_id)
+            validate_transition(case["status"], "cancelled")
+            case = update_task(conn, case_id, status="cancelled")
+            append_event(conn, case_id, "cancelled", "任务已按用户决定取消", payload={"reason": reason.strip()})
+            return case
+
+        return self._with_connection(stop)
+
+    def record_report(self, case_id: str, *, summary: str, evidence_type: str, location: str = "") -> dict:
+        if not summary.strip() or not evidence_type.strip():
+            raise ButlerStateError("a report needs a summary and evidence type")
+
+        def record(conn):
+            case = self._case(conn, case_id)
+            if case["task_type"] not in {"research", "health_check", "deploy", "memory_update"}:
+                raise ButlerStateError("reports can only complete a non-code task")
+            if case["status"] != "investigating":
+                raise ButlerStateError("a report can only be recorded while investigating")
+            if case["task_type"] == "memory_update":
+                drafts = persisted_memory_drafts(conn, task_id=case_id)
+                if not any(draft["status"] == "approved" for draft in drafts):
+                    raise ButlerStateError("memory update needs an approved memory draft before reporting a write")
+            validate_transition(case["status"], "verifying")
+            evidence = create_evidence(
+                conn,
+                {
+                    "task_id": case_id,
+                    "evidence_type": evidence_type.strip(),
+                    "summary": summary.strip(),
+                    "location": location.strip(),
+                },
+            )
+            context = {**case["context"], "report": {"summary": summary.strip(), "evidence_id": evidence["id"]}}
+            case = update_task(conn, case_id, status="verifying", context=context)
+            append_event(
+                conn,
+                case_id,
+                "report_recorded",
+                "已记录任务报告，等待完成条件核验",
+                actor=case["current_role"] or "butler",
+                payload={"evidence_id": evidence["id"], "evidence_type": evidence_type.strip(), "location": location.strip()},
+            )
+            return case
+
+        return self._with_connection(record)
+
     def record_change(self, case_id: str, *, summary: str, files: list[str]) -> dict:
         if not summary.strip() or not files:
             raise ButlerStateError("a change record needs a summary and changed files")
@@ -330,11 +402,19 @@ class ButlerRuntime:
     def complete(self, case_id: str) -> dict:
         def finish(conn):
             case = self._case(conn, case_id)
-            if "audit" not in case["context"]:
-                raise ButlerStateError("audit is required before completion")
-            validation = case["context"].get("validation")
-            if not validation or not validation.get("passed"):
-                raise ButlerStateError("validation is required before completion")
+            no_code_task = case["task_type"] in {"research", "health_check", "deploy", "memory_update"}
+            if no_code_task:
+                if "report" not in case["context"]:
+                    raise ButlerStateError("a recorded report is required before completion")
+                validation = case["context"].get("validation")
+                if case["task_type"] == "deploy" and (not validation or not validation.get("passed")):
+                    raise ButlerStateError("deployment validation is required before completion")
+            else:
+                if "audit" not in case["context"]:
+                    raise ButlerStateError("audit is required before completion")
+                validation = case["context"].get("validation")
+                if not validation or not validation.get("passed"):
+                    raise ButlerStateError("validation is required before completion")
             validate_transition(case["status"], "completed")
             case = update_task(conn, case_id, status="completed")
             append_event(conn, case_id, "completed", "任务已完成并通过验证")
@@ -408,6 +488,7 @@ class ButlerRuntime:
 
     def next_action(self, case_id: str) -> dict:
         case = self.get_case(case_id)
+        non_code_task = case["task_type"] in {"research", "health_check", "deploy", "memory_update"}
         actions = {
             "received": {
                 "kind": "locate_context",
@@ -420,9 +501,29 @@ class ButlerRuntime:
                 "summary": "选择当前工作阶段，并按需要分派领域专家。",
             },
             "investigating": {
-                "kind": "record_attempt",
-                "required": ("action", "result", "learned"),
-                "summary": "记录一次有证据的调查或最小修复尝试。",
+                "kind": "record_report" if non_code_task else "record_attempt",
+                "required": ("summary", "evidence_type") if non_code_task else ("action", "result", "learned"),
+                "summary": "记录任务报告及其证据。" if non_code_task else "记录一次有证据的调查或最小修复尝试。",
+            },
+            "awaiting_approval": {
+                "kind": "resolve_approval",
+                "required": ("approval_id", "approved"),
+                "summary": "等待用户确认或拒绝受保护的操作。",
+            },
+            "implementing": {
+                "kind": "record_change",
+                "required": ("summary", "files"),
+                "summary": "记录实际改动和涉及文件，交给审查。",
+            },
+            "auditing": {
+                "kind": "record_audit",
+                "required": ("verdict", "checklist"),
+                "summary": "填写六项审查清单后进入验证。",
+            },
+            "verifying": {
+                "kind": "record_validation" if (not non_code_task or case["task_type"] == "deploy") else "complete_case",
+                "required": ("passed", "evidence") if (not non_code_task or case["task_type"] == "deploy") else (),
+                "summary": "按用户报告的原始现象完成验证。" if (not non_code_task or case["task_type"] == "deploy") else "报告证据已记录，可以结束任务。",
             },
             "blocked": {
                 "kind": "await_user_direction",

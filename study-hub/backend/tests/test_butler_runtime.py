@@ -265,3 +265,17 @@ def test_approved_memory_draft_records_intent_but_never_performs_a_write():
         "target_path": "project-memory/frontend/问题.md",
         "content": "保存验证方式",
     }
+
+
+def test_next_action_changes_with_the_case_stage_and_task_type():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    research = runtime.open_case(task_type="research", description="研究现有方案")
+    runtime.record_context(research["id"], project_index_hits=[], owner_files=[])
+    runtime.assign(research["id"], role="explorer")
+
+    assert runtime.next_action(research["id"])["kind"] == "record_report"
+
+    change = _implementing_case(runtime)
+    assert runtime.next_action(change["id"])["kind"] == "record_change"

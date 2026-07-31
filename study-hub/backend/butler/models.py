@@ -24,7 +24,7 @@ TERMINAL_STATUSES = frozenset({"completed", "cancelled", "archived"})
 ALLOWED_TRANSITIONS = {
     "received": {"located", "blocked", "cancelled"},
     "located": {"investigating", "awaiting_approval", "blocked", "cancelled"},
-    "investigating": {"awaiting_approval", "implementing", "blocked", "cancelled"},
+    "investigating": {"awaiting_approval", "implementing", "verifying", "blocked", "cancelled"},
     "awaiting_approval": {"investigating", "implementing", "blocked", "cancelled"},
     "implementing": {"investigating", "auditing", "blocked", "cancelled"},
     "auditing": {"investigating", "verifying", "blocked", "cancelled"},

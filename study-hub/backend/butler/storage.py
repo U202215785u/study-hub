@@ -178,6 +178,38 @@ def list_events(conn, task_id: str) -> list[dict]:
     return [event_from_row(row) for row in rows]
 
 
+def evidence_from_row(row) -> dict | None:
+    if row is None:
+        return None
+    evidence = dict(row)
+    evidence["payload"] = decode(evidence.pop("payload_json"), {})
+    return evidence
+
+
+def create_evidence(conn, evidence: dict) -> dict:
+    cursor = conn.execute(
+        """
+        INSERT INTO butler_evidence (task_id, evidence_type, summary, location, payload_json)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            evidence["task_id"], evidence["evidence_type"], evidence["summary"],
+            evidence.get("location", ""), encode(evidence.get("payload", {})),
+        ),
+    )
+    row = conn.execute(
+        "SELECT * FROM butler_evidence WHERE id = ?", (cursor.lastrowid,)
+    ).fetchone()
+    return evidence_from_row(row)
+
+
+def list_evidence(conn, task_id: str) -> list[dict]:
+    rows = conn.execute(
+        "SELECT * FROM butler_evidence WHERE task_id = ? ORDER BY id", (task_id,)
+    ).fetchall()
+    return [evidence_from_row(row) for row in rows]
+
+
 def approval_from_row(row) -> dict | None:
     return dict(row) if row is not None else None
 

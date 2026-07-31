@@ -12,6 +12,7 @@ from mcp.server import Server
 from mcp.server.models import InitializationOptions, ServerCapabilities
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
+from butler.mcp_tools import butler_tool_definitions, call_butler_tool
 
 # 确保 backend 目录在导入路径中
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -435,7 +436,7 @@ async def list_tools() -> list[Tool]:
                 "properties": {},
             },
         ),
-    ]
+    ] + butler_tool_definitions()
 
 
 # ====== Tool Handlers ======
@@ -443,6 +444,8 @@ async def list_tools() -> list[Tool]:
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     try:
+        if name.startswith("butler_"):
+            return await call_butler_tool(name, arguments)
         if name == "search_knowledge_base":
             return await handle_search(arguments)
         elif name == "list_categories":
