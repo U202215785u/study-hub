@@ -9,13 +9,17 @@ from .models import TASK_TYPES, ButlerStateError, validate_transition
 from .storage import (
     append_event,
     create_approval,
+    create_memory_draft as persist_memory_draft,
     create_task,
     list_events,
+    list_memory_drafts as persisted_memory_drafts,
     list_tasks,
     pending_approvals,
     read_approval,
+    read_memory_draft,
     read_task,
     resolve_approval as persist_approval,
+    resolve_memory_draft as persist_memory_draft_resolution,
     update_task,
 )
 
@@ -337,6 +341,70 @@ class ButlerRuntime:
             return case
 
         return self._with_connection(finish)
+
+    def create_memory_draft(self, case_id: str, *, target_path: str, content: str) -> dict:
+        if not target_path.strip() or not content.strip():
+            raise ButlerStateError("a memory draft needs a target path and proposed content")
+
+        def create(conn):
+            self._case(conn, case_id)
+            draft = persist_memory_draft(
+                conn,
+                {
+                    "id": uuid4().hex,
+                    "task_id": case_id,
+                    "target_path": target_path.strip(),
+                    "content": content.strip(),
+                    "status": "pending",
+                },
+            )
+            append_event(
+                conn,
+                case_id,
+                "memory_draft_created",
+                "已生成记忆草稿，等待用户确认后再写入",
+                payload={"draft_id": draft["id"], "target_path": draft["target_path"]},
+            )
+            return draft
+
+        return self._with_connection(create)
+
+    def list_memory_drafts(self, *, case_id: str | None = None) -> list[dict]:
+        def list_for_case(conn):
+            if case_id is not None:
+                self._case(conn, case_id)
+            return persisted_memory_drafts(conn, task_id=case_id)
+
+        return self._with_connection(list_for_case)
+
+    def resolve_memory_draft(self, draft_id: str, *, approved: bool, response: str = "") -> dict:
+        def resolve(conn):
+            draft = read_memory_draft(conn, draft_id)
+            if draft is None:
+                raise ButlerStateError(f"unknown memory draft: {draft_id}")
+            if draft["status"] != "pending":
+                raise ButlerStateError("memory draft has already been decided")
+            draft = persist_memory_draft_resolution(
+                conn, draft_id, approved=approved, response=response
+            )
+            append_event(
+                conn,
+                draft["task_id"],
+                "memory_draft_resolved",
+                "用户已确认记忆草稿，等待明确写入操作" if approved else "用户拒绝写入这份记忆草稿",
+                payload={
+                    "draft_id": draft_id,
+                    "approved": approved,
+                    "response": response,
+                    "requested_operation": (
+                        {"kind": "write_memory", "target_path": draft["target_path"], "content": draft["content"]}
+                        if approved else None
+                    ),
+                },
+            )
+            return draft
+
+        return self._with_connection(resolve)
 
     def next_action(self, case_id: str) -> dict:
         case = self.get_case(case_id)

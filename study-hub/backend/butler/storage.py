@@ -221,3 +221,51 @@ def resolve_approval(conn, approval_id: str, *, approved: bool, response: str) -
         (status, response, approval_id),
     )
     return read_approval(conn, approval_id)
+
+
+def memory_draft_from_row(row) -> dict | None:
+    return dict(row) if row is not None else None
+
+
+def create_memory_draft(conn, draft: dict) -> dict:
+    conn.execute(
+        """
+        INSERT INTO butler_memory_drafts (id, task_id, target_path, content, status, response)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            draft["id"], draft["task_id"], draft["target_path"], draft["content"],
+            draft["status"], draft.get("response", ""),
+        ),
+    )
+    return read_memory_draft(conn, draft["id"])
+
+
+def read_memory_draft(conn, draft_id: str) -> dict | None:
+    row = conn.execute(
+        "SELECT * FROM butler_memory_drafts WHERE id = ?", (draft_id,)
+    ).fetchone()
+    return memory_draft_from_row(row)
+
+
+def list_memory_drafts(conn, *, task_id: str | None = None) -> list[dict]:
+    query = "SELECT * FROM butler_memory_drafts"
+    values = []
+    if task_id is not None:
+        query += " WHERE task_id = ?"
+        values.append(task_id)
+    query += " ORDER BY created_at, id"
+    return [memory_draft_from_row(row) for row in conn.execute(query, values).fetchall()]
+
+
+def resolve_memory_draft(conn, draft_id: str, *, approved: bool, response: str) -> dict | None:
+    status = "approved" if approved else "rejected"
+    conn.execute(
+        """
+        UPDATE butler_memory_drafts
+        SET status = ?, response = ?, decided_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'pending'
+        """,
+        (status, response, draft_id),
+    )
+    return read_memory_draft(conn, draft_id)

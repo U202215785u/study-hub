@@ -217,3 +217,51 @@ def test_failed_validation_returns_case_to_investigation_and_counts_attempt():
 
     assert outcome["status"] == "investigating"
     assert outcome["attempt_count"] == 1
+
+
+def _completed_case(runtime):
+    case = _implementing_case(runtime)
+    runtime.record_change(case["id"], summary="修复保存", files=["frontend/src/views/Home.vue"])
+    runtime.record_audit(
+        case["id"],
+        verdict="passed",
+        checklist={key: "passed" for key in ("null", "boundary", "error", "impact", "regression", "pattern")},
+    )
+    runtime.record_validation(case["id"], passed=True, evidence="保存成功")
+    return runtime.complete(case["id"])
+
+
+def test_memory_draft_never_writes_project_memory_before_user_confirmation():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _completed_case(runtime)
+    draft = runtime.create_memory_draft(
+        case["id"],
+        target_path="project-memory/frontend/问题.md",
+        content="保存状态问题的验证方式",
+    )
+
+    assert draft["status"] == "pending"
+    assert runtime.resolve_memory_draft(draft["id"], approved=False)["status"] == "rejected"
+    assert runtime.list_memory_drafts(case_id=case["id"])[0]["content"] == "保存状态问题的验证方式"
+
+
+def test_approved_memory_draft_records_intent_but_never_performs_a_write():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _completed_case(runtime)
+    draft = runtime.create_memory_draft(
+        case["id"], target_path="project-memory/frontend/问题.md", content="保存验证方式"
+    )
+
+    approved = runtime.resolve_memory_draft(draft["id"], approved=True, response="确认")
+
+    assert approved["status"] == "approved"
+    resolution_event = runtime.events(case["id"])[-1]
+    assert resolution_event["payload"]["requested_operation"] == {
+        "kind": "write_memory",
+        "target_path": "project-memory/frontend/问题.md",
+        "content": "保存验证方式",
+    }
