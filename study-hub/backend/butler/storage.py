@@ -1,4 +1,6 @@
-"""SQLite schema owned by the Butler runtime."""
+"""SQLite schema and persistence helpers owned by the Butler runtime."""
+
+import json
 
 
 def initialize_butler_schema(conn) -> None:
@@ -79,3 +81,98 @@ def initialize_butler_schema(conn) -> None:
         """
     )
     conn.commit()
+
+
+def encode(value) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True)
+
+
+def decode(value: str, default):
+    try:
+        return json.loads(value or "")
+    except (TypeError, json.JSONDecodeError):
+        return default
+
+
+def task_from_row(row) -> dict | None:
+    if row is None:
+        return None
+    task = dict(row)
+    task["context"] = decode(task.pop("context_json"), {})
+    task["experts"] = tuple(filter(None, task.pop("current_expert").split(",")))
+    return task
+
+
+def event_from_row(row) -> dict:
+    event = dict(row)
+    event["type"] = event.pop("event_type")
+    event["payload"] = decode(event.pop("payload_json"), {})
+    return event
+
+
+def create_task(conn, task: dict) -> dict:
+    conn.execute(
+        """
+        INSERT INTO butler_tasks (
+            id, task_type, title, description, feature_code, status, risk_level,
+            attempt_count, current_role, current_expert, context_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            task["id"], task["task_type"], task["title"], task["description"],
+            task["feature_code"], task["status"], task["risk_level"],
+            task["attempt_count"], task["current_role"], task["current_expert"],
+            encode(task["context"]),
+        ),
+    )
+    return read_task(conn, task["id"])
+
+
+def read_task(conn, task_id: str) -> dict | None:
+    return task_from_row(
+        conn.execute("SELECT * FROM butler_tasks WHERE id = ?", (task_id,)).fetchone()
+    )
+
+
+def list_tasks(conn, *, include_archived=False) -> list[dict]:
+    query = "SELECT * FROM butler_tasks"
+    values = []
+    if not include_archived:
+        query += " WHERE status != ?"
+        values.append("archived")
+    query += " ORDER BY updated_at DESC, id DESC"
+    return [task_from_row(row) for row in conn.execute(query, values).fetchall()]
+
+
+def update_task(conn, task_id: str, **changes) -> dict | None:
+    if not changes:
+        return read_task(conn, task_id)
+    values = dict(changes)
+    if "context" in values:
+        values["context_json"] = encode(values.pop("context"))
+    columns = list(values)
+    assignments = ", ".join(f"{column} = ?" for column in columns)
+    conn.execute(
+        f"UPDATE butler_tasks SET {assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [values[column] for column in columns] + [task_id],
+    )
+    return read_task(conn, task_id)
+
+
+def append_event(conn, task_id: str, event_type: str, summary: str, *, actor="butler", payload=None) -> dict:
+    cursor = conn.execute(
+        """
+        INSERT INTO butler_events (task_id, event_type, actor, summary, payload_json)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (task_id, event_type, actor, summary, encode(payload or {})),
+    )
+    row = conn.execute("SELECT * FROM butler_events WHERE id = ?", (cursor.lastrowid,)).fetchone()
+    return event_from_row(row)
+
+
+def list_events(conn, task_id: str) -> list[dict]:
+    rows = conn.execute(
+        "SELECT * FROM butler_events WHERE task_id = ? ORDER BY id", (task_id,)
+    ).fetchall()
+    return [event_from_row(row) for row in rows]
