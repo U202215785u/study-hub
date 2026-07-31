@@ -176,3 +176,48 @@ def list_events(conn, task_id: str) -> list[dict]:
         "SELECT * FROM butler_events WHERE task_id = ? ORDER BY id", (task_id,)
     ).fetchall()
     return [event_from_row(row) for row in rows]
+
+
+def approval_from_row(row) -> dict | None:
+    return dict(row) if row is not None else None
+
+
+def create_approval(conn, approval: dict) -> dict:
+    conn.execute(
+        """
+        INSERT INTO butler_approvals (id, task_id, risk_kind, summary, status, response)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            approval["id"], approval["task_id"], approval["risk_kind"],
+            approval["summary"], approval["status"], approval.get("response", ""),
+        ),
+    )
+    return read_approval(conn, approval["id"])
+
+
+def read_approval(conn, approval_id: str) -> dict | None:
+    return approval_from_row(
+        conn.execute("SELECT * FROM butler_approvals WHERE id = ?", (approval_id,)).fetchone()
+    )
+
+
+def pending_approvals(conn, task_id: str) -> list[dict]:
+    rows = conn.execute(
+        "SELECT * FROM butler_approvals WHERE task_id = ? AND status = 'pending' ORDER BY created_at, id",
+        (task_id,),
+    ).fetchall()
+    return [approval_from_row(row) for row in rows]
+
+
+def resolve_approval(conn, approval_id: str, *, approved: bool, response: str) -> dict | None:
+    status = "approved" if approved else "rejected"
+    conn.execute(
+        """
+        UPDATE butler_approvals
+        SET status = ?, response = ?, decided_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'pending'
+        """,
+        (status, response, approval_id),
+    )
+    return read_approval(conn, approval_id)

@@ -1,4 +1,5 @@
 import database
+import pytest
 
 
 def test_initialize_butler_schema_creates_all_runtime_tables():
@@ -90,3 +91,129 @@ def test_case_remains_available_from_a_new_runtime_instance():
 
     assert second_runtime.get_case(case["id"])["description"] == "研究 Agent 协作方式"
     assert case["id"] in {item["id"] for item in second_runtime.list_cases()}
+
+
+def _investigating_case(runtime):
+    case = runtime.open_case(task_type="bug", description="保存失败")
+    runtime.record_context(case["id"], project_index_hits=[], owner_files=[])
+    return runtime.assign(case["id"], role="debugger")
+
+
+def test_high_risk_change_cannot_enter_implementation_before_confirmation():
+    from butler.runtime import ButlerRuntime
+    from butler.models import ButlerStateError
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.open_case(task_type="change", description="删除旧数据")
+    runtime.record_context(case["id"], project_index_hits=[], owner_files=[])
+    approval = runtime.request_approval(
+        case["id"], risk_kind="data", summary="将删除旧数据"
+    )
+
+    with pytest.raises(ButlerStateError, match="approval"):
+        runtime.begin_implementation(case["id"])
+
+    runtime.resolve_approval(approval["id"], approved=True, response="确认")
+    assert runtime.begin_implementation(case["id"])["status"] == "implementing"
+
+
+def test_third_unsuccessful_attempt_blocks_the_case():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _investigating_case(runtime)
+    for index in range(3):
+        outcome = runtime.record_attempt(
+            case["id"],
+            action=f"检查 {index}",
+            result="failed",
+            learned="排除一种可能",
+        )
+
+    assert outcome["status"] == "blocked"
+    assert outcome["attempt_count"] == 3
+
+
+def test_rejected_approval_blocks_case_and_explicit_resume_keeps_history():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.open_case(task_type="change", description="更换部署启动方式")
+    runtime.record_context(case["id"], project_index_hits=[], owner_files=[])
+    approval = runtime.request_approval(
+        case["id"], risk_kind="deployment", summary="将调整启动脚本"
+    )
+
+    runtime.resolve_approval(approval["id"], approved=False, response="暂不处理")
+    resumed = runtime.resume(case["id"], direction="先只调查影响范围")
+
+    assert resumed["status"] == "investigating"
+    assert resumed["attempt_count"] == 0
+    assert [event["type"] for event in runtime.events(case["id"])] == [
+        "received",
+        "context_recorded",
+        "approval_requested",
+        "approval_resolved",
+        "resumed",
+    ]
+
+
+def _implementing_case(runtime):
+    case = _investigating_case(runtime)
+    return runtime.begin_implementation(case["id"])
+
+
+def test_changed_case_requires_audit_and_original_behavior_validation_before_completion():
+    from butler.runtime import ButlerRuntime
+    from butler.models import ButlerStateError
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _implementing_case(runtime)
+    runtime.record_change(
+        case["id"],
+        summary="修复提交状态",
+        files=["frontend/src/components/ContentImportWorkspace.vue"],
+    )
+
+    with pytest.raises(ButlerStateError, match="audit"):
+        runtime.complete(case["id"])
+
+    runtime.record_audit(
+        case["id"],
+        verdict="passed",
+        checklist={
+            "null": "passed",
+            "boundary": "passed",
+            "error": "passed",
+            "impact": "passed",
+            "regression": "passed",
+            "pattern": "passed",
+        },
+    )
+    with pytest.raises(ButlerStateError, match="validation"):
+        runtime.complete(case["id"])
+
+    runtime.record_validation(
+        case["id"],
+        passed=True,
+        evidence="确认解析后出现进度",
+    )
+    assert runtime.complete(case["id"])["status"] == "completed"
+
+
+def test_failed_validation_returns_case_to_investigation_and_counts_attempt():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _implementing_case(runtime)
+    runtime.record_change(case["id"], summary="修复保存", files=["frontend/src/views/Home.vue"])
+    runtime.record_audit(
+        case["id"],
+        verdict="passed",
+        checklist={key: "passed" for key in ("null", "boundary", "error", "impact", "regression", "pattern")},
+    )
+
+    outcome = runtime.record_validation(case["id"], passed=False, evidence="保存仍失败")
+
+    assert outcome["status"] == "investigating"
+    assert outcome["attempt_count"] == 1
