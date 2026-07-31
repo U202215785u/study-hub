@@ -86,7 +86,15 @@ class ButlerRuntime:
             lambda conn: list_tasks(conn, include_archived=include_archived)
         )
 
-    def record_context(self, case_id: str, *, project_index_hits: list[str], owner_files: list[str]) -> dict:
+    def record_context(
+        self,
+        case_id: str,
+        *,
+        project_index_hits: list[str],
+        owner_files: list[str],
+        memory_summary: list[str] | tuple[str, ...] = (),
+        location_notes: list[str] | tuple[str, ...] = (),
+    ) -> dict:
         def record(conn):
             case = self._case(conn, case_id)
             validate_transition(case["status"], "located")
@@ -94,12 +102,71 @@ class ButlerRuntime:
                 **case["context"],
                 "project_index_hits": list(project_index_hits),
                 "owner_files": list(owner_files),
+                "memory_summary": list(memory_summary),
+                "location_notes": list(location_notes),
             }
             case = update_task(conn, case_id, status="located", context=context)
             append_event(conn, case_id, "context_recorded", "已定位项目记录和领域知识", payload=context)
             return case
 
         return self._with_connection(record)
+
+    def create_task_card(self, case_id: str, *, scope: str = "", acceptance: str = "") -> dict:
+        """Create a compact, evidence-backed handoff card for another Agent."""
+
+        def compact(values) -> str:
+            return "；".join(str(value).strip() for value in values if str(value).strip())
+
+        def create(conn):
+            case = self._case(conn, case_id)
+            context = case["context"]
+            if "project_index_hits" not in context:
+                raise ButlerStateError("context must be recorded before creating a task card")
+
+            location_parts = []
+            if case["feature_code"]:
+                location_parts.append(f"功能代号：{case['feature_code']}")
+            if memory := compact(context.get("memory_summary", ())):
+                location_parts.append(f"项目记忆：{memory}")
+            if hits := compact(context.get("project_index_hits", ())):
+                location_parts.append(f"定位记录：{hits}")
+            if files := compact(context.get("owner_files", ())):
+                location_parts.append(f"相关文件：{files}")
+            if notes := compact(context.get("location_notes", ())):
+                location_parts.append(f"补充线索：{notes}")
+
+            card = {
+                "case_id": case_id,
+                "task": case["title"],
+                "known": case["description"],
+                "location": "；".join(location_parts) or "待查",
+                "scope": scope.strip() or "待查",
+                "acceptance": acceptance.strip() or "待查",
+            }
+            card["text"] = "\n".join(
+                (
+                    f"【任务】{card['task']}",
+                    f"【已知】{card['known']}",
+                    f"【定位】{card['location']}",
+                    f"【范围】{card['scope']}",
+                    f"【验收】{card['acceptance']}",
+                )
+            )
+            context = {**context, "task_card": card}
+            update_task(conn, case_id, context=context)
+            append_event(conn, case_id, "task_card_created", "已生成可交给执行 Agent 的任务卡", payload=card)
+            return card
+
+        return self._with_connection(create)
+
+    def get_task_card(self, case_id: str) -> dict:
+        def read(conn):
+            card = self._case(conn, case_id)["context"].get("task_card")
+            if card is None:
+                raise ButlerStateError("no task card has been created for this case")
+            return card
+
+        return self._with_connection(read)
 
     def assign(self, case_id: str, *, role: str, experts: list[str] | tuple[str, ...] = ()) -> dict:
         if role not in INTERNAL_ROLES:
