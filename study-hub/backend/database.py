@@ -1,5 +1,7 @@
 import sqlite3, os
 
+from butler.storage import initialize_butler_schema
+
 DB_DIR = os.path.join(os.path.dirname(__file__), "data")
 DB_PATH = os.path.join(DB_DIR, "study_hub.db")
 
@@ -501,6 +503,7 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_mu_checked ON monitored_urls(last_checked);
     """)
     conn.commit()
+    initialize_butler_schema(conn)
 
     conn.close()
 
