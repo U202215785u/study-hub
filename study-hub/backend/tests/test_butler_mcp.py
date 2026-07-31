@@ -58,4 +58,6 @@ def test_canonical_butler_skill_requires_a_runtime_case_before_project_work():
 
     assert "butler_open_case" in content
     assert "butler_next_action" in content
+    assert "butler_create_task_card" in content
+    assert "butler_get_task_card" in content
     assert "butler_record_validation" in content

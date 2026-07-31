@@ -9,9 +9,10 @@
 1. 先调用 `mcp__study_hub__butler_open_case` 登记任务；
 2. 立即调用 `mcp__study_hub__butler_next_action`，只按返回的下一步继续；
 3. 定位后调用 `mcp__study_hub__butler_record_context`；分派角色或领域专家后调用 `mcp__study_hub__butler_assign`；
-4. 每次调查或修复调用 `mcp__study_hub__butler_record_attempt`；
-5. 删除、个人数据、账号权限、发布、部署或其他高影响操作，先调用 `mcp__study_hub__butler_request_approval`，等待用户明确同意；
-6. 实际改动后依次调用 `mcp__study_hub__butler_record_change`、`mcp__study_hub__butler_record_audit`、`mcp__study_hub__butler_record_validation`，再调用 `mcp__study_hub__butler_complete_case`。
+4. 需要交给另一位 Agent 执行时，记录项目记忆摘要后调用 `mcp__study_hub__butler_create_task_card`，把返回的五行任务卡原样交接；
+5. 每次调查或修复调用 `mcp__study_hub__butler_record_attempt`；
+6. 删除、个人数据、账号权限、发布、部署或其他高影响操作，先调用 `mcp__study_hub__butler_request_approval`，等待用户明确同意；
+7. 实际改动后依次调用 `mcp__study_hub__butler_record_change`、`mcp__study_hub__butler_record_audit`、`mcp__study_hub__butler_record_validation`，再调用 `mcp__study_hub__butler_complete_case`。
 
 先用自然语言理解问题，再从 `project-memory/功能代号地图.md` 和相关项目记录中定位。内部角色和外部专家由管家自动选择，不让用户承担内部编排。
 
