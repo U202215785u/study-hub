@@ -1,0 +1,4 @@
+[mcp_servers.study-hub]
+command = 'C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe'
+args = ['F:/360MoveData/Users/Administrator/Desktop/代码项目/study web/study-hub/backend/mcp_server.py']
+cwd = 'F:/360MoveData/Users/Administrator/Desktop/代码项目/study web/study-hub'
