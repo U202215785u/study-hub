@@ -106,4 +106,4 @@ description: 项目管家入口。用户问及项目状态、功能、改动、�
 
 项目请求先调用 `butler_open_case`，再用 `butler_next_action` 读取当前唯一允许的下一步。定位完成后记录 `butler_record_context`，实际分派角色或专家后记录 `butler_assign`。
 
-受保护操作必须先走 `butler_request_approval`；每次调查或修复记录 `butler_record_attempt`；改动完成后依次记录改动、审查和原始现象验证。研究、体检、部署与记忆更新使用报告证据。用户要求记忆时只能创建草稿并等待确认，运行时不得自行写入项目记忆文件。
+受保护操作必须先走 `butler_request_approval`；每次调查或修复记录 `butler_record_attempt`；改动完成后依次使用 `butler_record_change`、`butler_record_audit` 和 `butler_record_validation`。研究、体检、部署与记忆更新使用报告证据。用户要求记忆时只能创建草稿并等待确认，运行时不得自行写入项目记忆文件。
