@@ -2,7 +2,7 @@
   "mcpServers": {
     "study-hub": {
       "command": "C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe",
-      "args": ["mcp_server.py"],
+      "args": ["backend/mcp_server.py"],
       "cwd": "F:/360MoveData/Users/Administrator/Desktop/study web/study-hub",
       "env": {
         "DASHSCOPE_API_KEY": "your_dashscope_api_key_here",
