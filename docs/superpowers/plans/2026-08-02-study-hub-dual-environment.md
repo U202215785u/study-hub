@@ -4,7 +4,7 @@
 
 **Goal:** Keep the main Study Hub as the stable use version on port 8741 and provide an isolated development worktree on port 8742.
 
-**Architecture:** The main project directory remains the stable entry point. A dedicated Git worktree and branch at the sibling path `study-hub-dev` provide the development copy. Each copy starts from its own backend directory, so code, PID files, logs, and backend data remain isolated.
+**Architecture:** The main project directory remains the stable entry point. A dedicated Git worktree and branch outside the repository at `F:/360MoveData/Users/Administrator/Desktop/代码项目/study-hub-dev` provide the development copy. Each copy starts from its own backend directory, so code, PID files, logs, and backend data remain isolated.
 
 **Tech Stack:** Git worktrees, Windows batch files, PowerShell, Uvicorn.
 
@@ -19,7 +19,7 @@
 
 ### Task 2: Create the development worktree
 
-**Files:** Create the Git worktree at `F:/360MoveData/Users/Administrator/Desktop/代码项目/study web/study-hub-dev` on branch `codex/study-hub-dev` from the current `master` HEAD.
+**Files:** Create the Git worktree at `F:/360MoveData/Users/Administrator/Desktop/代码项目/study-hub-dev` on branch `codex/study-hub-dev` from the current `master` HEAD.
 
 - [x] Verify the new worktree reports branch `codex/study-hub-dev` and has its own `study-hub/backend/data` directory.
 
