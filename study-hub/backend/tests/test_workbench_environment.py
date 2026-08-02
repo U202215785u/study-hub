@@ -22,6 +22,7 @@ def test_environment_returns_only_controlled_fields_and_surfaces_health_failure(
     assert data["health"]["status"] == "degraded"
     assert data["health"]["checks"]["database"]["status"] == "error"
     assert data["paths"]["project_root"] == "."
+    assert data["paths"]["backend"] == "backend"
     assert str(tmp_path) not in str(data)
     assert secret not in str(data)
     assert set(data) == {"status", "runtime", "health", "paths"}

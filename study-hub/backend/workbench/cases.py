@@ -5,35 +5,35 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import datetime, timezone
 
-from butler.storage import (
-    evidence_from_row,
-    list_events,
-    list_tasks,
-    task_from_row,
-)
+from butler.storage import evidence_from_row, list_events, list_tasks, task_from_row
 
 STATUS_LABELS = {
-    "received": "已接收",
-    "located": "已定位",
-    "investigating": "调查中",
-    "awaiting_approval": "待审批",
-    "implementing": "执行中",
-    "auditing": "待审查",
-    "verifying": "验证中",
-    "completed": "已完成",
-    "blocked": "已阻塞",
-    "cancelled": "已取消",
-    "archived": "已归档",
+    "received": "\u5df2\u63a5\u6536",
+    "located": "\u5df2\u5b9a\u4f4d",
+    "investigating": "\u8c03\u67e5\u4e2d",
+    "awaiting_approval": "\u5f85\u5ba1\u6279",
+    "implementing": "\u6267\u884c\u4e2d",
+    "auditing": "\u5f85\u5ba1\u67e5",
+    "verifying": "\u9a8c\u8bc1\u4e2d",
+    "completed": "\u5df2\u5b8c\u6210",
+    "blocked": "\u5df2\u963b\u585e",
+    "cancelled": "\u5df2\u53d6\u6d88",
+    "archived": "\u5df2\u5f52\u6863",
 }
 TASK_TYPE_LABELS = {
-    "bug": "故障排查",
-    "change": "变更",
-    "research": "调研",
-    "health_check": "健康检查",
-    "deploy": "部署",
-    "memory_update": "记忆更新",
+    "bug": "\u6545\u969c\u6392\u67e5",
+    "change": "\u53d8\u66f4",
+    "research": "\u8c03\u7814",
+    "health_check": "\u5065\u5eb7\u68c0\u67e5",
+    "deploy": "\u90e8\u7f72",
+    "memory_update": "\u8bb0\u5fc6\u66f4\u65b0",
 }
-RISK_LEVEL_LABELS = {"normal": "普通", "protected": "受保护"}
+RISK_LEVEL_LABELS = {"normal": "\u666e\u901a", "protected": "\u53d7\u4fdd\u62a4"}
+APPROVAL_STATUS_LABELS = {
+    "pending": "\u5f85\u51b3\u5b9a",
+    "approved": "\u5df2\u6279\u51c6",
+    "rejected": "\u5df2\u62d2\u7edd",
+}
 CASE_SORT_FIELDS = {"updated_at", "created_at", "status", "attempt_count", "title"}
 
 
@@ -49,27 +49,27 @@ def _iso_timestamp(value):
         return value
 
 
-def _labels(value: str, labels: dict[str, str]) -> str:
-    return labels.get(value, f"未知{value}")
-
-
 def _csv_values(value: str | None) -> set[str] | None:
     if not value:
         return None
     return {item.strip() for item in value.split(",") if item.strip()}
 
 
+def _label(value: str, labels: dict[str, str], unknown: str) -> str:
+    return labels.get(value, unknown)
+
+
 def _case_summary(task: dict) -> dict:
     return {
         "id": task["id"],
         "task_type": task["task_type"],
-        "task_type_label": _labels(task["task_type"], TASK_TYPE_LABELS),
+        "task_type_label": _label(task["task_type"], TASK_TYPE_LABELS, "\u672a\u77e5\u7c7b\u578b"),
         "title": task["title"],
         "feature_code": task.get("feature_code", "") or "",
         "status": task["status"],
-        "status_label": _labels(task["status"], STATUS_LABELS),
+        "status_label": _label(task["status"], STATUS_LABELS, "\u672a\u77e5\u72b6\u6001"),
         "risk_level": task["risk_level"],
-        "risk_level_label": _labels(task["risk_level"], RISK_LEVEL_LABELS),
+        "risk_level_label": _label(task["risk_level"], RISK_LEVEL_LABELS, "\u672a\u77e5\u98ce\u9669\u7ea7\u522b"),
         "attempt_count": task["attempt_count"],
         "current_role": task.get("current_role", "") or "",
         "experts": list(task.get("experts", ())),
@@ -78,18 +78,11 @@ def _case_summary(task: dict) -> dict:
     }
 
 
-def _json_task(task: dict) -> dict:
-    """Keep the projection compatible with the runtime JSON shape."""
-    result = dict(task)
-    result["experts"] = list(result.get("experts", ()))
-    return result
-
-
 def _contains_keyword(task: dict, keyword: str) -> bool:
     needle = keyword.casefold()
     return any(
         needle in str(task.get(field) or "").casefold()
-        for field in ("id", "title", "description", "feature_code", "task_type")
+        for field in ("id", "title", "description", "feature_code")
     )
 
 
@@ -125,10 +118,8 @@ def list_case_summaries(
     if keyword and keyword.strip():
         tasks = [task for task in tasks if _contains_keyword(task, keyword.strip())]
 
-    tasks.sort(
-        key=lambda task: (task.get(sort_by) or "", task.get("id") or ""),
-        reverse=sort_order == "desc",
-    )
+    tasks.sort(key=lambda task: task.get("id") or "", reverse=True)
+    tasks.sort(key=lambda task: task.get(sort_by) or "", reverse=sort_order == "desc")
     return [_case_summary(task) for task in tasks]
 
 
@@ -137,6 +128,7 @@ def _event_projection(event: dict, fields: Iterable[str]) -> dict:
     projection = {
         "id": event["id"],
         "case_id": event["task_id"],
+        "type": event["type"],
         "actor": event["actor"],
         "created_at": _iso_timestamp(event["created_at"]),
         "summary": event["summary"],
@@ -172,9 +164,7 @@ def _all_approvals(conn, case_id: str) -> list[dict]:
         approval["case_id"] = approval.pop("task_id")
         approval["created_at"] = _iso_timestamp(approval.get("created_at"))
         approval["decided_at"] = _iso_timestamp(approval.get("decided_at"))
-        approval["status_label"] = {"pending": "待决定", "approved": "已批准", "rejected": "已拒绝"}.get(
-            approval["status"], f"未知{approval['status']}"
-        )
+        approval["status_label"] = APPROVAL_STATUS_LABELS.get(approval["status"], "\u672a\u77e5\u72b6\u6001")
         approvals.append(approval)
     return approvals
 
@@ -239,26 +229,22 @@ def get_case_detail(conn, case_id: str) -> dict | None:
     for item in evidence:
         item["case_id"] = item.pop("task_id")
         item["created_at"] = _iso_timestamp(item.get("created_at"))
-    approvals = _all_approvals(conn, case_id)
-    memory_drafts = _all_memory_drafts(conn, case_id)
 
     from butler.runtime import ButlerRuntime
     from database import get_db
-
-    next_action = ButlerRuntime(get_db).next_action(case_id)
 
     return {
         **_case_summary(task),
         "description": task["description"],
         "context": task["context"],
-        "next_action": next_action,
-        "events": events,
+        "next_action": ButlerRuntime(get_db).next_action(case_id),
+        "events": [_event_projection(event, ()) for event in events],
         "files": _unique_files(changes, task),
         "attempts": attempts,
         "changes": changes,
         "audits": audits,
         "validations": validations,
         "evidence": evidence,
-        "approvals": approvals,
-        "memory_drafts": memory_drafts,
+        "approvals": _all_approvals(conn, case_id),
+        "memory_drafts": _all_memory_drafts(conn, case_id),
     }

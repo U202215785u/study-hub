@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _ROADMAP_FILE_CANDIDATES = (
     Path("project-memory") / "未来规划.md",
     Path("docs") / "roadmap.md",
@@ -27,7 +27,7 @@ def _default_health(project_root: Path) -> dict[str, Any]:
             "status": "ok" if project_root.is_dir() else "error",
         },
         "backend": {
-            "status": "ok" if (project_root / "study-hub" / "backend").is_dir() else "error",
+            "status": "ok" if (project_root / "backend").is_dir() else "error",
         },
     }
     status = "ok" if all(item["status"] == "ok" for item in checks.values()) else "degraded"
@@ -79,7 +79,7 @@ def get_environment_info(
         "health": health,
         "paths": {
             "project_root": ".",
-            "backend": _relative_path(root / "study-hub" / "backend", root),
+            "backend": _relative_path(root / "backend", root),
         },
     }
 

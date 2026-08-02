@@ -111,6 +111,8 @@ def test_case_detail_aggregates_events_files_attempts_audit_validation_and_appro
     response = _client().get(f"/workbench/cases/{case['id']}")
 
     assert response.status_code == 200
+    assert response.json()["ok"] is True
+    assert response.json()["meta"]["schema_version"] == "workbench.v1"
     body = response.json()["data"]
     assert body["id"] == case["id"]
     assert body["status"] == "verifying"
@@ -121,6 +123,7 @@ def test_case_detail_aggregates_events_files_attempts_audit_validation_and_appro
         "audit_recorded",
         "validation_recorded",
     }
+    assert body["events"][0]["case_id"] == case["id"]
     assert body["files"] == ["backend/workbench/cases.py"]
     assert body["attempts"][0]["action"] == "读取事实表"
     assert body["changes"][0]["files"] == ["backend/workbench/cases.py"]
