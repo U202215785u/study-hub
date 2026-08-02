@@ -55,6 +55,10 @@ image2api/
 # Node modules
 node_modules/
 
+# Study UI generated artifacts
+study-hub/frontend/storybook-static/
+study-hub/frontend/test-results/
+
 # Virtual environments
 venv/
 .venv/

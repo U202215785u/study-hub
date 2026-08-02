@@ -1,49 +1,50 @@
 <template>
-  <nav class="mb-6 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3">
-    <router-link v-if="route.path !== '/'" to="/" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">
-      ← 仪表盘
-    </router-link>
-    <h1 class="min-w-0 text-xl font-bold tracking-tight">{{ pageTitle }}</h1>
-    <div class="flex min-w-0 max-w-full flex-wrap gap-x-3 gap-y-2 sm:ml-auto sm:justify-end">
-      <router-link to="/kb" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">知识库</router-link>
-      <router-link to="/wiki" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">Wiki</router-link>
-      <router-link to="/learning" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">学习</router-link>
-      <router-link to="/memory" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">记忆</router-link>
-      <router-link to="/workflow" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">工作流</router-link>
-      <router-link to="/ddl" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">DDL</router-link>
-      <router-link to="/sop" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">SOP</router-link>
-      <router-link to="/creator" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">创作</router-link>
-      <router-link to="/skills" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">Skill</router-link>
-      <router-link to="/journal" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">手账</router-link>
-      <router-link to="/workbench" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">工作台</router-link>
-      <router-link to="/settings" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">设置</router-link>
-      <a href="/second-self/index.html" class="shrink-0 text-[13px] text-text-secondary transition-colors hover:text-accent">自我</a>
+  <nav class="app-nav" aria-label="主导航">
+    <div class="app-nav__primary">
+      <RouterLink v-for="item in primaryItems" :key="item.to" :to="item.to">{{ item.label }}</RouterLink>
     </div>
+    <div class="app-nav__overflow-links">
+      <RouterLink v-for="item in overflowItems" :key="item.to" :to="item.to">{{ item.label }}</RouterLink>
+    </div>
+    <details class="app-nav__menu">
+      <summary aria-label="更多导航">更多</summary>
+      <div class="app-nav__menu-panel" role="menu">
+        <RouterLink v-for="item in overflowItems" :key="item.to" :to="item.to" role="menuitem">{{ item.label }}</RouterLink>
+        <a href="/second-self/index.html" role="menuitem">自我</a>
+      </div>
+    </details>
   </nav>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
-const titles = {
-  '/': '学习中枢',
-  '/kb': '知识库管理',
-  '/wiki': 'Wiki 知识库',
-  '/brainstorm': 'AI 头脑风暴',
-  '/learning': '学习路线',
-  '/learning-checklist': '学习清单',
-  '/learning-plan': '学习计划',
-  '/memory': '记忆系统',
-  '/workflow': '工作流',
-  '/ddl': 'DDL 面板',
-  '/sop': 'SOP 规范化',
-  '/creator': '新媒体创作中心',
-  '/skills': 'Skill 市场',
-  '/journal': '手账日记',
-  '/workbench': '工作台',
-  '/settings': '设置中心'
-}
-const pageTitle = computed(() => titles[route.path] || '学习中枢')
+const primaryItems = [
+  { to: '/', label: '首页' },
+  { to: '/kb', label: '知识库' },
+  { to: '/learning', label: '学习' },
+  { to: '/workflow', label: '工作流' },
+  { to: '/creator', label: '创作' },
+]
+const overflowItems = [
+  { to: '/memory', label: '记忆' },
+  { to: '/ddl', label: 'DDL' },
+  { to: '/sop', label: 'SOP' },
+  { to: '/skills', label: 'Skill' },
+  { to: '/journal', label: '手账' },
+  { to: '/workbench', label: '工作台' },
+  { to: '/settings', label: '设置' },
+]
 </script>
+
+<style scoped>
+.app-nav { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: var(--ui-space-4); }
+.app-nav__primary, .app-nav__overflow-links { display: flex; min-width: 0; align-items: center; gap: var(--ui-space-1); }
+.app-nav a, .app-nav__menu summary { display: inline-flex; min-height: 36px; box-sizing: border-box; align-items: center; border-radius: var(--ui-radius-sm); padding: 0 var(--ui-space-3); color: var(--ui-color-text-muted); font: 700 12px/1 var(--ui-font-sans); text-decoration: none; cursor: pointer; white-space: nowrap; }
+.app-nav a:hover, .app-nav a:focus-visible, .app-nav__menu summary:hover, .app-nav__menu summary:focus-visible { outline: none; background: var(--ui-color-surface-raised); color: var(--ui-color-text-strong); }
+.app-nav a.router-link-active { background: color-mix(in srgb, var(--ui-color-action) 14%, transparent); color: var(--ui-color-action); }
+.app-nav__menu { position: relative; display: none; }
+.app-nav__menu summary { list-style: none; }
+.app-nav__menu summary::-webkit-details-marker { display: none; }
+.app-nav__menu-panel { position: absolute; z-index: 40; top: calc(100% + var(--ui-space-2)); right: 0; display: grid; width: 180px; border: 1px solid var(--ui-color-border-strong); border-radius: var(--ui-radius-md); padding: var(--ui-space-2); background: var(--ui-color-surface); box-shadow: var(--ui-shadow-overlay); }
+@media (max-width: 1279px) { .app-nav__overflow-links { display: none; } .app-nav__menu { display: block; } }
+@media (max-width: 767px) { .app-nav__primary a:nth-child(n + 4) { display: none; } .app-nav { gap: var(--ui-space-1); } .app-nav a, .app-nav__menu summary { padding: 0 var(--ui-space-2); font-size: 11px; } }
+</style>
