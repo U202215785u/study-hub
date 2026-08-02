@@ -48,7 +48,8 @@ def test_cases_list_returns_empty_array_when_no_butler_tasks_exist():
     response = _client().get("/workbench/cases")
 
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["ok"] is True
+    assert response.json()["data"]["items"] == []
 
 
 def test_cases_list_filters_and_sorts_source_tasks_by_updated_at():
@@ -69,8 +70,8 @@ def test_cases_list_filters_and_sorts_source_tasks_by_updated_at():
     )
 
     assert response.status_code == 200
-    assert [item["id"] for item in response.json()] == [second["id"]]
-    assert response.json()[0]["status"] == "investigating"
+    assert [item["id"] for item in response.json()["data"]["items"]] == [second["id"]]
+    assert response.json()["data"]["items"][0]["status"] == "investigating"
 
 
 def test_case_detail_aggregates_events_files_attempts_audit_validation_and_approvals():
@@ -110,9 +111,9 @@ def test_case_detail_aggregates_events_files_attempts_audit_validation_and_appro
     response = _client().get(f"/workbench/cases/{case['id']}")
 
     assert response.status_code == 200
-    body = response.json()
-    assert body["task"]["id"] == case["id"]
-    assert body["task"]["status"] == "verifying"
+    body = response.json()["data"]
+    assert body["id"] == case["id"]
+    assert body["status"] == "verifying"
     assert {event["type"] for event in body["events"]} >= {
         "attempt_recorded",
         "approval_requested",
@@ -136,4 +137,5 @@ def test_case_detail_returns_404_for_unknown_case():
     response = _client().get("/workbench/cases/does-not-exist")
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Butler case not found"
+    assert response.json()["error"]["code"] == "WB_NOT_FOUND"
+    assert response.json()["error"]["details"]["resource_id"] == "does-not-exist"
