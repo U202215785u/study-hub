@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "douyin-mcp-server"
+version = "1.3.0"
+description = "MCP server for parsing Douyin videos and extracting text (with error codes and logging)"
+authors = [{name = "study-web"}]
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "dashscope",
+    "ffmpeg-python",
+    "mcp>=1.0.0",
+    "requests",
+    "tqdm",
+]
+
+[project.scripts]
+douyin-mcp-server = "douyin_mcp_server.server:main"
+
+[tool.setuptools.packages.find]
+include = ["douyin_mcp_server*"]
