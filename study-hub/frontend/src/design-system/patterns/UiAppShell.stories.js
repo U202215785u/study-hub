@@ -4,7 +4,7 @@ const renderShell = () => ({
   components: { UiAppShell },
   template: `<UiAppShell>
     <template #brand><strong>Study Hub</strong></template>
-    <template #topNavigation><div>首页　知识库　工作流</div></template>
+    <template #topNavigation><nav aria-label="主导航">首页　知识库　工作流</nav></template>
     <template #sidebar><div style="padding:20px">侧栏</div></template>
     <div style="min-height:500px">主内容</div>
     <template #dock><div style="padding:20px">快捷工具</div></template>

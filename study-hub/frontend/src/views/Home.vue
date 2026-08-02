@@ -1,688 +1,249 @@
 <template>
-  <div class="flex flex-col gap-7">
-    <!-- 标题 -->
-    <div class="text-center mb-1">
-      <h1 class="text-[22px] font-bold tracking-tight">学习中枢</h1>
-      <div class="mt-1">
-        <a href="/kb" target="_blank" rel="noopener noreferrer" class="text-xs text-text-secondary hover:text-accent mr-3">知识库管理 →</a>
-        <a href="/wiki" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:text-[#a5b0ff]">🧠 Wiki 知识库 →</a>
+  <section class="home-dashboard" aria-labelledby="home-title">
+    <header class="home-dashboard__header">
+      <div>
+        <p class="home-dashboard__eyebrow">STUDY HUB / WORKSPACE</p>
+        <h1 id="home-title">学习中枢</h1>
+        <p class="home-dashboard__subtitle">把今天要理解、整理和输出的内容放在一个安静的工作台里。</p>
       </div>
-    </div>
+      <nav class="home-dashboard__quick-nav" aria-label="首页快捷入口">
+        <RouterLink to="/kb">知识库</RouterLink>
+        <RouterLink to="/learning">学习路线</RouterLink>
+        <RouterLink to="/creator">创作中心</RouterLink>
+        <UiButton variant="secondary" size="sm" @click="reviewOpen = true">每日复盘</UiButton>
+      </nav>
+    </header>
 
-    <!-- 搜索框 -->
-    <div class="relative flex items-center gap-0">
-      <select v-model="searchMode" class="px-3 py-4 bg-surface border-2 border-border border-r-0 rounded-l-[12px] text-text text-sm outline-none cursor-pointer whitespace-nowrap min-w-[90px] appearance-none focus:border-accent">
-        <option value="ai">AI 推荐</option>
-        <option value="kb">知识库</option>
-        <option value="web">全网</option>
-        <option value="cmd">命令</option>
-      </select>
-      <input v-model="searchInput" @keydown.enter="doSearch" type="text" placeholder="输入搜索内容…" autofocus
-        class="flex-1 px-4 py-4 bg-surface border-2 border-border border-l border-r-0 text-text text-base outline-none min-w-0 focus:border-accent focus:shadow-[0_0_24px_rgba(124,138,255,0.15)]">
-      <select v-model="searchCategory" class="px-2.5 py-4 bg-surface border-2 border-border rounded-r-[12px] text-text text-xs outline-none cursor-pointer max-w-[100px] flex-shrink-0 focus:border-accent">
-        <option value="">全部分类</option>
-        <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.icon }} {{ c.name }}</option>
-      </select>
-    </div>
+    <form class="home-search" role="search" @submit.prevent="doSearch">
+      <UiSelect v-model="searchMode" class="home-search__mode" label="搜索模式" :options="searchModeOptions" />
+      <UiInput v-model="searchInput" data-home-search-input label="搜索内容" placeholder="搜索知识、任务或命令" />
+      <UiSelect v-model="searchCategory" label="分类" :options="categoryOptions" />
+      <UiButton data-home-search-primary="true" type="button" size="lg" @click="doSearch">搜索</UiButton>
+    </form>
 
-    <!-- 搜索结果 -->
-    <div v-if="searchLoading" class="bg-surface border border-border rounded-[12px] p-7 text-center text-text-secondary">
-      <span>正在搜索…</span>
-    </div>
-    <div v-else-if="searchResult" class="bg-surface border border-border rounded-[12px] p-5">
-      <div v-if="searchError" class="text-danger">{{ searchError }}</div>
-      <div v-else>
-        <MarkdownRenderer :content="searchAnswer" />
-        <div v-if="searchSources" class="text-xs text-text-secondary mt-4">
-          来源：{{ searchSources }}
-        </div>
-      </div>
-    </div>
+    <UiWidgetFrame v-if="searchResult" class="home-search-result" title="搜索结果" :loading="searchLoading" :error="searchError" :empty="false" :description="searchSources ? `来源：${searchSources}` : ''">
+      <MarkdownRenderer v-if="searchAnswer" :content="searchAnswer" />
+      <p v-else-if="!searchError" class="home-dashboard__muted">没有找到可展示的结果。</p>
+    </UiWidgetFrame>
 
-    <!-- 常用网站 -->
-    <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">常用网站</div>
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-        <a v-for="(s, i) in settings.shortcuts" :key="i" :href="s.url" target="_blank"
-          class="relative aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2"
-          @contextmenu.prevent="openShortcutModal(i)">
-          <span class="text-[28px]">{{ s.icon }}</span>
-          <span class="text-[13px] text-text-secondary">{{ s.name }}</span>
-          <button @click.prevent="confirmRemoveShortcut(i)" class="absolute top-1 right-1 w-[22px] h-[22px] rounded-full border-none bg-white/[0.08] text-text-secondary text-sm flex items-center justify-center hover:bg-danger hover:text-white">×</button>
-        </a>
-        <div @click="openShortcutModal()"
-          class="aspect-square bg-surface border border-dashed border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all opacity-60 hover:opacity-100 gap-2">
-          <span class="text-[28px]">+</span>
-          <span class="text-[13px] text-text-secondary">添加</span>
-        </div>
-      </div>
-    </div>
+    <UiDashboardGrid aria-label="首页工作台">
+      <UiDashboardItem span="2x3"><TaskWidget :tasks="taskItems" @select="openAutomation" /></UiDashboardItem>
+      <UiDashboardItem span="2x2"><CalendarWidget :days="calendarDays" :month-label="calendarMonth" @select="selectedDate = $event" /></UiDashboardItem>
+      <UiDashboardItem span="2x2"><AutomationQueueWidget :items="queueItems" @open="queuePanelOpen = true" @retry="retryTask" /></UiDashboardItem>
+      <UiDashboardItem span="2x1"><KnowledgeWidget :items="knowledgeItems" @open="viewDocument" /></UiDashboardItem>
+      <UiDashboardItem span="2x2"><CreationWidget :items="creationItems" @open="launchCreation" /></UiDashboardItem>
+      <UiDashboardItem span="2x1"><WorkflowWidget :steps="workflowSteps" @run="runWorkflow" /></UiDashboardItem>
+    </UiDashboardGrid>
 
-    <!-- AI 启动器 -->
-    <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">AI 启动器</div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div v-for="(a, i) in settings.launcherItems" :key="i"
-          class="relative bg-surface border border-border rounded-[12px] p-5 text-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent flex flex-col items-center gap-2">
-          <div @click="launchAI(a.url)" class="flex flex-col items-center gap-2 flex-1">
-            <span class="text-[32px]">{{ a.icon }}</span>
-            <span class="text-sm font-semibold">{{ a.name }}</span>
-            <span class="text-[11px] text-text-secondary break-all">{{ a.url }}</span>
-          </div>
-          <button @click.stop="confirmRemoveLauncher(i)" class="absolute top-1 right-1 w-[22px] h-[22px] rounded-full border-none bg-white/[0.08] text-text-secondary text-sm flex items-center justify-center hover:bg-danger hover:text-white">×</button>
-        </div>
-        <div @click="openAIModal()"
-          class="bg-surface border border-dashed border-border rounded-[12px] p-5 text-center cursor-pointer transition-all opacity-60 hover:opacity-100 flex flex-col items-center gap-2">
-          <span class="text-[32px]">+</span>
-          <span class="text-sm font-semibold">添加 AI</span>
-        </div>
+    <UiWidgetFrame v-if="reviewOpen" class="home-review" title="每日复盘" description="记录今天真正理解了什么，AI 会帮你整理成可回看的内容。">
+      <textarea v-model="reviewInput" aria-label="今日学习记录" placeholder="写写今天学了什么…" />
+      <div class="home-review__actions">
+        <UiButton :loading="reviewLoading" @click="polishReview">AI 润色</UiButton>
+        <UiButton variant="secondary" :loading="reviewLoading" @click="weeklyReport">生成本周周报</UiButton>
+        <UiButton variant="text" @click="reviewOpen = false">收起</UiButton>
+        <span class="home-dashboard__muted">{{ reviewStatus }}</span>
       </div>
-    </div>
+      <MarkdownRenderer v-if="reviewResult" :content="reviewResult" />
+      <div v-if="reviewHistory.length" class="home-review__history">
+        <button v-for="item in reviewHistory.slice(0, 5)" :key="item.id" type="button" @click="viewReview(item)">{{ item.date }} · {{ (item.raw_text || '').slice(0, 42) }}</button>
+      </div>
+    </UiWidgetFrame>
 
-    <!-- 学习工具箱 -->
-    <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">学习工具箱</div>
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-        <router-link to="/brainstorm" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
-          <span class="text-[28px]">💡</span>
-          <span class="text-[13px] text-text-secondary">头脑风暴</span>
-        </router-link>
-        <router-link to="/learning" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
-          <span class="text-[28px]">📋</span>
-          <span class="text-[13px] text-text-secondary">学习清单</span>
-        </router-link>
-        <a v-if="!isElectron" href="/suit/index.html" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
-          <span class="text-[28px]">🏋️</span>
-          <span class="text-[13px] text-text-secondary">前端套件</span>
-        </a>
-        <router-link to="/creator" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
-          <span class="text-[28px]">🎨</span>
-          <span class="text-[13px] text-text-secondary">创作中心</span>
-        </router-link>
-        <router-link to="/skills" class="aspect-square bg-surface border border-border rounded-[12px] flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:border-accent no-underline text-text gap-2">
-          <span class="text-[28px]">🧩</span>
-          <span class="text-[13px] text-text-secondary">Skill 市场</span>
-        </router-link>
-      </div>
-    </div>
-
-    <!-- 知识库 -->
-    <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">知识库</div>
-      <div class="bg-surface border border-border rounded-[12px] p-5">
-        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <span class="font-semibold">最近文档</span>
-          <div class="flex gap-2 items-center">
-            <select v-model="docSort" @change="loadDocuments" class="px-2.5 py-1.5 bg-bg border border-border rounded-[8px] text-text text-[12px] outline-none cursor-pointer focus:border-accent">
-              <option value="created_at:desc">最新优先</option>
-              <option value="created_at:asc">最早优先</option>
-              <option value="title:asc">标题 A-Z</option>
-              <option value="title:desc">标题 Z-A</option>
-            </select>
-            <input ref="fileInput" type="file" accept=".txt,.md,.pdf" multiple class="hidden" @change="handleUpload">
-            <button @click="$refs.fileInput.click()" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer hover:bg-surface-hover hover:border-accent">上传文档</button>
-            <button @click="doKBSearch" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] cursor-pointer hover:opacity-90">搜索知识库</button>
-            <button @click="openPasteModal" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer hover:bg-surface-hover hover:border-accent">粘贴 Claude 对话</button>
-            <button @click="openInbox" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer hover:bg-surface-hover hover:border-accent">打开收件箱</button>
-          </div>
-        </div>
-        <ul v-if="documents.length" class="flex flex-col gap-1.5">
-          <li v-for="d in documents.slice(0, 10)" :key="d.id" class="px-3 py-2 rounded-[8px] flex justify-between items-center cursor-pointer hover:bg-surface-hover transition-colors">
-            <span @click="viewDocument(d.id)" class="flex items-center gap-2 flex-1">
-              <span class="text-sm">{{ d.title }}</span>
-              <span v-if="d.category_name" class="text-[11px]" :style="{color: d.category_color || '#7c8aff'}">{{ d.category_icon }} {{ d.category_name }}</span>
-              <span class="text-text-secondary text-xs">{{ d.created_at?.slice(0,10) }} · {{ d.char_count || 0 }}字</span>
-            </span>
-            <div class="flex gap-1 items-center">
-              <!-- ASR 失败：重新识别 -->
-              <button
-                v-if="d.asr_failed"
-                @click.stop="reparseDocument(d.id)"
-                class="px-2 py-0.5 rounded-[6px] border border-danger bg-danger/10 text-danger text-[11px] hover:bg-danger hover:text-white whitespace-nowrap"
-                title="重新识别（ASR 失败）"
-              >
-                🔄 重识
-              </button>
-              <button @click.stop="copyDocument(d)" class="px-2 py-0.5 rounded-[6px] border border-border bg-surface text-text-secondary text-[12px] hover:bg-surface-hover hover:border-accent" title="复制全文">复制</button>
-              <button @click.stop="deleteDocument(d.id)" class="px-2 py-0.5 rounded-[6px] border border-border bg-surface text-text-secondary text-[12px] hover:bg-danger hover:text-white hover:border-danger" title="删除">删除</button>
-            </div>
-          </li>
-        </ul>
-        <div v-else class="text-text-secondary text-sm text-center py-5">知识库为空，请上传文档</div>
-      </div>
-    </div>
-
-    <!-- 每日复盘 -->
-    <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">每日复盘</div>
-      <div class="bg-surface border border-border rounded-[12px] p-5">
-        <textarea v-model="reviewInput" placeholder="写写今天学了什么… 随意写，AI 会帮你润色。" class="w-full min-h-[120px] p-3.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none resize-y focus:border-accent"></textarea>
-        <div class="flex gap-2.5 items-center flex-wrap mt-3">
-          <button @click="polishReview" :disabled="reviewLoading" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-50">AI 润色</button>
-          <button @click="weeklyReport" :disabled="reviewLoading" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer hover:bg-surface-hover hover:border-accent disabled:opacity-50">生成本周周报</button>
-          <span class="text-xs text-text-secondary">{{ reviewStatus }}</span>
-        </div>
-        <div v-if="reviewResult" class="mt-4 p-4 bg-bg border border-border rounded-[8px]">
-          <MarkdownRenderer :content="reviewResult" />
-        </div>
-        <div v-if="reviewHistory.length" class="mt-4">
-          <h4 class="text-[13px] text-text-secondary mb-2">历史复盘</h4>
-          <div v-for="r in reviewHistory.slice(0, 7)" :key="r.id" @click="viewReview(r)"
-            class="px-3 py-2.5 rounded-[8px] cursor-pointer text-sm hover:bg-surface-hover transition-colors border-b border-border last:border-b-0">
-            {{ r.date }} — {{ (r.raw_text || '').slice(0, 50) }}…
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SOP 建议 -->
-    <div>
-      <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px] mb-1">SOP 建议</div>
-      <div class="bg-surface border border-border rounded-[12px] p-5">
-        <div class="flex items-center justify-between mb-3">
-          <span class="font-semibold">Wiki → SOP</span>
-          <router-link to="/sop" class="px-3 py-1.5 rounded-[8px] border border-border bg-surface text-text text-[12px] cursor-pointer hover:bg-surface-hover hover:border-accent no-underline">前往 SOP →</router-link>
-        </div>
-        <div class="text-[13px] text-text-secondary mb-3">{{ sopSummary }}</div>
-        <div v-if="sopPending.length" class="flex flex-col gap-1.5">
-          <div v-for="s in sopPending.slice(0, 5)" :key="s.id" class="px-3 py-2 bg-bg rounded-[8px] flex items-center gap-2">
-            <span class="text-[10px] px-1.5 py-0.5 rounded-full" :class="sopTypeClass(s.suggestion_type)">{{ sopTypeLabel(s.suggestion_type) }}</span>
-            <span class="text-[12px] truncate flex-1">{{ s.suggested_title }}</span>
-          </div>
-        </div>
-        <span v-if="!sopPending.length" class="text-xs text-text-secondary">无待处理建议</span>
-      </div>
-    </div>
-
-    <!-- 自动化工具 -->
-    <div>
-      <div class="flex items-center justify-between mb-1">
-        <div class="text-[13px] font-semibold text-text-secondary uppercase tracking-[1.5px]">自动化工具</div>
-        <button @click="queuePanelOpen = true" class="text-xs text-accent hover:text-[#a5b0ff] flex items-center gap-1">
-          <span>📋</span> 解析队列 <span v-if="queueStats.running > 0" class="bg-accent text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ queueStats.running }}</span>
-        </button>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="mod in automationModules" :key="mod.id" class="bg-surface border border-border rounded-[12px] p-5 flex flex-col gap-3">
-          <div class="flex items-center gap-2.5">
-            <span class="text-[28px]">{{ mod.icon }}</span>
-            <div>
-              <div class="text-[15px] font-semibold">{{ mod.name }}</div>
-              <div class="text-xs text-text-secondary">{{ mod.desc }}</div>
-            </div>
-          </div>
-          <input v-model="mod.input" :placeholder="mod.placeholder" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-          <!-- 抖音模块：额外的批量导入区 -->
-          <div v-if="mod.id === 'douyin-summary'" class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] text-text-secondary">📥 批量导入（每行一个链接）</span>
-              <button @click="mod.showBatch = !mod.showBatch" class="text-[11px] text-accent hover:underline">{{ mod.showBatch ? '收起' : '展开' }}</button>
-            </div>
-            <textarea v-if="mod.showBatch" v-model="mod.batchInput" placeholder="粘贴多个抖音分享链接，每行一个…&#10;例如：&#10;https://v.douyin.com/xxxxx/&#10;https://v.douyin.com/yyyyy/" rows="4" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent resize-none"></textarea>
-          </div>
-          <!-- 细粒度进度指示器 -->
-          <div v-if="mod.activeTaskId && taskSteps[mod.activeTaskId]" class="flex flex-col gap-1.5">
-            <div class="flex items-center gap-2 text-xs">
-              <span class="text-text-secondary">{{ taskProgressText[mod.activeTaskId] || '处理中…' }}</span>
-              <span v-if="taskSteps[mod.activeTaskId].some(s => s.status === 'running')" class="inline-block w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin"></span>
-            </div>
-            <div class="flex gap-1">
-              <div v-for="(step, idx) in taskSteps[mod.activeTaskId]" :key="step.key"
-                class="h-1.5 flex-1 rounded-full transition-colors"
-                :class="{
-                  'bg-accent': step.status === 'done',
-                  'bg-accent/40 animate-pulse': step.status === 'running',
-                  'bg-border': step.status === 'pending',
-                  'bg-danger': step.status === 'error'
-                }"
-                :title="step.label"
-              ></div>
-            </div>
-          </div>
-          <div class="flex gap-2.5 items-center">
-            <button @click="runAutomation(mod)" :disabled="mod.loading" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-50">开始解析</button>
-            <span class="text-[13px] min-h-[20px]" :class="mod.statusClass">{{ mod.status }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 全局解析队列面板（抽屉） ===== -->
-  <div v-if="queuePanelOpen" class="fixed inset-0 bg-black/60 z-[100] flex justify-end" @click.self="queuePanelOpen = false">
-    <div class="bg-surface border-l border-border w-[90%] max-w-[420px] h-full flex flex-col">
-      <div class="flex items-center justify-between p-5 border-b border-border">
-        <h3 class="text-base font-semibold">📋 解析队列</h3>
-        <button @click="queuePanelOpen = false" class="text-text-secondary hover:text-text text-lg">×</button>
-      </div>
-      <div class="p-4 flex flex-col gap-3 overflow-y-auto flex-1">
-        <!-- 统计 -->
-        <div class="grid grid-cols-4 gap-2 text-center">
-          <div class="bg-bg rounded-[8px] p-2">
-            <div class="text-lg font-bold">{{ queueStats.pending }}</div>
-            <div class="text-[10px] text-text-secondary">待处理</div>
-          </div>
-          <div class="bg-bg rounded-[8px] p-2">
-            <div class="text-lg font-bold text-accent">{{ queueStats.running }}</div>
-            <div class="text-[10px] text-text-secondary">进行中</div>
-          </div>
-          <div class="bg-bg rounded-[8px] p-2">
-            <div class="text-lg font-bold text-success">{{ queueStats.done }}</div>
-            <div class="text-[10px] text-text-secondary">已完成</div>
-          </div>
-          <div class="bg-bg rounded-[8px] p-2">
-            <div class="text-lg font-bold text-danger">{{ queueStats.error }}</div>
-            <div class="text-[10px] text-text-secondary">失败</div>
-          </div>
-        </div>
-        <!-- 任务列表 -->
-        <div v-if="queueTasks.length" class="flex flex-col gap-2">
-          <div v-for="t in queueTasks" :key="t.task_id" class="bg-bg border border-border rounded-[8px] p-3 flex flex-col gap-2">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-xs px-1.5 py-0.5 rounded bg-surface border border-border flex-shrink-0">{{ t.module_name }}</span>
-                <span class="text-xs text-text-secondary truncate">{{ t.input }}</span>
-              </div>
-              <TaskStatusBadge :status="t.status" class="flex-shrink-0" />
-            </div>
-            <!-- 步骤条 -->
-            <div v-if="t.steps" class="flex gap-1">
-              <div v-for="step in t.steps" :key="step.key"
-                class="h-1 flex-1 rounded-full transition-colors"
-                :class="{
-                  'bg-accent': step.status === 'done',
-                  'bg-accent/40 animate-pulse': step.status === 'running',
-                  'bg-border': step.status === 'pending',
-                  'bg-danger': step.status === 'error'
-                }"
-                :title="step.label"
-              ></div>
-            </div>
-            <!-- API Key 无效错误提示 -->
-            <div v-if="t.api_key_error" class="flex items-center gap-2 bg-danger/10 border border-danger/30 rounded-[6px] px-2.5 py-1.5">
-              <span class="text-danger text-[11px] flex-1">⚠️ API Key 无效：{{ t.api_key_error_msg }}</span>
-              <button @click="retryTask(t.task_id)" class="px-2 py-0.5 rounded-[4px] bg-danger text-white text-[10px] hover:bg-danger/80 flex-shrink-0">🔄 重新加载</button>
-            </div>
-            <div v-else class="flex items-center justify-between text-[11px] text-text-secondary">
-              <span class="truncate max-w-[140px]">{{ t.progress }}</span>
-              <span v-if="t.error" class="text-danger truncate max-w-[140px] text-right" :title="t.error">{{ t.error }}</span>
-              <span v-else-if="t.doc_id">
-                <button @click="viewDocument(t.doc_id)" class="text-accent hover:underline">查看文档 #{{ t.doc_id }}</button>
-              </span>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center text-text-secondary text-sm py-8">暂无任务</div>
-      </div>
-      <div class="p-4 border-t border-border flex gap-2">
-        <button @click="clearQueue" class="px-3 py-2 rounded-[8px] border border-border bg-surface text-text text-xs hover:bg-surface-hover">清除已完成</button>
-        <button @click="refreshQueue" class="px-3 py-2 rounded-[8px] border border-border bg-accent text-white text-xs hover:opacity-90">刷新</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 弹窗 ===== -->
-  <!-- Shortcut Modal -->
-  <div v-if="shortcutModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]" @click.self="shortcutModal = false">
-    <div class="bg-surface border border-border rounded-[12px] p-6 w-[90%] max-w-[440px] flex flex-col gap-4">
-      <h3 class="text-base">{{ editingShortcutIdx >= 0 ? '编辑快捷方式' : '添加快捷方式' }}</h3>
-      <input v-model="shortcutForm.name" placeholder="名称" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <input v-model="shortcutForm.url" placeholder="https://…" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <input v-model="shortcutForm.icon" placeholder="图标 (emoji)" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <div class="flex gap-2.5 justify-end">
-        <button @click="shortcutModal = false" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] hover:bg-surface-hover">取消</button>
-        <button @click="saveShortcut" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] hover:opacity-90">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- AI Modal -->
-  <div v-if="aiModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]" @click.self="aiModal = false">
-    <div class="bg-surface border border-border rounded-[12px] p-6 w-[90%] max-w-[440px] flex flex-col gap-4">
-      <h3 class="text-base">添加 AI 服务</h3>
-      <input v-model="aiForm.name" placeholder="名称" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <input v-model="aiForm.url" placeholder="https://…" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <input v-model="aiForm.icon" placeholder="图标 (emoji)" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <div class="flex gap-2.5 justify-end">
-        <button @click="aiModal = false" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] hover:bg-surface-hover">取消</button>
-        <button @click="saveAI" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] hover:opacity-90">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Document Modal -->
-  <div v-if="docModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]" @click.self="docModal = false">
-    <div class="bg-surface border border-border rounded-[12px] p-5 w-[92%] md:w-[88%] max-w-[1200px] flex flex-col gap-4 max-h-[90vh]">
-      <h3 class="text-base font-semibold shrink-0">{{ docTitle }}</h3>
-      <div class="overflow-y-auto bg-bg p-5 rounded-[8px] flex-1 min-h-0">
+    <div v-if="docModal" class="home-modal" role="presentation" @click.self="docModal = false">
+      <section class="home-modal__panel" role="dialog" aria-modal="true" aria-labelledby="document-title">
+        <header><h2 id="document-title">{{ docTitle }}</h2><UiIconButton label="关闭" variant="text" @click="docModal = false">×</UiIconButton></header>
         <MarkdownRenderer :content="docContent" />
-      </div>
-      <div class="flex gap-2.5 justify-end shrink-0">
-        <button @click="docModal = false" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] hover:bg-surface-hover">关闭</button>
-      </div>
+        <footer><UiButton variant="secondary" @click="copyDocument(activeDocument)">复制全文</UiButton><UiButton @click="docModal = false">关闭</UiButton></footer>
+      </section>
     </div>
-  </div>
 
-  <!-- Paste Modal -->
-  <div v-if="pasteModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]" @click.self="pasteModal = false">
-    <div class="bg-surface border border-border rounded-[12px] p-6 w-[90%] max-w-[600px] flex flex-col gap-4">
-      <h3 class="text-base">粘贴 Claude 对话</h3>
-      <textarea v-model="pasteForm.content" placeholder="从 Claude 复制对话内容，粘贴到这里…" class="w-full min-h-[200px] p-3.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none resize-y focus:border-accent"></textarea>
-      <input v-model="pasteForm.title" :placeholder="'Claude对话 ' + new Date().toISOString().slice(0,16).replace('T',' ')" class="px-3.5 py-2.5 bg-bg border border-border rounded-[8px] text-text text-sm outline-none focus:border-accent">
-      <div class="flex gap-2.5 justify-end">
-        <button @click="pasteModal = false" class="px-4 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] hover:bg-surface-hover">取消</button>
-        <button @click="savePaste" class="px-4 py-2 rounded-[8px] border border-border bg-accent text-white text-[13px] hover:opacity-90">存入知识库</button>
-      </div>
+    <div v-if="automationDialog && selectedAutomation" class="home-modal" role="presentation" @click.self="automationDialog = false">
+      <section class="home-modal__panel" role="dialog" aria-modal="true" aria-labelledby="automation-title">
+        <header><h2 id="automation-title">{{ selectedAutomation.name }}</h2><UiIconButton label="关闭" variant="text" @click="automationDialog = false">×</UiIconButton></header>
+        <p class="home-dashboard__muted">{{ selectedAutomation.desc }}</p>
+        <UiInput v-model="selectedAutomation.input" label="分享链接" :placeholder="selectedAutomation.placeholder" />
+        <footer><UiButton :loading="selectedAutomation.loading" @click="runAutomation(selectedAutomation)">开始解析</UiButton><UiButton variant="secondary" @click="automationDialog = false">取消</UiButton></footer>
+      </section>
     </div>
-  </div>
 
-  <!-- Toast -->
-  <div v-if="toastVisible" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-[8px] text-sm border z-[200] transition-opacity"
-    :class="toastError ? 'border-danger text-danger' : 'border-border text-text bg-surface'">
-    {{ toastMessage }}
-  </div>
+    <aside v-if="queuePanelOpen" class="home-drawer" aria-label="解析队列" @keydown.esc="queuePanelOpen = false">
+      <header><h2>解析队列</h2><UiIconButton label="关闭队列" variant="text" @click="queuePanelOpen = false">×</UiIconButton></header>
+      <div class="home-drawer__stats"><UiBadge status="neutral" :label="`待处理 ${queueStats.pending || 0}`" /><UiBadge status="info" :label="`进行中 ${queueStats.running || 0}`" /><UiBadge status="success" :label="`已完成 ${queueStats.done || 0}`" /><UiBadge status="danger" :label="`失败 ${queueStats.error || 0}`" /></div>
+      <div class="home-drawer__list"><div v-for="item in queueItems" :key="item.id" class="home-drawer__item"><span>{{ item.title }}</span><UiButton v-if="item.status === 'error'" size="sm" variant="text" @click="retryTask(item.id)">重试</UiButton></div></div>
+      <footer><UiButton variant="secondary" @click="clearQueue">清除已完成</UiButton><UiButton @click="refreshQueue">刷新</UiButton></footer>
+    </aside>
+
+    <div v-if="toast.visible" class="home-toast" :data-error="toast.error ? 'true' : undefined" role="status">{{ toast.message }}</div>
+  </section>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSettingsStore } from '../stores/settings.js'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
-import TaskStatusBadge from '../components/TaskStatusBadge.vue'
+import {
+  AutomationQueueWidget,
+  CalendarWidget,
+  CreationWidget,
+  KnowledgeWidget,
+  TaskWidget,
+  UiBadge,
+  UiButton,
+  UiDashboardGrid,
+  UiDashboardItem,
+  UiIconButton,
+  UiInput,
+  UiSelect,
+  UiWidgetFrame,
+  WorkflowWidget,
+} from '@study-ui'
 import { useHomeSearch } from '../composables/home/useHomeSearch.js'
 import { useAutomationQueue } from '../composables/home/useAutomationQueue.js'
 import { useKnowledgeDocuments } from '../composables/home/useKnowledgeDocuments.js'
 import { useDailyReview } from '../composables/home/useDailyReview.js'
 
+const router = useRouter()
 const settings = useSettingsStore()
-
-// Electron 环境检测
-const isElectron = !!(window.electronAPI)
-
-// 安全打开外部链接
+const isElectron = Boolean(window.electronAPI)
+const toast = ref({ visible: false, message: '', error: false })
+let toastTimer
+function showToast(message, error = false) {
+  toast.value = { visible: true, message, error }
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toast.value.visible = false }, 2500)
+}
 function openExternal(url) {
-  if (isElectron) {
-    window.electronAPI.openExternal(url)
-  } else {
-    window.open(url, '_blank')
-  }
+  if (isElectron) window.electronAPI.openExternal(url)
+  else window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-// ===== 搜索 =====
 const categories = ref([])
-const {
-  mode: searchMode,
-  query: searchInput,
-  category: searchCategory,
-  loading: searchLoading,
-  hasResult: searchResult,
-  answer: searchAnswer,
-  sources: searchSources,
-  error: searchError,
-  submit: doSearch,
-  searchKnowledge: doKBSearch,
-} = useHomeSearch({
-  apiPost: settings.apiPost,
-  openExternal,
-  loadCommands: () => settings.loadFromStorage('commands', {}),
-  notify: showToast,
-})
+const search = useHomeSearch({ apiPost: settings.apiPost, openExternal, loadCommands: () => settings.loadFromStorage('commands', {}), notify: showToast })
+const { mode: searchMode, query: searchInput, category: searchCategory, loading: searchLoading, hasResult: searchResult, answer: searchAnswer, sources: searchSources, error: searchError, submit: doSearch } = search
+const searchModeOptions = [{ value: 'ai', label: 'AI 推荐' }, { value: 'kb', label: '知识库' }, { value: 'web', label: '全网' }, { value: 'cmd', label: '命令' }]
+const categoryOptions = computed(() => [{ value: '', label: '全部分类' }, ...categories.value.map((item) => ({ value: String(item.id), label: `${item.icon || ''} ${item.name}`.trim() }))])
 
-// ===== 快捷方式弹窗 =====
-const shortcutModal = ref(false)
-const editingShortcutIdx = ref(-1)
-const shortcutForm = ref({ name: '', url: '', icon: '' })
-
-function openShortcutModal(idx) {
-  editingShortcutIdx.value = idx !== undefined ? idx : -1
-  if (idx !== undefined) {
-    const s = settings.shortcuts[idx]
-    shortcutForm.value = { ...s }
-  } else {
-    shortcutForm.value = { name: '', url: '', icon: '' }
-  }
-  shortcutModal.value = true
-}
-
-function saveShortcut() {
-  const { name, url, icon } = shortcutForm.value
-  if (!name || !url) { showToast('请填写名称和 URL', true); return }
-  if (editingShortcutIdx.value >= 0) {
-    settings.shortcuts[editingShortcutIdx.value] = { name, url, icon: icon || '🔗' }
-  } else {
-    settings.addShortcut({ name, url, icon: icon || '🔗' })
-  }
-  shortcutModal.value = false
-}
-
-// ===== AI 弹窗 =====
-const aiModal = ref(false)
-const aiForm = ref({ name: '', url: '', icon: '' })
-
-function openAIModal() {
-  aiForm.value = { name: '', url: '', icon: '' }
-  aiModal.value = true
-}
-
-function saveAI() {
-  const { name, url, icon } = aiForm.value
-  if (!name || !url) { showToast('请填写名称和 URL', true); return }
-  settings.addLauncher({ name, url, icon: icon || '🤖' })
-  aiModal.value = false
-}
-
-function launchAI(url) { openExternal(url) }
-
-function confirmRemoveShortcut(i) {
-  if (confirm('确定删除这个常用网站吗？')) {
-    settings.removeShortcut(i)
-  }
-}
-
-function confirmRemoveLauncher(i) {
-  if (confirm('确定删除这个 AI 服务吗？')) {
-    settings.removeLauncher(i)
-  }
-}
-
-// ===== 知识库 =====
-const {
-  documents,
-  sort: docSort,
-  activeDocument,
-  reload: loadDocuments,
-  setSort: setDocumentSort,
-  open: openDocument,
-  copy: copyDocument,
-  remove: deleteDocument,
-  reparse: reparseDocument,
-  uploadFiles,
-  openInbox,
-} = useKnowledgeDocuments({
+let queueApi
+const knowledgeApi = useKnowledgeDocuments({
   apiGet: settings.apiGet,
   apiPost: settings.apiPost,
   apiDelete: settings.apiDelete,
   apiUpload: settings.apiUpload,
   category: searchCategory,
   notify: showToast,
-  confirmAction: (message) => confirm(message),
-  onReparseQueued: () => startQueuePoll(),
+  confirmAction: (message) => window.confirm(message),
+  onReparseQueued: () => queueApi?.start(),
 })
+queueApi = useAutomationQueue({ apiGet: settings.apiGet, apiPost: settings.apiPost, apiDelete: settings.apiDelete, onCompleted: knowledgeApi.reload, notify: showToast, onApiKeyInvalid: (message) => window.alert(message) })
+const { documents, activeDocument, reload: loadDocuments, open: viewDocument, copy: copyDocument } = knowledgeApi
+const { items: queueTasks, stats: queueStats, start: startQueuePoll, stop: stopQueuePoll, clear: clearQueue, retry: retryTask, refresh: fetchQueue } = queueApi
+const queuePanelOpen = ref(false)
+const refreshQueue = () => { fetchQueue(); showToast('已刷新') }
+const queueItems = computed(() => queueTasks.value.map((item) => ({
+  id: item.id || item.task_id,
+  title: item.title || item.module_id || '自动化任务',
+  status: item.status,
+  progress: typeof (item.progressValue ?? item.percent ?? item.progress) === 'number' ? (item.progressValue ?? item.percent ?? item.progress) : 0,
+})))
+const knowledgeItems = computed(() => documents.value.slice(0, 8).map((item) => ({ id: item.id, title: item.title, meta: item.created_at?.slice(0, 10) || '最近', status: 'ready' })))
+
+const automationModules = ref([
+  { id: 'douyin-summary', name: '抖音摘要', desc: '提取文本、识别资源并生成文档', placeholder: '粘贴抖音分享链接…', input: '', loading: false },
+  { id: 'bilibili-summary', name: 'B 站解析', desc: '解析视频信息并提取语音文本', placeholder: '粘贴 B 站分享链接…', input: '', loading: false },
+  { id: 'xiaohongshu-summary', name: '小红书解析', desc: '提取笔记内容并归档', placeholder: '粘贴小红书分享链接…', input: '', loading: false },
+])
+const taskItems = computed(() => automationModules.value.map((item) => ({ id: item.id, title: item.name, time: item.desc, status: item.loading ? 'running' : 'pending', progress: item.loading ? 42 : 0 })))
+const automationDialog = ref(false)
+const selectedAutomationId = ref('')
+const selectedAutomation = computed(() => automationModules.value.find((item) => item.id === selectedAutomationId.value))
+function openAutomation(id) { selectedAutomationId.value = id; automationDialog.value = true }
+async function runAutomation(module) {
+  if (!module.input.trim()) return showToast('请粘贴分享链接', true)
+  module.loading = true
+  try {
+    const data = await settings.apiPost('/automation/queue', { module_id: module.id, input: module.input.trim() })
+    if (data.error) showToast(data.error, true)
+    else { showToast('任务已提交'); automationDialog.value = false; startQueuePoll() }
+  } catch {
+    showToast('请求失败', true)
+  } finally {
+    module.loading = false
+  }
+}
+
+const creationItems = computed(() => settings.launcherItems.map((item, index) => ({ id: `launcher-${index}`, title: item.name, thumbnail: '', kind: 'template', url: item.url })))
+function launchCreation(id) {
+  const index = Number(id.split('-')[1])
+  const item = settings.launcherItems[index]
+  if (item) openExternal(item.url)
+}
+const workflowSteps = [
+  { id: 'collect', label: '收集', status: 'done' },
+  { id: 'understand', label: '理解', status: 'done' },
+  { id: 'organize', label: '整理', status: 'running' },
+  { id: 'publish', label: '输出', status: 'pending' },
+]
+function runWorkflow(id) {
+  const routes = { collect: '/kb', understand: '/learning', organize: '/workflow', publish: '/creator' }
+  if (routes[id]) router.push(routes[id])
+}
+
+const today = new Date()
+const calendarMonth = `${today.getFullYear()} 年 ${today.getMonth() + 1} 月`
+const selectedDate = ref(today.toISOString().slice(0, 10))
+const calendarDays = computed(() => Array.from({ length: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() }, (_, index) => {
+  const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`
+  return { date, label: String(index + 1), selected: date === selectedDate.value, eventTones: date === selectedDate.value ? ['lime'] : [] }
+}))
+
+const reviewOpen = ref(false)
+const review = useDailyReview({ apiPost: settings.apiPost, apiGet: settings.apiGet, notify: showToast })
+const { input: reviewInput, loading: reviewLoading, status: reviewStatus, result: reviewResult, history: reviewHistory, polish: polishReview, weeklyReport, loadHistory: loadReviewHistory, view: viewReview } = review
+
 const docModal = computed({ get: () => Boolean(activeDocument.value), set: (value) => { if (!value) activeDocument.value = null } })
 const docTitle = computed(() => activeDocument.value?.title || '')
 const docContent = computed(() => activeDocument.value?.content || '')
-const viewDocument = openDocument
-const handleUpload = async (event) => {
-  const files = [...(event.target.files || [])]
-  if (files.length) await uploadFiles(files)
-  event.target.value = ''
-}
 
-// ===== 粘贴 Claude 对话 =====
-const pasteModal = ref(false)
-const pasteForm = ref({ title: '', content: '' })
-
-function openPasteModal() {
-  pasteForm.value = {
-    title: 'Claude对话 ' + new Date().toISOString().slice(0, 16).replace('T', ' '),
-    content: ''
-  }
-  pasteModal.value = true
-}
-
-async function savePaste() {
-  const { title, content } = pasteForm.value
-  if (!content) { showToast('请粘贴对话内容', true); return }
-  try {
-    const body = { title: title || pasteForm.value.title, content, source: 'claude' }
-    if (searchCategory.value) body.category_id = parseInt(searchCategory.value)
-    const data = await settings.apiPost('/upload/text', body)
-    if (data.id) {
-      showToast(`已存入知识库`)
-      pasteModal.value = false
-      loadDocuments()
-    } else showToast('存入失败', true)
-  } catch { showToast('存入失败', true) }
-}
-
-// ===== 每日复盘 =====
-const {
-  input: reviewInput,
-  loading: reviewLoading,
-  status: reviewStatus,
-  result: reviewResult,
-  history: reviewHistory,
-  polish: polishReview,
-  weeklyReport,
-  loadHistory: loadReviewHistory,
-  view: viewReview,
-} = useDailyReview({ apiPost: settings.apiPost, apiGet: settings.apiGet, notify: showToast })
-
-// ===== SOP 建议摘要 =====
-const sopPending = ref([])
-const sopSummary = ref('')
-
-async function loadSopPending() {
-  try {
-    sopPending.value = await settings.apiGet('/sop/suggestions?status=pending&limit=5')
-    sopSummary.value = sopPending.value.length
-      ? `${sopPending.value.length} 条待审核建议`
-      : '暂无待处理建议'
-  } catch {
-    sopPending.value = []
-    sopSummary.value = '加载失败'
-  }
-}
-
-function sopTypeLabel(type) {
-  return { new_block: '新环节', merge_into_block: '合并', insert_into_chain: '插链', enrich_block: '丰富', extract_chain: '提取流程' }[type] || type
-}
-
-function sopTypeClass(type) {
-  return {
-    new_block: 'bg-green-500/15 text-green-400',
-    merge_into_block: 'bg-blue-500/15 text-blue-400',
-    insert_into_chain: 'bg-accent/15 text-accent',
-    enrich_block: 'bg-yellow-500/15 text-yellow-400',
-    extract_chain: 'bg-purple-500/15 text-purple-400',
-  }[type] || 'bg-white/10 text-text-secondary'
-}
-
-// ===== 自动化工具 =====
-const automationModules = ref([
-  { id: 'douyin-summary', name: '抖音摘要', icon: '📹', desc: '粘贴抖音分享链接，自动提取文本、识别资源、生成文档', placeholder: '粘贴抖音分享链接…', input: '', batchInput: '', showBatch: false, loading: false, status: '', statusClass: '', activeTaskId: '' },
-  { id: 'bilibili-summary', name: 'B站解析', icon: '📺', desc: '粘贴B站分享链接，自动解析视频信息、提取语音文本、生成文档', placeholder: '粘贴B站分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
-  { id: 'xiaohongshu-summary', name: '小红书解析', icon: '📕', desc: '粘贴小红书分享链接，自动提取笔记内容、图片视频、生成文档', placeholder: '粘贴小红书分享链接…', input: '', loading: false, status: '', statusClass: '', activeTaskId: '' },
-])
-
-// 全局队列面板状态
-const queuePanelOpen = ref(false)
-const {
-  items: queueTasks,
-  stats: queueStats,
-  stepsByTask: taskSteps,
-  progressByTask: taskProgressText,
-  refresh: fetchQueue,
-  start: startQueuePoll,
-  stop: stopQueuePoll,
-  clear: clearQueue,
-  retry: retryTask,
-} = useAutomationQueue({
-  apiGet: settings.apiGet,
-  apiPost: settings.apiPost,
-  apiDelete: settings.apiDelete,
-  onCompleted: loadDocuments,
-  notify: showToast,
-  onApiKeyInvalid: (message) => alert(message + '\n\n请按以下步骤操作:\n1. 打开 backend/.env 文件\n2. 更新 DASHSCOPE_API_KEY=你的新密钥\n3. 重启后端服务\n4. 再次点击重试'),
-})
-function refreshQueue() { fetchQueue(); showToast('已刷新') }
-
-async function runAutomation(mod) {
-  // 检查是否有批量输入（仅抖音模块）
-  const batchText = (mod.batchInput || '').trim()
-  const singleInput = mod.input.trim()
-  const hasBatch = mod.id === 'douyin-summary' && batchText
-
-  if (!hasBatch && !singleInput) { showToast('请粘贴分享链接', true); return }
-  mod.loading = true
-  mod.status = '⏳ 已提交，正在处理…'
-  mod.statusClass = 'text-text-secondary'
-
-  try {
-    let payload
-    if (hasBatch) {
-      // 批量模式：从 textarea 提取所有行
-      const lines = batchText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
-      if (singleInput) lines.unshift(singleInput) // 把单独输入框的链接也加上
-      payload = { module_id: mod.id, inputs: lines }
-    } else {
-      payload = { module_id: mod.id, input: singleInput }
-    }
-
-    const data = await settings.apiPost('/automation/queue', payload)
-    if (data.error) {
-      mod.status = data.error
-      mod.statusClass = 'text-danger'
-      showToast('提交失败', true)
-    } else if (data.task_ids && data.task_ids.length) {
-      mod.activeTaskId = data.task_ids[0]
-      const count = data.count || data.task_ids.length
-      mod.status = `⏳ 已提交 ${count} 个任务，排队中…`
-      // 清空批量输入
-      if (hasBatch) mod.batchInput = ''
-      startQueuePoll()
-    } else {
-      mod.status = '提交完成'
-    }
-  } catch (err) {
-    mod.status = '无法连接后端'
-    mod.statusClass = 'text-danger'
-    showToast('请求失败', true)
-  } finally { mod.loading = false }
-}
-
-// ===== Toast =====
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastError = ref(false)
-let toastTimer = null
-
-function showToast(msg, isError = false) {
-  toastMessage.value = msg
-  toastError.value = isError
-  toastVisible.value = true
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toastVisible.value = false }, 2500)
-}
-
-// ===== 初始化 =====
 onMounted(async () => {
-  loadDocuments()
-  loadReviewHistory()
-  loadSopPending()
-  startQueuePoll()
+  await Promise.all([loadDocuments(), loadReviewHistory()])
   try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
+  startQueuePoll()
 })
-onUnmounted(() => {
-  stopQueuePoll()
-})
+onUnmounted(() => stopQueuePoll())
 </script>
+
+<style scoped>
+.home-dashboard { display: grid; gap: var(--ui-space-6); max-width: 1480px; margin: 0 auto; }
+.home-dashboard__header { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ui-space-6); }
+.home-dashboard__eyebrow { margin: 0 0 var(--ui-space-2); color: var(--ui-color-action); font: 700 11px/1 var(--ui-font-mono); letter-spacing: 0; }
+.home-dashboard__header h1 { margin: 0; color: var(--ui-color-text-strong); font-size: 40px; line-height: 1.1; }
+.home-dashboard__subtitle { max-width: 38rem; margin: var(--ui-space-3) 0 0; color: var(--ui-color-text-muted); font-size: 14px; }
+.home-dashboard__quick-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--ui-space-2); }
+.home-dashboard__quick-nav a { color: var(--ui-color-text-muted); font-size: 12px; text-decoration: none; }
+.home-dashboard__quick-nav a:hover { color: var(--ui-color-action); }
+.home-search { display: grid; grid-template-columns: 150px minmax(0, 1fr) 170px auto; align-items: end; gap: var(--ui-space-3); padding: var(--ui-space-4); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-lg); background: var(--ui-color-surface); }
+.home-search :deep(.ui-field) { min-width: 0; }
+.home-search__mode :deep(.ui-field__label) { color: var(--ui-color-text-muted); }
+.home-dashboard__muted { margin: 0; color: var(--ui-color-text-muted); font-size: 13px; }
+.home-review { gap: var(--ui-space-4); }
+.home-review textarea { width: 100%; min-height: 140px; box-sizing: border-box; resize: vertical; border: 1px solid var(--ui-color-border-strong); border-radius: var(--ui-radius-md); padding: var(--ui-space-3); background: var(--ui-color-canvas); color: var(--ui-color-text); font: 400 14px/1.5 var(--ui-font-sans); }
+.home-review textarea:focus { outline: none; border-color: var(--ui-color-action); box-shadow: var(--ui-focus-ring); }
+.home-review__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-2); }
+.home-review__history { display: grid; gap: var(--ui-space-1); }
+.home-review__history button { border: 0; border-bottom: 1px solid var(--ui-color-border); padding: var(--ui-space-2) 0; background: none; color: var(--ui-color-text-muted); text-align: left; cursor: pointer; }
+.home-review__history button:hover { color: var(--ui-color-text-strong); }
+.home-modal { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: var(--ui-space-4); background: rgb(0 0 0 / 64%); }
+.home-modal__panel { display: grid; width: min(680px, 100%); max-height: min(760px, 90vh); gap: var(--ui-space-4); overflow: auto; border: 1px solid var(--ui-color-border-strong); border-radius: var(--ui-radius-lg); padding: var(--ui-space-5); background: var(--ui-color-surface); box-shadow: var(--ui-shadow-overlay); }
+.home-modal__panel header, .home-modal__panel footer, .home-drawer header, .home-drawer footer { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); }
+.home-modal__panel h2, .home-drawer h2 { margin: 0; color: var(--ui-color-text-strong); font-size: 18px; }
+.home-drawer { position: fixed; z-index: 70; top: 0; right: 0; bottom: 0; display: grid; width: min(420px, 94vw); grid-template-rows: auto auto 1fr auto; gap: var(--ui-space-4); border-left: 1px solid var(--ui-color-border-strong); padding: var(--ui-space-5); background: var(--ui-color-surface); box-shadow: var(--ui-shadow-overlay); }
+.home-drawer__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-space-2); }
+.home-drawer__list { display: grid; align-content: start; gap: var(--ui-space-1); overflow: auto; }
+.home-drawer__item { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--ui-space-3); border-bottom: 1px solid var(--ui-color-border); padding: var(--ui-space-3) 0; color: var(--ui-color-text); font-size: 13px; }
+.home-drawer__item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-toast { position: fixed; z-index: 100; right: var(--ui-space-5); bottom: var(--ui-space-5); max-width: min(380px, calc(100vw - 40px)); border: 1px solid var(--ui-color-border-strong); border-radius: var(--ui-radius-md); padding: var(--ui-space-3) var(--ui-space-4); background: var(--ui-color-surface-raised); color: var(--ui-color-text-strong); box-shadow: var(--ui-shadow-overlay); font-size: 13px; }
+.home-toast[data-error='true'] { border-color: var(--ui-color-danger); color: var(--ui-color-danger); }
+@media (max-width: 1023px) { .home-dashboard__header { align-items: flex-start; flex-direction: column; } .home-dashboard__quick-nav { justify-content: flex-start; } .home-search { grid-template-columns: repeat(2, minmax(0, 1fr)); } .home-search__mode, .home-search :deep(.ui-field:nth-child(2)) { grid-column: span 1; } .home-search :deep(.ui-button) { width: 100%; } }
+@media (max-width: 767px) { .home-dashboard { gap: var(--ui-space-4); } .home-search { grid-template-columns: 1fr; padding: var(--ui-space-3); } .home-search > * { grid-column: auto !important; } .home-dashboard__header h1 { font-size: 30px; } .home-dashboard__subtitle { font-size: 13px; } .home-modal__panel { padding: var(--ui-space-4); } }
+</style>

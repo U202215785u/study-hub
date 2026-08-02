@@ -2,7 +2,7 @@
   <div class="ui-app-shell" :data-dock-open="dockOpen ? 'true' : undefined">
     <header class="ui-app-shell__topbar">
       <div v-if="$slots.brand" class="ui-app-shell__brand"><slot name="brand" /></div>
-      <nav class="ui-app-shell__nav" aria-label="主导航"><slot name="topNavigation" /></nav>
+      <div class="ui-app-shell__nav"><slot name="topNavigation" /></div>
       <button v-if="$slots.dock" class="ui-app-shell__dock-trigger" type="button" :aria-expanded="dockOpen" aria-controls="study-ui-dock" @click="dockOpen = !dockOpen">
         快捷工具
       </button>
