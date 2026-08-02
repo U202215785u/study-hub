@@ -13,6 +13,7 @@ export default {
       viewports: {
         mobile: { name: 'Mobile 390', styles: { width: '390px', height: '844px' } },
         tablet: { name: 'Tablet 768', styles: { width: '768px', height: '1024px' } },
+        compact: { name: 'Compact 1024', styles: { width: '1024px', height: '980px' } },
         desktop: { name: 'Desktop 1440', styles: { width: '1440px', height: '980px' } },
       },
     },
