@@ -98,3 +98,58 @@ def test_mcp_creates_and_reads_the_persisted_task_card():
 
     assert created_payload["result"]["text"].startswith("【任务】解析提交后转圈")
     assert read_payload["result"] == created_payload["result"]
+
+
+def test_task_card_keeps_a_memory_snapshot_with_sources_and_freshness():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.open_case(task_type="bug", description="ASR 识别失败")
+    runtime.record_context(
+        case["id"],
+        project_index_hits=["识别服务调用供应商 API"],
+        owner_files=["backend/services/asr.py"],
+        memory_summary=["HTTP 200 仍需读取业务错误码"],
+        memory_sources=["project-memory/automation/asr.md#provider-response"],
+        memory_freshness="2026-08-01",
+    )
+    card = runtime.create_task_card(case["id"], scope="只检查 ASR 响应", acceptance="说明 200 的业务含义")
+
+    runtime.record_context(
+        case["id"],
+        project_index_hits=["后续新增定位"],
+        owner_files=[],
+        memory_summary=[],
+    )
+
+    assert card["snapshot"]["memory_sources"] == ["project-memory/automation/asr.md#provider-response"]
+    assert card["snapshot"]["memory_freshness"] == "2026-08-01"
+    assert card["snapshot"]["project_index_hits"] == ["识别服务调用供应商 API"]
+    assert runtime.get_task_card(case["id"])["snapshot"] == card["snapshot"]
+
+
+def test_an_accepted_task_card_collects_a_result_from_the_same_agent():
+    from butler.models import ButlerStateError
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _located_case(runtime)
+    runtime.create_task_card(case["id"], scope="只检查提交流程", acceptance="给出根因")
+
+    accepted = runtime.accept_task_card(case["id"], agent="asr-debugger")
+    with pytest.raises(ButlerStateError, match="accepted"):
+        runtime.accept_task_card(case["id"], agent="another-agent")
+    report = runtime.report_execution_result(
+        case["id"],
+        agent="asr-debugger",
+        outcome="root_cause_found",
+        summary="供应商业务错误码被当成成功处理",
+        evidence="响应体包含业务错误字段",
+        files=["backend/services/asr.py"],
+    )
+
+    assert accepted["agent"] == "asr-debugger"
+    assert report["outcome"] == "root_cause_found"
+    handoff = runtime.get_case(case["id"])["context"]["task_card_handoff"]
+    assert handoff["status"] == "reported"
+    assert handoff["result"]["files"] == ["backend/services/asr.py"]

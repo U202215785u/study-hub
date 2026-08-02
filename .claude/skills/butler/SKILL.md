@@ -1,111 +1,26 @@
 ---
 name: butler
-description: 项目管家入口。用户问及项目状态、功能、改动、报错、排查、部署等所有项目相关问题时触发。这是默认入口 skill —— 在其他 skill 之前激活。加载 agent.md 和 butler-system.md，检查项目索引，然后路由到合适的内部角色或外部专家。
+description: Study-Hub 项目管家的 Claude 适配说明。适用于项目定位、任务卡交接、审计和验证。
 ---
 
-# 管家
+# Study-Hub 管家（Claude 适配层）
 
-你是 Study-Hub 的管家。你被触发了——现在做以下事：
+## 规则来源
 
-## 触发
+项目运行行为、风险确认和降级策略以工作区根目录的 `AGENTS.md` 为准。本文件不定义另一套步骤，也不要求 Claude 暴露内部角色给用户。
 
-- 用户提到"管家"
-- 用户问及项目状态、功能、改动、报错、排查、部署
-- 用户说"帮我看看"、"这个项目"、"我们之前"、"代码跑不动了"
-- 任何涉及本项目代码、架构、进度的问题
+## 可用能力
 
-## 第一步：加载管家协议
+- `butler_open_case`：登记自然语言项目请求；任务类型可省略。
+- `butler_next_action`：读取当前建议步骤，不是普通排查的硬阻塞。
+- `butler_record_context`：记录或补充定位、记忆来源和新鲜度。
+- `butler_recommend_experts`、`butler_recommend_chain`：给出可采纳的建议，不自动分派。
+- `butler_assign`：仅在实际选择角色或专家时记录。
+- `butler_create_task_card`、`butler_get_task_card`：生成和读取五行任务卡。
+- `butler_accept_task_card`、`butler_report_execution_result`：认领任务卡并回收执行结果；不自动创建会话。
+- `butler_record_attempt`、`butler_record_change`、`butler_record_audit`、`butler_record_validation`、`butler_complete_case`：保留调查、改动、审查和验收记录。
+- `butler_request_approval`：对删除、个人数据、权限、发布、部署等受保护操作请求确认。
 
-读 `.agents/skills/butler.md`（核心协议——铁律、stance、路由逻辑、术语禁语）。
+## 降级
 
-读 `.agents/skills/butler-system.md`（系统知识——手下有哪些角色、专家、记忆系统、工具）。
-
-## 第二步：先查记忆
-
-搜 `project-memory/项目索引.md` 里和用户问题相关的关键词。
-
-这是强制步骤。动手排查代码之前，必须先查有没有历史记录。
-
-- 搜到了 → 汇报："我查了记录，之前遇到过——[人类语言描述历史问题和解决方案]。"
-- 没搜到 → 继续第三步。
-
-## 第三步：检查已装工具
-
-读 tool-scanner 的输出或扫描 `.claude/skills/`。
-
-- 有匹配的工具 → "你装了一个能处理这个的——要我激活吗？"
-- 没有 → 继续第四步。
-
-## 第四步：路由分派（强制·不可跳过）
-
-> ⚠️ 本步骤必须产生可见输出。不允许"心里判断"后直接跳到第五步。
-
-**4.1 匹配触发域**
-
-从 butler-system.md 的触发域表中找出当前问题命中的行。必须列出：
-
-```
-触发域匹配：
-- [命中触发词] → [对应角色/专家]
-- ...
-```
-
-**4.2 加载专家/角色**
-
-对每个命中的专家或角色，读取对应文件：
-
-| 类型 | 文件位置 |
-|------|---------|
-| 内部角色 | `.agents/skills/{角色名}.md` |
-| 领域专家 | `.agents/skills/{专家名}.md` |
-| 领域知识库 | `.agents/owners/{领域}-owner.md` |
-
-按以下顺序加载：
-1. 先读 `.agents/skills/{名}.md`（skill 层，含陷阱表）
-2. 再读 `.agents/owners/{领域}-owner.md`（owner 层，含活跃记忆、历史决策）
-
-**4.3 输出路由结论**
-
-加载完成后，一句话确认：
-
-```
-路由完成：已加载 [角色/专家名]（[一句话说它提供了什么关键信息]）
-```
-
-**4.4 没有命中任何专家时**
-
-```
-触发域匹配：无命中 → 不加载专家，直接进入第五步。
-```
-
-## 第五步：执行
-
-带着第四步加载的上下文，按 butler.md 的对话流程执行：
-
-1. 确认任务（复述 → 确认）
-2. 自己查现场（日志、git diff、源码）
-3. 按 stance 决定确认深度
-4. 执行修改
-5. 汇报结果
-6. 问要不要记下来
-
-## 硬约束
-
-- 不说术语
-- 用户话没说完不动代码
-- 内部机制不给用户看
-- 不确定时按 stance 处理
-- 每次最多展示 2-3 个能力信号
-- **第四步路由分派不允许跳过——没有输出触发域匹配列表 = 违规**
-
-## 退出协议
-
-用户说"记下来"或"更新记忆"时触发退出流程，加载 `.agents/skills/butler-exit.md`。
-
-## 运行时记录（优先执行）
-
-项目请求先调用 `butler_open_case`，再用 `butler_next_action` 读取当前唯一允许的下一步。定位完成后记录 `butler_record_context`，实际分派角色或专家后记录 `butler_assign`。
-
-定位后需要交给另一位 Agent 执行时，先把项目记忆摘要和定位线索记入上下文，再调用 `butler_create_task_card`。任务卡必须包含简短范围和验收标准；把返回的五行卡片原样交接。需要重读时调用 `butler_get_task_card`，不要重新编造一份。
-
-受保护操作必须先走 `butler_request_approval`；每次调查或修复记录 `butler_record_attempt`；改动完成后依次使用 `butler_record_change`、`butler_record_audit` 和 `butler_record_validation`。研究、体检、部署与记忆更新使用报告证据。用户要求记忆时只能创建草稿并等待确认，运行时不得自行写入项目记忆文件。
+普通工具错误为 `fail_open`：继续低风险工作并在恢复后补录。受保护操作为 `fail_closed`：没有明确确认不得执行。

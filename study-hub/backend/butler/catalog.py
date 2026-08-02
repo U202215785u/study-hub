@@ -29,7 +29,7 @@ EXTERNAL_EXPERTS = {
         "label": "后端专家",
         "skill": ".agents/skills/backend-expert.md",
         "owner": ".agents/owners/backend-owner.md",
-        "keywords": ("服务", "接口", "api", "数据库", "保存", "返回", "路由", "后端"),
+        "keywords": ("服务", "接口", "api", "数据库", "保存", "路由", "后端"),
     },
     "deploy-expert": {
         "label": "部署专家",
@@ -63,3 +63,8 @@ def resolve_experts(description: str) -> tuple[str, ...]:
         for name, definition in EXTERNAL_EXPERTS.items()
         if any(keyword.lower() in text for keyword in definition["keywords"])
     )
+
+
+def recommend_chain(task_type: str) -> tuple[str, ...]:
+    """Return the suggested workflow without assigning anyone to the case."""
+    return TASK_CHAINS[task_type]

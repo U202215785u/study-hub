@@ -16,6 +16,10 @@ def test_mcp_exposes_all_butler_lifecycle_groups():
         "butler_record_validation",
         "butler_complete_case",
         "butler_create_memory_draft",
+        "butler_recommend_experts",
+        "butler_recommend_chain",
+        "butler_accept_task_card",
+        "butler_report_execution_result",
     } <= names
 
 
@@ -50,6 +54,34 @@ def test_mcp_returns_a_readable_error_without_a_stack_trace():
     payload = json.loads(content[0].text)
     assert payload["status"] == "error"
     assert "Traceback" not in payload["reason"]
+
+
+def test_mcp_normal_task_errors_are_explicitly_fail_open_but_approval_errors_are_fail_closed():
+    from butler.mcp_tools import call_butler_tool
+
+    ordinary = asyncio.run(call_butler_tool("butler_open_case", {"task_type": "???", "description": ""}))
+    protected = asyncio.run(call_butler_tool("butler_request_approval", {}))
+
+    ordinary_payload = json.loads(ordinary[0].text)
+    protected_payload = json.loads(protected[0].text)
+    assert ordinary_payload["policy"] == "fail_open"
+    assert ordinary_payload["continue"]
+    assert protected_payload["policy"] == "fail_closed"
+
+
+def test_mcp_recommends_experts_and_exposes_task_card_handoff_actions():
+    from butler.mcp_tools import call_butler_tool
+
+    opened = asyncio.run(
+        call_butler_tool(
+            "butler_open_case",
+            {"task_type": "investigate", "description": "火山引擎 ASR 返回 200 但识别失败"},
+        )
+    )
+    case_id = json.loads(opened[0].text)["case_id"]
+    recommended = asyncio.run(call_butler_tool("butler_recommend_experts", {"case_id": case_id}))
+
+    assert json.loads(recommended[0].text)["result"]["experts"] == ["automation-expert"]
 
 
 def test_canonical_butler_skill_requires_a_runtime_case_before_project_work():

@@ -10,6 +10,8 @@ $DataDir = Join-Path $ProjectDir "data"
 $PidFile = Join-Path $ProjectDir "data\server.pid"
 $LogFile = Join-Path $ProjectDir "data\app.log"
 
+. (Join-Path $ProjectDir "start-background-helpers.ps1")
+
 New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 
 # Check if port already in use (only check LISTENING state, ignore TIME_WAIT)
@@ -27,6 +29,12 @@ if ($PortInUse) {
             Write-Host "[INFO] Backend already running (PID=$ExistingPid)" -ForegroundColor Green
             exit 0
         }
+    }
+    $ExistingProcess = Get-CimInstance Win32_Process -Filter "ProcessId = $ExistingPid" -ErrorAction SilentlyContinue
+    if ($ExistingProcess -and (Test-StudyHubBackendProcess -CommandLine $ExistingProcess.CommandLine -ProjectDir $ProjectDir)) {
+        Set-Content -Path $PidFile -Value $ExistingPid -NoNewline
+        Write-Host "[INFO] Backend already running (PID=$ExistingPid)" -ForegroundColor Green
+        exit 0
     }
     Write-Host "[ERROR] Port 8741 occupied by another process" -ForegroundColor Red
     exit 1

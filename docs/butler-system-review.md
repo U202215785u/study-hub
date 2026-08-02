@@ -38,8 +38,8 @@ flowchart LR
 
 | 文件 | 当前职责 |
 |---|---|
-| `AGENTS.md` | Codex 在本工作区的入口规则：何时登记任务、何时生成任务卡、何时确认与验收。 |
-| `.claude/skills/butler/SKILL.md` | 原管家工作说明；包含记忆、角色、分派与运行时记录步骤。 |
+| `AGENTS.md` | Codex 在本工作区的唯一行为规则来源：尽力登记、降级、确认、交接与验收。 |
+| `.claude/skills/butler/SKILL.md` | Claude 适配说明与开发参考；不重复或覆盖 `AGENTS.md` 的行为规则。 |
 | `.codex/config.toml` | 仅当前项目加载本地 Study-Hub MCP 服务。 |
 | `study-hub/backend/mcp_server.py` | stdio MCP 服务；保留知识库等旧能力，并注册管家能力。 |
 | `study-hub/backend/butler/models.py` | 任务类型、状态和状态流转规则。 |
@@ -62,16 +62,20 @@ sequenceDiagram
     participant X as 执行 Agent
 
     U->>C: 自然语言问题
-    C->>B: butler_open_case(task_type, description)
-    C->>B: butler_next_action(case_id)
+    C->>B: butler_open_case(自然语言描述)
+    B-->>C: 已登记 / fail_open / fail_closed
+    C->>B: butler_next_action(case_id)（建议）
     C->>C: 查功能代号地图、项目记忆、相关文件
     C->>B: butler_record_context(...)
-    C->>B: butler_assign(...)
+    C->>B: butler_recommend_experts / butler_recommend_chain（建议）
+    C->>B: butler_assign(...)（实际分派时）
     alt 交给另一位 Agent
         C->>B: butler_create_task_card(...)
         B-->>C: 五行任务卡
         C->>X: 原样交接任务卡
-        X-->>C: 改动和验证结果
+        X->>B: butler_accept_task_card
+        X->>B: butler_report_execution_result
+        B-->>C: 执行结果
     end
     C->>B: 改动 / 审查 / 验证记录
     C->>B: butler_complete_case
@@ -79,7 +83,7 @@ sequenceDiagram
 
 ### 3.2 任务类型（当前实现）
 
-运行时只接受以下固定值：
+运行时内部保存以下标准值，但入口同时接受常用英文别名、中文标签和描述中的自然语言线索：
 
 | 值 | 含义 |
 |---|---|
@@ -90,7 +94,7 @@ sequenceDiagram
 | `deploy` | 发布、部署与上线检查 |
 | `memory_update` | 项目经验更新 |
 
-> 重要：当前不会接受 `investigate`、`diagnose` 等值。火山引擎 ASR 案例中，`investigate` 因而被拒绝；正确的当前值应为 `bug`。
+> 例如 `investigate`、`diagnose`、`排查`、`调查` 会归为 `bug`；省略类型时，运行时会按描述归类。火山引擎 ASR 案例可直接提交，无需猜测 `bug`。
 
 ### 3.3 状态流（当前实现）
 
@@ -117,9 +121,11 @@ received → located → investigating → implementing → auditing → verifyi
 - `project_index_hits`：项目索引或功能代号地图命中；
 - `owner_files`：相关领域知识文件；
 - `memory_summary`：对当前任务有用的项目记忆摘要；
+- `memory_sources`：记忆摘要的来源引用；
+- `memory_freshness`：这组记忆的更新时间；
 - `location_notes`：额外定位线索。
 
-这些信息保存在任务自身的 `context_json`，不复制或自动改写项目记忆文件。
+这些信息保存在任务自身的 `context_json`，不复制或自动改写项目记忆文件。任务处于 `located` 或 `investigating` 时可以继续追加线索，已有事实不会被覆盖。
 
 ### 4.2 任务卡
 
@@ -140,7 +146,8 @@ received → located → investigating → implementing → auditing → verifyi
 - 只使用用户描述和已记录事实；
 - 缺失的信息显示“待查”；
 - `butler_get_task_card` 返回已保存的同一张卡；
-- 卡片不直接启动另一个 Agent，只是可复制的交接物。
+- 卡片保存生成当时的事实快照、记忆来源与新鲜度；后续记忆不会静默改写旧卡。
+- 卡片不直接启动另一个 Agent；执行者可认领卡片并回传结果，主 Agent 仍决定审查、验证和合并。
 
 ## 5. 角色与专家
 
@@ -152,53 +159,31 @@ received → located → investigating → implementing → auditing → verifyi
 
 ### 当前事实
 
-运行时目前**不会自动调用** `resolve_experts()` 或任务链。`butler_assign()` 只验证并保存 Codex 已经给出的角色和专家名称。
-
-因此，“自动选择角色和专家”目前是入口规则和模型行为上的约定，不是运行时保证。
+运行时通过 `butler_recommend_experts` 和 `butler_recommend_chain` 真实调用推荐逻辑。两者均返回可采纳的只读建议；`butler_assign()` 仍只记录 Codex 最终实际采用的角色和专家，不会自动锁定或启动 Agent。
 
 ## 6. 已实现的安全与验收能力
 
 - 删除、个人数据、账号权限、发布、部署等操作可以进入确认状态；
-- 三次记录为精确值 `failed` 的尝试后，任务会停止；
+- 三次无进展尝试后，任务会停止；`failed`、`error`、`timeout` 等同样计入；
 - 代码类任务完成前需要改动记录、六项审查和原始现象验证；
 - 研究、体检、部署、记忆更新需要报告证据；
 - 记忆只先生成草稿，用户确认后仍由明确写入操作完成。
 
-## 7. 当前限制与风险（审查重点）
+## 7. 已解决项与保留边界
 
-### P0：入口规则会造成软阻塞
+- **普通任务不再软阻塞**：MCP 普通错误返回 `policy: fail_open` 和补录指引；`AGENTS.md` 明确 Codex 可以继续低风险工作。确认类错误返回 `policy: fail_closed`。
+- **任务分类不再要求猜固定英文值**：入口支持别名和自然语言归类；ASR 的 `investigate` 自动归为 `bug`。
+- **调查可持续补充事实**：`record_context()` 在定位和调查阶段均可追加文件、记忆和线索。
+- **推荐已接入运行时**：专家和任务链由真实 MCP 工具提供，但保持建议性质。
+- **任务卡具备协作闭环**：执行 Agent 可以认领并回传结果，过程有事件留痕。
+- **失败上限按无进展语义统计**：不再依赖精确 `failed` 字符串。
+- **规则来源已收敛**：`AGENTS.md` 是 Codex 的唯一行为规则来源；Claude skill 是适配说明。
 
-`AGENTS.md` 要求项目操作“先登记并只按下一步继续”。若 MCP 无法启动、输入值不合法或服务短暂异常，Codex 容易停在入口，不能自然转为普通排查。
+仍保留的有意边界：管家**不会自动创建 Codex 会话、抢占任务或自动合并改动**。若以后需要自动会话调度，应单独设计线程生命周期、并发、权限与结果合并策略，而不是把当前任务卡误称为自动调度。
 
-**实际证据**：`task_type=investigate` 被运行时拒绝，导致 ASR 排查在第一步反复登记。
+## 8. 已实现的目标形态
 
-### P0：任务分类对 Agent 不够友好
-
-MCP 输入把 `task_type` 声明为任意字符串，没有枚举、中文说明、自动归类或恢复建议。用户无需理解内部分类，但 Agent 仍被迫准确猜中英文值。
-
-### P1：状态机对真实调试过于刚性
-
-`record_context()` 只允许从 `received` 进入 `located`；开始调查后无法自然追加定位和项目记忆。真实调试通常需要反复补线索，当前模型会被迫绕开记录或新建任务。
-
-### P1：自动路由尚未实际接线
-
-`resolve_experts()` 和 `TASK_CHAINS` 存在，但运行时未调用它们。系统声称自动编排，实际仍依赖每个 Codex 回合自行选择，行为不稳定。
-
-### P1：任务卡不是 Agent 调度
-
-当前任务卡是高质量交接文本，不创建新会话、不启动执行 Agent、不接收另一个会话的结果。若要真正多 Agent 自动协作，需要额外的线程创建、任务交付和结果回收能力。
-
-### P2：失败上限依赖精确文本
-
-只有 `result == "failed"` 会累计失败。`error`、`timeout` 等同样没有进展的结果不会计入，可能导致“最多三次”失效。
-
-### P2：入口规则存在双份来源
-
-`AGENTS.md` 和 `.claude/skills/butler/SKILL.md` 都定义流程；两处以后可能漂移，导致 Codex 与其他使用场景不一致。
-
-## 8. 建议的目标形态
-
-建议把管家改成“辅助、可恢复、只在高风险处拦截”的系统：
+管家现在是“辅助、可恢复、只在高风险处拦截”的系统：
 
 ```text
 自然语言请求
@@ -210,29 +195,19 @@ MCP 输入把 `task_type` 声明为任意字符串，没有枚举、中文说明
   → 收集审查与验证证据
 ```
 
-具体改造优先级：
-
-1. `butler_open_case` 接受自然语言别名，或由运行时自动归类；在错误时提供“建议使用 bug”等可继续提示。
-2. 将“唯一允许下一步”降级为建议；登记失败时允许 Codex 继续只读排查，并在恢复后补记。
-3. 允许调查阶段持续追加项目记忆、文件和定位线索。
-4. 让运行时真正调用专家推荐逻辑，但输出“推荐”而非硬性锁定。
-5. 只有删除、敏感数据、权限和发布保留强制确认。
-6. 若需要真正自动多 Agent 协作，再接入线程创建、交接、回收和合并验收；不要把现有任务卡描述成自动调度。
+已实现：自然语言归类、失败开放/关闭、可追加上下文、只读推荐、任务卡快照、认领和结果回收、强制高风险确认。自动创建会话仍是未来可选项目，不属于当前系统的承诺。
 
 ## 9. 验证现状
 
-- 管家运行时与 MCP 测试：40 项通过；
+- 后端全量测试：50 项通过；
 - 已完成一次真实 stdio MCP 启动验证；
-- 已完成一次任务卡真实演练：卡片“定位”包含项目记忆、功能代号、定位记录和相关文件；
-- 近期已确认 `investigate` 分类拒绝问题；
-- 本文的限制项来自当前代码检查，而非推测。
+- 已完成一次 MCP 适配器演练：`investigate → bug`、ASR → `automation-expert`、五行任务卡快照、认领、结果回收、`fail_open` 与 `fail_closed` 均有实际输出；
+- `mcp_server` 已注册专家建议、任务链建议、任务卡认领和结果回收四项新工具；
+- 本文的已实现项与保留边界均来自当前代码和测试，而非推测。
 
 ## 10. 请 Claude 重点审查的问题
 
-1. “管家先行”应如何实现为不阻塞 Codex 的可恢复机制？
-2. 任务状态机应保留哪些硬闸门，哪些应改为建议？
-3. 自然语言分类、角色推荐和任务链应放在运行时、提示词层还是二者组合？
-4. 如何支持多 Agent 交接与结果回收，同时不增加用户操作负担？
-5. 项目记忆如何持续补充、引用和过期，而不制造重复或过时的任务卡？
-6. 是否应合并 `AGENTS.md` 与 `.claude/skills/butler/SKILL.md` 的规则来源？
-7. 对于“工具不可用、输入错误、数据库锁定、外部服务超时”，什么是合适的失败开放策略？
+1. 当前 fail-open/fail-closed 边界是否覆盖了所有高影响操作？
+2. 自然语言分类的别名和关键词是否需要按真实任务记录继续调整？
+3. 任务卡的认领与结果回收字段是否足够简洁且适合其他 Agent？
+4. 何时才值得单独设计自动创建会话、并发和结果合并，而不是保持当前手动交接？

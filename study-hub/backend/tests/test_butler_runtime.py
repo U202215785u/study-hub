@@ -279,3 +279,81 @@ def test_next_action_changes_with_the_case_stage_and_task_type():
 
     change = _implementing_case(runtime)
     assert runtime.next_action(change["id"])["kind"] == "record_change"
+
+
+def test_open_case_accepts_task_aliases_and_classifies_a_natural_language_report():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+
+    investigation = runtime.open_case(
+        task_type="investigate",
+        description="火山引擎 ASR 返回 200 但识别失败",
+    )
+    research = runtime.open_case(
+        task_type="",
+        description="研究当前项目可采用的 Agent 协作方案",
+    )
+
+    assert investigation["task_type"] == "bug"
+    assert research["task_type"] == "research"
+
+
+def test_context_can_be_supplemented_while_a_case_is_under_investigation():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _investigating_case(runtime)
+
+    updated = runtime.record_context(
+        case["id"],
+        project_index_hits=["ASR 响应由识别服务处理"],
+        owner_files=["backend/services/asr.py"],
+        memory_summary=["HTTP 200 不代表供应商业务成功"],
+        memory_sources=["project-memory/automation/asr.md#response"],
+        memory_freshness="2026-08-01",
+        location_notes=["需要检查供应商响应体"],
+    )
+
+    assert updated["status"] == "investigating"
+    assert updated["context"]["project_index_hits"] == ["ASR 响应由识别服务处理"]
+    assert updated["context"]["owner_files"] == ["backend/services/asr.py"]
+    assert updated["context"]["memory_sources"] == ["project-memory/automation/asr.md#response"]
+    assert updated["context"]["memory_freshness"] == "2026-08-01"
+    assert runtime.events(case["id"])[-1]["type"] == "context_updated"
+
+
+@pytest.mark.parametrize("result", ["failed", "error", "timeout"])
+def test_three_no_progress_results_block_a_case_regardless_of_result_wording(result):
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = _investigating_case(runtime)
+
+    for index in range(3):
+        outcome = runtime.record_attempt(
+            case["id"],
+            action=f"第 {index + 1} 次排查",
+            result=result,
+            learned="本次没有新增可验证线索",
+        )
+
+    assert outcome["status"] == "blocked"
+    assert outcome["attempt_count"] == 3
+
+
+def test_runtime_recommends_an_advisory_chain_and_matching_experts_without_assigning_them():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.open_case(
+        task_type="investigate",
+        description="火山引擎 ASR 返回 200 但识别失败",
+    )
+
+    experts = runtime.recommend_experts(case["id"])
+    chain = runtime.recommend_chain(case["id"])
+
+    assert experts["experts"] == ["automation-expert"]
+    assert chain["chain"] == ["butler", "debugger", "experts", "implementer", "auditor", "smoke-tester"]
+    assert runtime.get_case(case["id"])["experts"] == ()

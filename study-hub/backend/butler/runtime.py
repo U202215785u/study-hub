@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import uuid4
 
-from .catalog import EXTERNAL_EXPERTS, INTERNAL_ROLES
-from .models import TASK_TYPES, ButlerStateError, validate_transition
+from .catalog import EXTERNAL_EXPERTS, INTERNAL_ROLES, recommend_chain as catalog_recommend_chain, resolve_experts
+from .models import NO_PROGRESS_RESULTS, TASK_TYPES, ButlerStateError, normalize_task_type, validate_transition
 from .storage import (
     append_event,
     create_approval,
@@ -50,11 +51,10 @@ class ButlerRuntime:
             raise ButlerStateError(f"unknown Butler case: {case_id}")
         return case
 
-    def open_case(self, *, task_type: str, description: str, feature_code="", title="") -> dict:
-        if task_type not in TASK_TYPES:
-            raise ButlerStateError(f"unsupported task type: {task_type}")
+    def open_case(self, *, task_type: str = "", description: str, feature_code="", title="") -> dict:
         if not description or not description.strip():
             raise ButlerStateError("a case needs a user-reported description")
+        task_type = normalize_task_type(task_type, description)
 
         def create(conn):
             case = create_task(
@@ -93,20 +93,37 @@ class ButlerRuntime:
         project_index_hits: list[str],
         owner_files: list[str],
         memory_summary: list[str] | tuple[str, ...] = (),
+        memory_sources: list[str] | tuple[str, ...] = (),
+        memory_freshness: str = "",
         location_notes: list[str] | tuple[str, ...] = (),
     ) -> dict:
+        def merged(old_values, new_values) -> list[str]:
+            return list(dict.fromkeys((*old_values, *new_values)))
+
         def record(conn):
             case = self._case(conn, case_id)
-            validate_transition(case["status"], "located")
+            if case["status"] == "received":
+                validate_transition(case["status"], "located")
+                status = "located"
+                event_type = "context_recorded"
+                event_summary = "已定位项目记录和领域知识"
+            elif case["status"] in {"located", "investigating"}:
+                status = case["status"]
+                event_type = "context_updated"
+                event_summary = "已补充项目记忆和定位线索"
+            else:
+                raise ButlerStateError("context can only be recorded while locating or investigating")
             context = {
                 **case["context"],
-                "project_index_hits": list(project_index_hits),
-                "owner_files": list(owner_files),
-                "memory_summary": list(memory_summary),
-                "location_notes": list(location_notes),
+                "project_index_hits": merged(case["context"].get("project_index_hits", ()), project_index_hits),
+                "owner_files": merged(case["context"].get("owner_files", ()), owner_files),
+                "memory_summary": merged(case["context"].get("memory_summary", ()), memory_summary),
+                "memory_sources": merged(case["context"].get("memory_sources", ()), memory_sources),
+                "memory_freshness": memory_freshness.strip() or case["context"].get("memory_freshness", ""),
+                "location_notes": merged(case["context"].get("location_notes", ()), location_notes),
             }
-            case = update_task(conn, case_id, status="located", context=context)
-            append_event(conn, case_id, "context_recorded", "已定位项目记录和领域知识", payload=context)
+            case = update_task(conn, case_id, status=status, context=context)
+            append_event(conn, case_id, event_type, event_summary, payload=context)
             return case
 
         return self._with_connection(record)
@@ -135,6 +152,16 @@ class ButlerRuntime:
             if notes := compact(context.get("location_notes", ())):
                 location_parts.append(f"补充线索：{notes}")
 
+            snapshot = {
+                "captured_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                "feature_code": case["feature_code"],
+                "memory_summary": list(context.get("memory_summary", ())),
+                "memory_sources": list(context.get("memory_sources", ())),
+                "memory_freshness": context.get("memory_freshness", ""),
+                "project_index_hits": list(context.get("project_index_hits", ())),
+                "owner_files": list(context.get("owner_files", ())),
+                "location_notes": list(context.get("location_notes", ())),
+            }
             card = {
                 "case_id": case_id,
                 "task": case["title"],
@@ -142,6 +169,7 @@ class ButlerRuntime:
                 "location": "；".join(location_parts) or "待查",
                 "scope": scope.strip() or "待查",
                 "acceptance": acceptance.strip() or "待查",
+                "snapshot": snapshot,
             }
             card["text"] = "\n".join(
                 (
@@ -167,6 +195,91 @@ class ButlerRuntime:
             return card
 
         return self._with_connection(read)
+
+    def accept_task_card(self, case_id: str, *, agent: str) -> dict:
+        """Let one execution agent claim a stored card without changing task gates."""
+        if not agent.strip():
+            raise ButlerStateError("task card acceptance needs an agent name")
+
+        def accept(conn):
+            case = self._case(conn, case_id)
+            if "task_card" not in case["context"]:
+                raise ButlerStateError("a task card must exist before it can be accepted")
+            current = case["context"].get("task_card_handoff", {})
+            if current.get("status") in {"accepted", "reported"}:
+                raise ButlerStateError("task card has already been accepted")
+            handoff = {
+                "status": "accepted",
+                "agent": agent.strip(),
+                "accepted_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            }
+            context = {**case["context"], "task_card_handoff": handoff}
+            update_task(conn, case_id, context=context)
+            append_event(conn, case_id, "task_card_accepted", "执行 Agent 已认领任务卡", actor=agent.strip(), payload=handoff)
+            return {"case_id": case_id, **handoff}
+
+        return self._with_connection(accept)
+
+    def report_execution_result(
+        self,
+        case_id: str,
+        *,
+        agent: str,
+        outcome: str,
+        summary: str,
+        evidence: str = "",
+        files: list[str] | tuple[str, ...] = (),
+    ) -> dict:
+        """Store a handoff result; lifecycle decisions remain with the coordinating agent."""
+        if not agent.strip() or not outcome.strip() or not summary.strip():
+            raise ButlerStateError("execution result needs agent, outcome, and summary")
+
+        def report(conn):
+            case = self._case(conn, case_id)
+            handoff = case["context"].get("task_card_handoff", {})
+            if handoff.get("status") != "accepted":
+                raise ButlerStateError("a task card must be accepted before reporting a result")
+            if handoff.get("agent") != agent.strip():
+                raise ButlerStateError("only the agent that accepted the task card can report its result")
+            result = {
+                "agent": agent.strip(),
+                "outcome": outcome.strip(),
+                "summary": summary.strip(),
+                "evidence": evidence.strip(),
+                "files": list(files),
+                "reported_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            }
+            handoff = {**handoff, "status": "reported", "result": result}
+            context = {**case["context"], "task_card_handoff": handoff}
+            update_task(conn, case_id, context=context)
+            append_event(conn, case_id, "execution_result_reported", "已回收执行 Agent 的任务结果", actor=agent.strip(), payload=result)
+            return {"case_id": case_id, **result}
+
+        return self._with_connection(report)
+
+    def recommend_experts(self, case_id: str) -> dict:
+        """Return a read-only domain recommendation for the current case."""
+        def recommend(conn):
+            case = self._case(conn, case_id)
+            return {
+                "case_id": case_id,
+                "experts": list(resolve_experts(case["description"])),
+                "advisory": True,
+            }
+
+        return self._with_connection(recommend)
+
+    def recommend_chain(self, case_id: str) -> dict:
+        """Return a read-only task-chain recommendation for the current case."""
+        def recommend(conn):
+            case = self._case(conn, case_id)
+            return {
+                "case_id": case_id,
+                "chain": list(catalog_recommend_chain(case["task_type"])),
+                "advisory": True,
+            }
+
+        return self._with_connection(recommend)
 
     def assign(self, case_id: str, *, role: str, experts: list[str] | tuple[str, ...] = ()) -> dict:
         if role not in INTERNAL_ROLES:
@@ -279,8 +392,9 @@ class ButlerRuntime:
             case = self._case(conn, case_id)
             if case["status"] != "investigating":
                 raise ButlerStateError("attempts can only be recorded while investigating")
-            count = case["attempt_count"] + (1 if result == "failed" else 0)
-            target_status = "blocked" if result == "failed" and count >= 3 else "investigating"
+            no_progress = result.strip().lower() in NO_PROGRESS_RESULTS
+            count = case["attempt_count"] + (1 if no_progress else 0)
+            target_status = "blocked" if no_progress and count >= 3 else "investigating"
             if target_status != case["status"]:
                 validate_transition(case["status"], target_status)
             case = update_task(conn, case_id, attempt_count=count, status=target_status)

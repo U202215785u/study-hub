@@ -25,15 +25,19 @@ def _runtime() -> ButlerRuntime:
 
 
 _TOOL_SPECS = (
-    ("butler_open_case", "登记一个项目问题、改动或检查任务。", {"task_type": {"type": "string"}, "description": {"type": "string"}, "feature_code": {"type": "string"}, "title": {"type": "string"}}, ("task_type", "description")),
+    ("butler_open_case", "登记一个项目问题、改动或检查任务。任务类型可留空或使用自然语言，管家会归类。", {"task_type": {"type": "string", "description": "可选；支持排查、调查、研究等自然语言。"}, "description": {"type": "string"}, "feature_code": {"type": "string"}, "title": {"type": "string"}}, ("description",)),
     ("butler_get_case", "读取一项管家任务的当前记录。", {"case_id": {"type": "string"}}, ("case_id",)),
     ("butler_list_cases", "列出尚未归档的管家任务。", {"include_archived": {"type": "boolean"}}, ()),
     ("butler_events", "读取一项任务的过程记录。", {"case_id": {"type": "string"}}, ("case_id",)),
     ("butler_evidence", "读取一项任务的验证和报告证据。", {"case_id": {"type": "string"}}, ("case_id",)),
     ("butler_next_action", "查看当前任务唯一允许的下一步。", {"case_id": {"type": "string"}}, ("case_id",)),
-    ("butler_record_context", "记录已查到的项目记忆和领域知识。", {"case_id": {"type": "string"}, "project_index_hits": {"type": "array", "items": {"type": "string"}}, "owner_files": {"type": "array", "items": {"type": "string"}}, "memory_summary": {"type": "array", "items": {"type": "string"}}, "location_notes": {"type": "array", "items": {"type": "string"}}}, ("case_id",)),
+    ("butler_record_context", "记录或补充已查到的项目记忆和领域知识。", {"case_id": {"type": "string"}, "project_index_hits": {"type": "array", "items": {"type": "string"}}, "owner_files": {"type": "array", "items": {"type": "string"}}, "memory_summary": {"type": "array", "items": {"type": "string"}}, "memory_sources": {"type": "array", "items": {"type": "string"}}, "memory_freshness": {"type": "string"}, "location_notes": {"type": "array", "items": {"type": "string"}}}, ("case_id",)),
     ("butler_create_task_card", "根据已定位的任务和项目记忆生成可交给执行 Agent 的五行任务卡。", {"case_id": {"type": "string"}, "scope": {"type": "string"}, "acceptance": {"type": "string"}}, ("case_id",)),
     ("butler_get_task_card", "读取当前任务已经生成的任务卡。", {"case_id": {"type": "string"}}, ("case_id",)),
+    ("butler_accept_task_card", "让一个执行 Agent 认领已生成的任务卡。不会自动创建会话。", {"case_id": {"type": "string"}, "agent": {"type": "string"}}, ("case_id", "agent")),
+    ("butler_report_execution_result", "回收认领任务卡的执行结果；不会替代审查和验证。", {"case_id": {"type": "string"}, "agent": {"type": "string"}, "outcome": {"type": "string"}, "summary": {"type": "string"}, "evidence": {"type": "string"}, "files": {"type": "array", "items": {"type": "string"}}}, ("case_id", "agent", "outcome", "summary")),
+    ("butler_recommend_experts", "按任务描述给出可采纳的领域专家建议，不自动分派。", {"case_id": {"type": "string"}}, ("case_id",)),
+    ("butler_recommend_chain", "按任务类型给出可采纳的处理链建议，不自动启动 Agent。", {"case_id": {"type": "string"}}, ("case_id",)),
     ("butler_assign", "分派当前处理角色和所需领域专家。", {"case_id": {"type": "string"}, "role": {"type": "string"}, "experts": {"type": "array", "items": {"type": "string"}}}, ("case_id", "role")),
     ("butler_record_attempt", "记录一次有结果的调查或修复尝试。", {"case_id": {"type": "string"}, "action": {"type": "string"}, "result": {"type": "string"}, "learned": {"type": "string"}}, ("case_id", "action", "result", "learned")),
     ("butler_request_approval", "登记需要用户确认的受保护操作。", {"case_id": {"type": "string"}, "risk_kind": {"type": "string"}, "summary": {"type": "string"}}, ("case_id", "risk_kind", "summary")),
@@ -81,21 +85,45 @@ def _result_payload(result, runtime: ButlerRuntime) -> dict:
     return payload
 
 
+def _error_payload(name: str, error: Exception) -> dict:
+    """Describe whether a caller may continue when Butler itself is unavailable."""
+    reason = str(error) or "工具参数不完整或当前任务不能执行这一步"
+    protected = name in {"butler_request_approval", "butler_resolve_approval"} or "approval is required" in reason
+    if protected:
+        return {
+            "status": "error",
+            "policy": "fail_closed",
+            "reason": reason,
+            "continue": "这是受保护操作；在获得明确确认前不要继续执行。",
+        }
+    return {
+        "status": "error",
+        "policy": "fail_open",
+        "reason": reason,
+        "continue": "这是普通管家记录问题；可继续进行只读定位或常规排查，并在管家恢复后补录任务和证据。",
+        "recovery": "检查参数或稍后重试 butler_open_case / 当前记录工具。",
+    }
+
+
 async def call_butler_tool(name: str, arguments: dict | None) -> list[TextContent]:
     """Dispatch Butler tools and return stable JSON text suitable for MCP clients."""
     args = arguments or {}
     runtime = _runtime()
     try:
         handlers = {
-            "butler_open_case": lambda: runtime.open_case(**args),
+            "butler_open_case": lambda: runtime.open_case(task_type=args.get("task_type", ""), description=args["description"], feature_code=args.get("feature_code", ""), title=args.get("title", "")),
             "butler_get_case": lambda: runtime.get_case(args["case_id"]),
             "butler_list_cases": lambda: runtime.list_cases(include_archived=args.get("include_archived", False)),
             "butler_events": lambda: runtime.events(args["case_id"]),
             "butler_evidence": lambda: runtime.evidence(args["case_id"]),
             "butler_next_action": lambda: runtime.next_action(args["case_id"]),
-            "butler_record_context": lambda: runtime.record_context(args["case_id"], project_index_hits=args.get("project_index_hits", []), owner_files=args.get("owner_files", []), memory_summary=args.get("memory_summary", []), location_notes=args.get("location_notes", [])),
+            "butler_record_context": lambda: runtime.record_context(args["case_id"], project_index_hits=args.get("project_index_hits", []), owner_files=args.get("owner_files", []), memory_summary=args.get("memory_summary", []), memory_sources=args.get("memory_sources", []), memory_freshness=args.get("memory_freshness", ""), location_notes=args.get("location_notes", [])),
             "butler_create_task_card": lambda: runtime.create_task_card(args["case_id"], scope=args.get("scope", ""), acceptance=args.get("acceptance", "")),
             "butler_get_task_card": lambda: runtime.get_task_card(args["case_id"]),
+            "butler_accept_task_card": lambda: runtime.accept_task_card(args["case_id"], agent=args["agent"]),
+            "butler_report_execution_result": lambda: runtime.report_execution_result(args["case_id"], agent=args["agent"], outcome=args["outcome"], summary=args["summary"], evidence=args.get("evidence", ""), files=args.get("files", [])),
+            "butler_recommend_experts": lambda: runtime.recommend_experts(args["case_id"]),
+            "butler_recommend_chain": lambda: runtime.recommend_chain(args["case_id"]),
             "butler_assign": lambda: runtime.assign(args["case_id"], role=args["role"], experts=args.get("experts", [])),
             "butler_record_attempt": lambda: runtime.record_attempt(args["case_id"], action=args["action"], result=args["result"], learned=args["learned"]),
             "butler_request_approval": lambda: runtime.request_approval(args["case_id"], risk_kind=args["risk_kind"], summary=args["summary"]),
@@ -117,5 +145,5 @@ async def call_butler_tool(name: str, arguments: dict | None) -> list[TextConten
             raise ButlerStateError(f"unknown Butler tool: {name}")
         payload = _result_payload(handlers[name](), runtime)
     except (ButlerStateError, KeyError, TypeError, ValueError) as exc:
-        payload = {"status": "error", "reason": str(exc) or "工具参数不完整或当前任务不能执行这一步"}
+        payload = _error_payload(name, exc)
     return [TextContent(type="text", text=json.dumps(payload, ensure_ascii=False, default=list))]

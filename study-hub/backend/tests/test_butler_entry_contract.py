@@ -22,6 +22,9 @@ def test_workspace_contract_requires_butler_for_project_operations():
     assert all(name in contract for name in required)
     assert "纯概念解释" in contract
     assert "用户不需要选择页面" in contract
+    assert "尽力登记" in contract
+    assert "fail-open" in contract
+    assert "高影响操作" in contract
 
 
 def test_butler_runtime_still_exposes_entry_and_completion_gates():
