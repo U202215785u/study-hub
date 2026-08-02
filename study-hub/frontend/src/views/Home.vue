@@ -384,10 +384,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '../stores/settings.js'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
 import TaskStatusBadge from '../components/TaskStatusBadge.vue'
+import { useHomeSearch } from '../composables/home/useHomeSearch.js'
+import { useAutomationQueue } from '../composables/home/useAutomationQueue.js'
+import { useKnowledgeDocuments } from '../composables/home/useKnowledgeDocuments.js'
+import { useDailyReview } from '../composables/home/useDailyReview.js'
 
 const settings = useSettingsStore()
 
@@ -404,63 +408,24 @@ function openExternal(url) {
 }
 
 // ===== 搜索 =====
-const searchMode = ref('ai')
-const searchInput = ref('')
-const searchCategory = ref('')
-const searchLoading = ref(false)
-const searchResult = ref(false)
-const searchAnswer = ref('')
-const searchSources = ref('')
-const searchError = ref('')
 const categories = ref([])
-
-async function doSearch() {
-  const val = searchInput.value.trim()
-  if (!val) return
-  searchLoading.value = true
-  searchResult.value = true
-  searchError.value = ''
-  searchAnswer.value = ''
-  searchSources.value = ''
-
-  try {
-    if (searchMode.value === 'web') {
-      const sid = 'sh_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6)
-      const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(val)}&ref=studyhub&sid=${sid}`
-      openExternal(bingUrl)
-      searchLoading.value = false
-      return
-    }
-    if (searchMode.value === 'cmd') {
-      const commands = settings.loadFromStorage('commands', {})
-      const url = commands[val]
-      if (url) openExternal(url)
-      else showToast(`未知命令: ${val}`, true)
-      searchLoading.value = false
-      return
-    }
-    if (searchMode.value === 'kb') {
-      const body = { question: val }
-      if (searchCategory.value) body.category_id = parseInt(searchCategory.value)
-      const data = await settings.apiPost('/rag/query', body)
-      if (data.error) { searchError.value = data.answer || data.error }
-      else { searchAnswer.value = data.answer; searchSources.value = data.sources?.join('；') || '' }
-    } else {
-      const data = await settings.apiPost('/ai-search', { question: val })
-      if (data.error) { searchError.value = data.answer || data.error }
-      else { searchAnswer.value = data.answer }
-    }
-  } catch {
-    searchError.value = '无法连接后端服务'
-  } finally {
-    searchLoading.value = false
-  }
-}
-
-function doKBSearch() {
-  searchMode.value = 'kb'
-  doSearch()
-}
+const {
+  mode: searchMode,
+  query: searchInput,
+  category: searchCategory,
+  loading: searchLoading,
+  hasResult: searchResult,
+  answer: searchAnswer,
+  sources: searchSources,
+  error: searchError,
+  submit: doSearch,
+  searchKnowledge: doKBSearch,
+} = useHomeSearch({
+  apiPost: settings.apiPost,
+  openExternal,
+  loadCommands: () => settings.loadFromStorage('commands', {}),
+  notify: showToast,
+})
 
 // ===== 快捷方式弹窗 =====
 const shortcutModal = ref(false)
@@ -520,87 +485,36 @@ function confirmRemoveLauncher(i) {
 }
 
 // ===== 知识库 =====
-const documents = ref([])
-const docModal = ref(false)
-const docTitle = ref('')
-const docContent = ref('')
-const docSort = ref('created_at:desc')
-
-async function loadDocuments() {
-  try {
-    const [sortBy, sortOrder] = docSort.value.split(':')
-    documents.value = await settings.apiGet(`/documents?sort_by=${sortBy}&sort_order=${sortOrder}`)
-  }
-  catch { documents.value = [] }
-}
-
-async function viewDocument(id) {
-  try {
-    const doc = await settings.apiGet(`/documents/${id}`)
-    if (doc.error) {
-      showToast(doc.error, true)
-      return
-    }
-    docTitle.value = doc.title
-    docContent.value = doc.content || ''
-    docModal.value = true
-  } catch { showToast('加载文档失败', true) }
-}
-
-async function copyDocument(doc) {
-  try {
-    await navigator.clipboard.writeText(doc.content || '')
-    showToast('已复制到剪贴板')
-  } catch { showToast('复制失败', true) }
-}
-
-async function deleteDocument(id) {
-  if (!confirm('确定要删除这篇文档吗？')) return
-  try {
-    await settings.apiDelete(`/documents/${id}`)
-    showToast('文档已删除')
-    loadDocuments()
-  } catch { showToast('删除失败', true) }
-}
-
-async function reparseDocument(id) {
-  const doc = documents.value.find(d => d.id === id)
-  if (!doc) return
-  if (!confirm(`重新识别 "${doc.title}"？\n将重新提取语音文本并更新文档。`)) return
-  try {
-    const data = await settings.apiPost(`/automation/reparse/${id}`)
-    if (data.error) {
-      showToast(data.error, true)
-    } else {
-      showToast('已重新提交识别任务，处理完成后自动刷新')
-      startQueuePoll()  // 启动轮询，等任务完成后自动刷新文档列表
-    }
-  } catch { showToast('重新识别失败', true) }
-}
-
-async function handleUpload(e) {
-  const files = e.target.files
-  if (!files.length) return
-  for (const file of files) {
-    const form = new FormData()
-    form.append('file', file)
-    if (searchCategory.value) form.append('category_id', searchCategory.value)
-    try {
-      const data = await settings.apiUpload('/upload', form)
-      if (data.id) showToast(`"${file.name}" 上传成功`)
-      else showToast(`上传失败`, true)
-    } catch { showToast(`上传 "${file.name}" 失败`, true) }
-  }
-  e.target.value = ''
-  loadDocuments()
-}
-
-async function openInbox() {
-  try {
-    const data = await settings.apiGet('/inbox/open')
-    if (data.error) showToast(data.error, true)
-    else showToast(`收件箱已打开`)
-  } catch { showToast('打开收件箱失败', true) }
+const {
+  documents,
+  sort: docSort,
+  activeDocument,
+  reload: loadDocuments,
+  setSort: setDocumentSort,
+  open: openDocument,
+  copy: copyDocument,
+  remove: deleteDocument,
+  reparse: reparseDocument,
+  uploadFiles,
+  openInbox,
+} = useKnowledgeDocuments({
+  apiGet: settings.apiGet,
+  apiPost: settings.apiPost,
+  apiDelete: settings.apiDelete,
+  apiUpload: settings.apiUpload,
+  category: searchCategory,
+  notify: showToast,
+  confirmAction: (message) => confirm(message),
+  onReparseQueued: () => startQueuePoll(),
+})
+const docModal = computed({ get: () => Boolean(activeDocument.value), set: (value) => { if (!value) activeDocument.value = null } })
+const docTitle = computed(() => activeDocument.value?.title || '')
+const docContent = computed(() => activeDocument.value?.content || '')
+const viewDocument = openDocument
+const handleUpload = async (event) => {
+  const files = [...(event.target.files || [])]
+  if (files.length) await uploadFiles(files)
+  event.target.value = ''
 }
 
 // ===== 粘贴 Claude 对话 =====
@@ -631,52 +545,17 @@ async function savePaste() {
 }
 
 // ===== 每日复盘 =====
-const reviewInput = ref('')
-const reviewLoading = ref(false)
-const reviewStatus = ref('')
-const reviewResult = ref('')
-const reviewHistory = ref([])
-
-async function polishReview() {
-  const text = reviewInput.value.trim()
-  if (!text) { showToast('请先输入今天的笔记', true); return }
-  reviewLoading.value = true
-  reviewStatus.value = '正在润色…'
-  try {
-    const today = new Date().toISOString().slice(0, 10)
-    const data = await settings.apiPost('/review/polish', { raw_text: text, date: today })
-    reviewResult.value = data.polished || ''
-    reviewStatus.value = '完成'
-    loadReviewHistory()
-  } catch {
-    showToast('润色失败', true)
-    reviewStatus.value = ''
-  } finally { reviewLoading.value = false }
-}
-
-async function weeklyReport() {
-  reviewLoading.value = true
-  reviewStatus.value = '正在生成周报…'
-  try {
-    const data = await settings.apiGet('/review/weekly')
-    reviewResult.value = data.report || ''
-    reviewStatus.value = '完成'
-  } catch {
-    showToast('周报生成失败', true)
-    reviewStatus.value = ''
-  } finally { reviewLoading.value = false }
-}
-
-async function loadReviewHistory() {
-  try {
-    const data = await settings.apiGet('/review/list')
-    reviewHistory.value = data
-  } catch { reviewHistory.value = [] }
-}
-
-function viewReview(r) {
-  reviewResult.value = r.polished || r.raw_text || ''
-}
+const {
+  input: reviewInput,
+  loading: reviewLoading,
+  status: reviewStatus,
+  result: reviewResult,
+  history: reviewHistory,
+  polish: polishReview,
+  weeklyReport,
+  loadHistory: loadReviewHistory,
+  view: viewReview,
+} = useDailyReview({ apiPost: settings.apiPost, apiGet: settings.apiGet, notify: showToast })
 
 // ===== SOP 建议摘要 =====
 const sopPending = ref([])
@@ -717,69 +596,24 @@ const automationModules = ref([
 
 // 全局队列面板状态
 const queuePanelOpen = ref(false)
-const queueTasks = ref([])
-const queueStats = ref({ total: 0, pending: 0, running: 0, done: 0, error: 0 })
-const taskSteps = ref({})   // task_id → steps[]
-const taskProgressText = ref({}) // task_id → progress text
-let queuePollTimer = null
-const _seenDoneTasks = new Set()  // 已处理过的完成/失败任务，避免重复刷新文档列表
-
-async function fetchQueue() {
-  try {
-    const data = await settings.apiGet('/automation/queue/status')
-    if (data.stats) queueStats.value = data.stats
-    if (data.tasks) {
-      queueTasks.value = data.tasks
-      // 同步到卡片步骤缓存
-      for (const t of data.tasks) {
-        if (t.steps) taskSteps.value[t.task_id] = t.steps
-        if (t.progress) taskProgressText.value[t.task_id] = t.progress
-      }
-      // 检测新完成的任务 → 刷新文档列表（用于重新解析等场景）
-      let needRefresh = false
-      for (const t of data.tasks) {
-        if ((t.status === 'done' || t.status === 'error') && !_seenDoneTasks.has(t.task_id)) {
-          _seenDoneTasks.add(t.task_id)
-          needRefresh = true
-        }
-      }
-      if (needRefresh) loadDocuments()
-    }
-  } catch { /* ignore */ }
-}
-
-function startQueuePoll() {
-  stopQueuePoll()
-  fetchQueue()
-  queuePollTimer = setInterval(fetchQueue, 3000)
-}
-function stopQueuePoll() {
-  if (queuePollTimer) { clearInterval(queuePollTimer); queuePollTimer = null }
-}
-
-async function clearQueue() {
-  try {
-    await settings.apiDelete('/automation/queue/clear')
-    fetchQueue()
-    showToast('已清除已完成任务')
-  } catch { showToast('清除失败', true) }
-}
-
-async function retryTask(taskId) {
-  try {
-    const data = await settings.apiPost(`/automation/queue/retry/${taskId}`)
-    if (data.error) {
-      if (data.api_key_invalid) {
-        alert(data.error + '\n\n请按以下步骤操作:\n1. 打开 backend/.env 文件\n2. 更新 DASHSCOPE_API_KEY=你的新密钥\n3. 重启后端服务\n4. 再次点击重试')
-      } else {
-        showToast(data.error, true)
-      }
-    } else {
-      showToast('任务已重新提交')
-      fetchQueue()
-    }
-  } catch { showToast('重试失败', true) }
-}
+const {
+  items: queueTasks,
+  stats: queueStats,
+  stepsByTask: taskSteps,
+  progressByTask: taskProgressText,
+  refresh: fetchQueue,
+  start: startQueuePoll,
+  stop: stopQueuePoll,
+  clear: clearQueue,
+  retry: retryTask,
+} = useAutomationQueue({
+  apiGet: settings.apiGet,
+  apiPost: settings.apiPost,
+  apiDelete: settings.apiDelete,
+  onCompleted: loadDocuments,
+  notify: showToast,
+  onApiKeyInvalid: (message) => alert(message + '\n\n请按以下步骤操作:\n1. 打开 backend/.env 文件\n2. 更新 DASHSCOPE_API_KEY=你的新密钥\n3. 重启后端服务\n4. 再次点击重试'),
+})
 function refreshQueue() { fetchQueue(); showToast('已刷新') }
 
 async function runAutomation(mod) {
@@ -845,7 +679,7 @@ onMounted(async () => {
   loadDocuments()
   loadReviewHistory()
   loadSopPending()
-  fetchQueue()
+  startQueuePoll()
   try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
 })
 onUnmounted(() => {
