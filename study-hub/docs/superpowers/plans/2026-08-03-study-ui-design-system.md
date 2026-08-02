@@ -99,7 +99,7 @@ Run:
 
 ```powershell
 cd frontend
-npm install --save-dev storybook @storybook/vue3-vite @storybook/addon-docs @storybook/addon-a11y vitest @vue/test-utils jsdom playwright
+npm install --save-dev --no-audit --no-fund storybook@8.6.14 @storybook/vue3-vite@8.6.14 @storybook/addon-docs@8.6.14 @storybook/addon-a11y@8.6.14 vitest@2.1.9 @vue/test-utils@2.4.11 jsdom@25.0.1 playwright@1.62.1
 npx playwright install chromium
 ```
 
@@ -197,7 +197,6 @@ export default {
 Create `.storybook/preview.js`:
 
 ```js
-import '../src/design-system/foundations/tokens.css'
 import '../src/assets/main.css'
 
 export default {
@@ -210,7 +209,7 @@ export default {
       ],
     },
     viewport: {
-      options: {
+      viewports: {
         mobile: { name: 'Mobile 390', styles: { width: '390px', height: '844px' } },
         tablet: { name: 'Tablet 768', styles: { width: '768px', height: '1024px' } },
         desktop: { name: 'Desktop 1440', styles: { width: '1440px', height: '980px' } },
