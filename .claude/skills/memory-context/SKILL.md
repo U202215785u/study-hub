@@ -5,7 +5,7 @@ description: 加载 Study-Hub 记忆上下文 — 用户偏好、项目背景、
 # Study-Hub 记忆上下文
 
 > 本文件由 Study-Hub 五层记忆系统自动生成。
-> 最后更新：2026-08-02 20:38
+> 最后更新：2026-08-02 20:46
 > ⚠️ 使用方式：在 Kimi Code CLI 对话中说"加载 memory-context skill"
 
 ## 暂无记忆
