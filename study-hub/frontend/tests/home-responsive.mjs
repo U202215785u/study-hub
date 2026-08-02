@@ -43,6 +43,16 @@ try {
     assert.equal(await page.getByRole('main').count(), 1)
     assert.equal(await page.getByRole('heading', { name: '学习中枢', level: 1 }).count(), 1)
 
+    if (viewport.width === 1024) {
+      const taskBox = await page.locator('[data-figma-node="349:405"]').boundingBox()
+      const calendarBox = await page.locator('[data-figma-node="349:516"]').boundingBox()
+      assert.ok(taskBox && calendarBox, 'expected task and calendar widgets at 1024px')
+      assert.ok(
+        Math.abs(taskBox.y - calendarBox.y) <= 2,
+        `task and calendar widgets should share a row at 1024px: ${taskBox.y} !== ${calendarBox.y}`,
+      )
+    }
+
     const target = resolve(output, `home-${viewport.width}.png`)
     await page.screenshot({ path: target, fullPage: true })
     assert.ok((await stat(target)).size > 10_000, `blank or incomplete screenshot at ${viewport.width}px`)
