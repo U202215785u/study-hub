@@ -272,7 +272,7 @@ const API = (() => {
       if (base) return base.replace(/\/+$/, '')
     } catch {}
   }
-  return 'http://127.0.0.1:8741'
+  return typeof window !== 'undefined' ? window.location.origin : ''
 })()
 
 // 创建

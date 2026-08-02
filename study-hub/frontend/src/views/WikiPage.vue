@@ -434,7 +434,7 @@ function safeJsonParse(s, def) {
 function resolveImageUrl(url) {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  if (url.startsWith('/images/')) return `http://localhost:8741${url}`
+  if (url.startsWith('/images/')) return `${window.location.origin}${url}`
   return url
 }
 
