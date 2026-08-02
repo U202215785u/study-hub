@@ -6,7 +6,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const apiBase = ref(
     import.meta.env.VITE_API_BASE ||
     (typeof window !== 'undefined' && window.electronAPI ? 'http://localhost:8741' : '') ||
-    (typeof window !== 'undefined' ? window.location.origin : '')
+    (import.meta.env.DEV ? '/api' : '')
   )
 
   const shortcuts = ref(loadFromStorage('shortcuts', [

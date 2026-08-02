@@ -17,8 +17,10 @@ The runtime source of truth is `src/design-system/foundations/tokens.css`. Compo
 | Data entry | Labeled native form controls | `UiInput`, `UiSelect` |
 | Data display | Content labels, status, quantitative progress | `UiTag`, `UiBadge`, `UiProgress` |
 | Feedback | Loading and empty states | `UiSpinner`, `UiEmpty` |
-| Patterns | Reusable composition and responsive structure | `UiPanelHeader`, `UiWidgetFrame`, `UiDashboardGrid`, `UiDashboardItem`, `UiAppShell` |
-| Study Hub widgets | Serializable homepage domain views | `TaskWidget`, `CalendarWidget`, `AutomationQueueWidget`, `KnowledgeWidget`, `CreationWidget`, `WorkflowWidget` |
+| Navigation | Primary navigation, search entry and live greeting | `CapsuleNavigation`, `GreetingBar` |
+| Patterns | Reusable composition and responsive structure | `UiPanelHeader`, `UiWidgetFrame`, `DashboardModuleCard` |
+| Layout | Application shells, fixed-format grids and module editing | `UiDashboardGrid`, `UiDashboardItem`, `UiAppShell`, `WorkbenchFrame`, `BentoDashboardGrid`, `DashboardEditor` |
+| Study Hub widgets | Serializable homepage domain views | `WorkHeatmapWidget`, `CalendarAgendaWidget`, `TodayFocusWidget`, `AutomationQueueWidget`, `KnowledgeWidget`, `DailyMemoryWidget`, `QuickCommandWidget`, `CreationWidget`, `WorkflowWidget` |
 
 ## Atomic Dependency Model
 
@@ -50,7 +52,7 @@ npm run verify:study-ui
 node tests/home-responsive.mjs
 ```
 
-Storybook groups components by General, Data Entry, Data Display, Feedback, Layout and Study Hub Widgets. Each public component includes examples for its applicable states and narrow containers. Widget stories also carry the exact Figma source node.
+Storybook groups components by 通用、导航、数据录入、数据展示、反馈、布局 and Study Hub Widgets. Each public component has its own catalog entry with applicable states and fixed-capacity examples. Widget stories also carry the exact Figma source node.
 
 ## Documentation Contract
 

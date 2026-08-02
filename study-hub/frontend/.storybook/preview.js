@@ -1,4 +1,12 @@
 import '../src/assets/main.css'
+import { setup } from '@storybook/vue3'
+import { createMemoryHistory, createRouter } from 'vue-router'
+
+const storyRouter = createRouter({
+  history: createMemoryHistory(),
+  routes: ['/', '/wiki', '/kb', '/workflow', '/ddl', '/journal', '/brainstorm'].map((path) => ({ path, component: { template: '<div />' } })),
+})
+setup((app) => { app.use(storyRouter) })
 
 export default {
   parameters: {

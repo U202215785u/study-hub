@@ -5,3 +5,4 @@ export const Default = {}
 export const Empty = { args: { tasks: [] } }
 export const Loading = { args: { loading: true } }
 export const Error = { args: { error: '任务加载失败' } }
+export const Overflow = { args: { tasks: Array.from({ length: 7 }, (_, index) => ({ id: index, title: `真实任务 ${index + 1}`, status: 'pending', time: '未安排时间' })) } }

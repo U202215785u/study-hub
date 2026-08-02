@@ -5,3 +5,4 @@ export const Default = {}
 export const Loading = { args: { loading: true } }
 export const Empty = { args: { cells: [] } }
 export const Error = { args: { error: '热力数据加载失败' } }
+export const Overflow = { args: { cells: Array.from({ length: 240 }, (_, index) => ({ id: index, level: index % 6 })) } }

@@ -3,3 +3,4 @@ export default { title: 'Study Hub Widgets/今日手账 DailyMemoryWidget', comp
 export const Default = { args: { title: '今日手账' } }
 export const Loading = { args: { loading: true } }
 export const Error = { args: { error: '手账加载失败' } }
+export const LongContent = { args: { title: '一段很长但不会改变卡片尺寸的今日手账标题' } }

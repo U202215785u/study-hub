@@ -7,7 +7,7 @@ const tasks = [
 ]
 const longTitle = '这是一条用于验证仪表盘组件在极端内容长度下仍然保持稳定布局并且不会遮挡状态与操作区域的六十字学习任务标题示例'
 
-export default { title: 'Study Hub/Widgets/TaskWidget', component: TaskWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页任务时间线，对应 Figma 349:405。点击任务只抛出任务 id。' } } }, args: { tasks } }
+export default { title: 'Study Hub Widgets/TaskWidget 任务时间线', component: TaskWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '任务时间线组件，对应 Figma 349:405。点击任务只抛出任务 id。' } } }, args: { tasks } }
 export const Default = {}
 export const Empty = { args: { tasks: [] } }
 export const Loading = { args: { loading: true } }

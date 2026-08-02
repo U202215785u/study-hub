@@ -83,7 +83,7 @@ import { useHomeSearch } from '../composables/home/useHomeSearch.js'
 import { useAutomationQueue } from '../composables/home/useAutomationQueue.js'
 import { useKnowledgeDocuments } from '../composables/home/useKnowledgeDocuments.js'
 import { useDailyReview } from '../composables/home/useDailyReview.js'
-import { createHomeDashboardData } from '../composables/home/useHomeDashboardData.js'
+import { createHomeDashboardData, toLocalDateKey } from '../composables/home/useHomeDashboardData.js'
 import { useDashboardLayout } from '../composables/home/useDashboardLayout.js'
 import { DASHBOARD_REGISTRY } from '../design-system/layout/dashboardRegistry.js'
 import { getWidgetGeometry } from '../design-system/layout/dashboardLayout.js'
@@ -141,13 +141,28 @@ const refreshQueue = () => { fetchQueue(); showToast('已刷新') }
 const mapper = createHomeDashboardData()
 const queueItems = computed(() => mapper.mapQueue(queueTasks.value))
 const knowledgeItems = computed(() => mapper.mapDocuments(documents.value))
+const ddlTasks = ref([])
+const ddlLoading = ref(true)
+const ddlError = ref('')
+async function loadDdlTasks() {
+  ddlLoading.value = true
+  ddlError.value = ''
+  try {
+    const data = await settings.apiGet('/ddl/tasks')
+    ddlTasks.value = Array.isArray(data) ? data : []
+  } catch {
+    ddlTasks.value = []
+    ddlError.value = '任务数据加载失败'
+  } finally {
+    ddlLoading.value = false
+  }
+}
 
 const automationModules = ref([
   { id: 'douyin-summary', name: '抖音摘要', desc: '提取文本、识别资源并生成文档。', placeholder: '粘贴抖音分享链接...', input: '', loading: false },
   { id: 'bilibili-summary', name: 'B站解析', desc: '解析视频信息并提取语音文本。', placeholder: '粘贴 B 站分享链接...', input: '', loading: false },
   { id: 'xiaohongshu-summary', name: '小红书解析', desc: '提取笔记内容并归档。', placeholder: '粘贴小红书分享链接...', input: '', loading: false },
 ])
-const taskItems = computed(() => automationModules.value.map((item) => ({ id: item.id, title: item.name, time: item.desc, status: item.loading ? 'running' : 'pending', progress: item.loading ? 42 : 0 })))
 const automationDialog = ref(false)
 const selectedAutomationId = ref('')
 const selectedAutomation = computed(() => automationModules.value.find((item) => item.id === selectedAutomationId.value))
@@ -163,15 +178,17 @@ async function runAutomation(module) {
 }
 
 const today = new Date()
-const selectedDate = ref(today.toISOString().slice(0, 10))
+const selectedDate = ref(toLocalDateKey(today))
 const calendarMonth = `${today.getFullYear()}年 ${today.getMonth() + 1}月`
 const calendarDays = computed(() => Array.from({ length: 7 }, (_, index) => {
   const date = new Date(today); date.setDate(today.getDate() - today.getDay() + index)
-  const id = date.toISOString().slice(0, 10)
+  const id = toLocalDateKey(date)
   return { date: id, label: String(date.getDate()), selected: id === selectedDate.value }
 }))
-const agendaItems = computed(() => queueItems.value.slice(0, 2).map((item, index) => ({ id: item.id, title: item.title, time: index ? '12:00 - 12:30' : '10:00 - 11:00', tone: index ? 'purple' : 'lime' })))
-const heatmapCells = computed(() => Array.from({ length: 196 }, (_, index) => ({ id: index, level: (index + queueTasks.value.length + documents.value.length) % 6 })))
+const agendaItems = computed(() => mapper.mapAgenda(ddlTasks.value, selectedDate.value))
+const taskItems = computed(() => mapper.mapTodayTasks(ddlTasks.value, selectedDate.value))
+const heatmapCells = computed(() => mapper.mapActivityHeatmap({ tasks: ddlTasks.value, documents: documents.value, queue: queueTasks.value }, today))
+const heatmapCaption = computed(() => `近 7 天：${heatmapCells.value.slice(-7).reduce((total, cell) => total + cell.count, 0)} 次记录`)
 
 const creationItems = computed(() => mapper.mapLaunchers(settings.launcherItems))
 function launchCreation(id) { const item = creationItems.value.find((entry) => entry.id === id); if (item?.url) openExternal(item.url); else router.push('/creator') }
@@ -192,9 +209,9 @@ const docContent = computed(() => activeDocument.value?.content || '')
 
 function propsFor(id) {
   const props = {
-    'work-heatmap': { cells: heatmapCells.value },
-    'calendar-agenda': { days: calendarDays.value, agenda: agendaItems.value, monthLabel: calendarMonth },
-    'today-focus': { tasks: taskItems.value, dateLabel: `${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日` },
+    'work-heatmap': { cells: heatmapCells.value, caption: heatmapCaption.value, loading: ddlLoading.value, error: ddlError.value },
+    'calendar-agenda': { days: calendarDays.value, agenda: agendaItems.value, monthLabel: calendarMonth, loading: ddlLoading.value, error: ddlError.value },
+    'today-focus': { tasks: taskItems.value, dateLabel: `${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`, loading: ddlLoading.value, error: ddlError.value },
     'automation-queue': { items: queueItems.value }, knowledge: { items: knowledgeItems.value },
     'daily-memory': { title: '今日手账' }, 'quick-command': { commands: commandItems.value },
     'creation-entry': { items: creationItems.value }, 'quick-workflow': { steps: workflowSteps },
@@ -203,8 +220,8 @@ function propsFor(id) {
 }
 function listenersFor(id) {
   return {
-    'calendar-agenda': { select: (date) => { selectedDate.value = date }, open: () => router.push('/journal') },
-    'today-focus': { select: openAutomation },
+    'calendar-agenda': { select: (date) => { selectedDate.value = date }, open: () => router.push('/ddl') },
+    'today-focus': { select: () => router.push('/ddl') },
     'automation-queue': { open: () => { queuePanelOpen.value = true }, retry: retryTask, create: () => openAutomation() },
     knowledge: { open: viewDocument }, 'daily-memory': { open: () => { reviewOpen.value = true } },
     'quick-command': { run: runCommand }, 'creation-entry': { open: launchCreation }, 'quick-workflow': { run: runWorkflow },
@@ -212,7 +229,7 @@ function listenersFor(id) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadDocuments(), loadReviewHistory()])
+  await Promise.all([loadDocuments(), loadReviewHistory(), loadDdlTasks()])
   try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
   startQueuePoll()
 })

@@ -6,3 +6,4 @@ export const Default = {}
 export const Empty = { args: { days, agenda: [] } }
 export const Loading = { args: { loading: true } }
 export const Error = { args: { error: '日程加载失败' } }
+export const Overflow = { args: { agenda: [...agenda, { id: 'c', title: '超出卡片容量的日程', time: '14:00 - 15:00' }] } }
