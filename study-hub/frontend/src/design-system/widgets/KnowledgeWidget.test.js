@@ -9,4 +9,9 @@ describe('KnowledgeWidget', () => {
     await wrapper.get('[data-knowledge-id="k1"]').trigger('click')
     expect(wrapper.emitted('open')).toEqual([['k1']])
   })
+
+  it('keeps the knowledge structure visible when no documents exist', () => {
+    const wrapper = mount(KnowledgeWidget)
+    expect(wrapper.get('h2').text()).toBe('知识库')
+  })
 })

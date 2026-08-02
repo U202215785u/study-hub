@@ -4,11 +4,14 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AutomationQueueWidget,
-  CalendarWidget,
+  BentoDashboardGrid,
+  CalendarAgendaWidget,
   CreationWidget,
+  DailyMemoryWidget,
   KnowledgeWidget,
-  TaskWidget,
-  UiDashboardGrid,
+  QuickCommandWidget,
+  TodayFocusWidget,
+  WorkHeatmapWidget,
   WorkflowWidget,
 } from '@study-ui'
 import { useSettingsStore } from '../stores/settings.js'
@@ -19,7 +22,7 @@ describe('Home dashboard composition', () => {
 
   afterEach(() => wrapper?.unmount())
 
-  it('composes six widgets and keeps legacy API commands reachable', async () => {
+  it('composes nine Figma widgets and keeps existing API commands reachable', async () => {
     const pinia = createPinia()
     const settings = useSettingsStore(pinia)
     settings.apiGet = vi.fn(async (path) => {
@@ -35,22 +38,22 @@ describe('Home dashboard composition', () => {
     settings.apiUpload = vi.fn(async () => ({}))
 
     const EmptyRoute = { template: '<div />' }
-    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: Home }, { path: '/kb', component: EmptyRoute }, { path: '/learning', component: EmptyRoute }, { path: '/creator', component: EmptyRoute }] })
+    const router = createRouter({ history: createMemoryHistory(), routes: ['/', '/kb', '/wiki', '/workflow', '/ddl', '/journal', '/brainstorm', '/settings', '/creator'].map((path) => ({ path, component: path === '/' ? Home : EmptyRoute })) })
     await router.push('/')
     await router.isReady()
     wrapper = mount(Home, { global: { plugins: [pinia, router] } })
     await flushPromises()
 
-    expect(wrapper.findComponent(UiDashboardGrid).exists()).toBe(true)
-    for (const component of [TaskWidget, CalendarWidget, AutomationQueueWidget, KnowledgeWidget, CreationWidget, WorkflowWidget]) {
+    expect(wrapper.findComponent(BentoDashboardGrid).exists()).toBe(true)
+    for (const component of [WorkHeatmapWidget, CalendarAgendaWidget, TodayFocusWidget, AutomationQueueWidget, KnowledgeWidget, DailyMemoryWidget, QuickCommandWidget, CreationWidget, WorkflowWidget]) {
       expect(wrapper.findComponent(component).exists()).toBe(true)
     }
-    expect(wrapper.findAll('[data-home-search-primary="true"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-figma-node]')).toHaveLength(9)
     expect(wrapper.get('[role="search"]')).toBeTruthy()
-    expect(wrapper.get('nav[aria-label="首页快捷入口"]')).toBeTruthy()
+    expect(wrapper.get('nav[aria-label="主导航"]')).toBeTruthy()
 
-    await wrapper.get('[data-home-search-input] input').setValue('原子设计')
-    await wrapper.get('[data-home-search-primary="true"]').trigger('click')
+    await wrapper.get('[role="search"] input').setValue('原子设计')
+    await wrapper.get('[role="search"]').trigger('submit')
     await wrapper.findComponent(KnowledgeWidget).vm.$emit('open', 'k1')
     await wrapper.findComponent(AutomationQueueWidget).vm.$emit('retry', 'q1')
     await flushPromises()

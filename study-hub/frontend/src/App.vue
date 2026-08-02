@@ -26,7 +26,7 @@ import NavBar from './components/NavBar.vue'
 import SystemStatus from './components/SystemStatus.vue'
 
 const route = useRoute()
-const isFullScreenRoute = computed(() => route.path.startsWith('/wiki') || route.path.startsWith('/kb'))
+const isFullScreenRoute = computed(() => route.path === '/' || route.path.startsWith('/wiki') || route.path.startsWith('/kb'))
 </script>
 
 <style scoped>

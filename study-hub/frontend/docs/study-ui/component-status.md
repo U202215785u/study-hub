@@ -18,9 +18,20 @@
 | Layout | UiDashboardGrid | Study UI | Stable 0.1 | Yes | Yes | Reading-order DOM with responsive visual grid | `349:96` source frame | `import { UiDashboardGrid } from '@study-ui'` |
 | Layout | UiDashboardItem | Study UI | Stable 0.1 | Yes | Yes | Logical span does not alter content semantics | `349:96` source frame | `import { UiDashboardItem } from '@study-ui'` |
 | Layout | UiAppShell | Study UI | Stable 0.1 | Yes | Yes | One main landmark; navigation supplied by NavBar | `349:96` source frame | `import { UiAppShell } from '@study-ui'` |
+| Layout | WorkbenchFrame | Study UI | Candidate 0.2 | Yes | Yes | One main landmark and constrained PC workspace | `349:96` | `import { WorkbenchFrame } from '@study-ui'` |
+| Navigation | CapsuleNavigation | Study UI | Candidate 0.2 | Yes | Yes | Named primary navigation, search, notification, and edit actions | `349:98` | `import { CapsuleNavigation } from '@study-ui'` |
+| Layout | GreetingBar | Study UI | Candidate 0.2 | Yes | Yes | One page heading with live date and time | `349:127` | `import { GreetingBar } from '@study-ui'` |
+| Layout | BentoDashboardGrid | Study UI | Candidate 0.2 | Yes | Yes | Eight-column DOM order with constrained spans | `349:96` | `import { BentoDashboardGrid } from '@study-ui'` |
+| Layout | DashboardEditor | Study UI | Candidate 0.2 | Yes | Yes | Named edit actions, drag handle, save and cancel | `349:98` | `import { DashboardEditor } from '@study-ui'` |
+| Pattern | DashboardModuleCard | Study UI | Candidate 0.2 | Yes | Yes | Stable content, loading, empty and error boundary | `349:96` | `import { DashboardModuleCard } from '@study-ui'` |
 | Study Hub widget | TaskWidget | Study Hub | Stable 0.1 | Yes | Yes | Keyboard-selectable rows and text status | `349:405` | `import { TaskWidget } from '@study-ui'` |
 | Study Hub widget | CalendarWidget | Study Hub | Stable 0.1 | Yes | Yes | Grid label, named dates and pressed selection | `349:516` | `import { CalendarWidget } from '@study-ui'` |
+| Study Hub widget | WorkHeatmapWidget | Study Hub | Candidate 0.2 | Yes | Yes | Labeled heatmap and fixed visible-cell capacity | `349:169` | `import { WorkHeatmapWidget } from '@study-ui'` |
+| Study Hub widget | CalendarAgendaWidget | Study Hub | Candidate 0.2 | Yes | Yes | Named dates and agenda actions | `349:516` | `import { CalendarAgendaWidget } from '@study-ui'` |
+| Study Hub widget | TodayFocusWidget | Study Hub | Candidate 0.2 | Yes | Yes | Named task buttons and visible status | `349:405` | `import { TodayFocusWidget } from '@study-ui'` |
 | Study Hub widget | AutomationQueueWidget | Study Hub | Stable 0.1 | Yes | Yes | Keyboard-open rows, named retry action and progress | `349:369` | `import { AutomationQueueWidget } from '@study-ui'` |
 | Study Hub widget | KnowledgeWidget | Study Hub | Stable 0.1 | Yes | Yes | Native document buttons and text status | `349:471` | `import { KnowledgeWidget } from '@study-ui'` |
+| Study Hub widget | DailyMemoryWidget | Study Hub | Candidate 0.2 | Yes | Yes | Native button opens daily review | `349:484` | `import { DailyMemoryWidget } from '@study-ui'` |
+| Study Hub widget | QuickCommandWidget | Study Hub | Candidate 0.2 | Yes | Yes | Native command buttons with capped capacity | `349:510` | `import { QuickCommandWidget } from '@study-ui'` |
 | Study Hub widget | CreationWidget | Study Hub | Stable 0.1 | Yes | Yes | Native work-item buttons and image alternatives | `349:493` | `import { CreationWidget } from '@study-ui'` |
 | Study Hub widget | WorkflowWidget | Study Hub | Stable 0.1 | Yes | Yes | Ordered steps and named run controls | `349:459` | `import { WorkflowWidget } from '@study-ui'` |

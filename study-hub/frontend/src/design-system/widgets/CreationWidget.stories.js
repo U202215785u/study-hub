@@ -8,7 +8,7 @@ const items = [
 ]
 const longTitle = '这是一个用于验证创作卡片标题在极端内容长度下仍然稳定截断并且不会改变缩略图比例和网格尺寸的六十字中文标题示例'
 
-export default { title: 'Study Hub/Widgets/CreationWidget', component: CreationWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页继续创作组件，对应 Figma 349:493。打开作品只抛出作品 id。' } } }, args: { items } }
+export default { title: 'Study Hub Widgets/创作入口 CreationWidget', component: CreationWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页继续创作组件，对应 Figma 349:493。打开作品只抛出作品 id。' } } }, args: { items } }
 export const Default = {}
 export const Empty = { args: { items: [] } }
 export const Loading = { args: { loading: true } }

@@ -18,9 +18,9 @@ describe('Figma dashboard geometry', () => {
       'today-focus',
       'automation-queue',
       'knowledge',
+      'creation-entry',
       'daily-memory',
       'quick-command',
-      'creation-entry',
       'quick-workflow',
     ])
     expect(getWidgetGeometry('work-heatmap', 1440).width).toBeCloseTo(677, 0)

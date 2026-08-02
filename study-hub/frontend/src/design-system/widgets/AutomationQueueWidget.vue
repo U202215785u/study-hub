@@ -1,35 +1,26 @@
 <template>
-  <UiWidgetFrame data-figma-node="349:369" title="自动化队列" :meta="`${items.length} 项`" :loading="loading" :error="error" :empty="!items.length && !loading && !error" empty-title="队列为空" empty-description="提交一个解析任务后，它会出现在这里。">
-    <div class="queue-list">
-      <div v-for="item in items" :key="item.id" class="queue-row" :data-queue-id="item.id" role="button" tabindex="0" @click="emit('open', item.id)" @keydown.enter="emit('open', item.id)" @keydown.space.prevent="emit('open', item.id)">
-        <div class="queue-row__copy"><strong>{{ item.title }}</strong><UiBadge :status="badgeStatus(item.status)" :label="statusLabel(item.status)" /></div>
-        <UiProgress :value="item.progress" :show-value="true" />
-        <UiButton v-if="item.status === 'error'" size="sm" variant="text" :data-retry-id="item.id" @click.stop="emit('retry', item.id)">重试</UiButton>
-      </div>
+  <DashboardModuleCard data-figma-node="349:369" title="自动化队列" :loading="loading" :error="error">
+    <div class="queue-widget">
+      <button v-for="item in visibleItems" :key="item.id" type="button" :data-queue-id="item.id" @click="$emit('open', item.id)">
+        <span><strong>{{ item.title }}</strong><b :data-status="item.status">{{ statusLabel(item.status) }}</b></span>
+        <i><em :style="{ width: `${Math.max(8, item.progress || 0)}%` }" :data-status="item.status" /></i>
+        <UiButton v-if="item.status === 'error'" :data-retry-id="item.id" size="sm" variant="text" @click.stop="$emit('retry', item.id)">重试</UiButton>
+      </button>
+      <div v-if="!visibleItems.length" class="queue-widget__empty">粘贴抖音分享链接...</div>
+      <UiButton class="queue-widget__more" size="sm" variant="text" @click="$emit('open')">查看队列</UiButton>
+      <UiButton class="queue-widget__start" size="sm" @click="$emit('create')">开始解析</UiButton>
     </div>
-  </UiWidgetFrame>
+  </DashboardModuleCard>
 </template>
-
 <script setup>
-import UiBadge from '../components/data-display/UiBadge.vue'
-import UiProgress from '../components/data-display/UiProgress.vue'
+import { computed } from 'vue'
 import UiButton from '../components/general/UiButton.vue'
-import UiWidgetFrame from '../patterns/UiWidgetFrame.vue'
-
-defineProps({ items: { type: Array, default: () => [] }, loading: Boolean, error: { type: String, default: '' } })
-const emit = defineEmits(['open', 'retry'])
-const statusLabels = { pending: '排队中', running: '处理中', done: '已完成', error: '失败' }
-const statusTone = { pending: 'neutral', running: 'info', done: 'success', error: 'danger' }
-const statusLabel = (status) => statusLabels[status] || statusLabels.pending
-const badgeStatus = (status) => statusTone[status] || 'neutral'
+import DashboardModuleCard from '../patterns/DashboardModuleCard.vue'
+const props = defineProps({ items: { type: Array, default: () => [] }, loading: Boolean, error: { type: String, default: '' } })
+defineEmits(['open', 'retry', 'create'])
+const visibleItems = computed(() => props.items.slice(0, 3))
+const statusLabel = (status) => ({ pending: '排队中', running: '处理中', done: '已完成', error: '失败' }[status] || '排队中')
 </script>
-
 <style scoped>
-.queue-list { display: grid; gap: var(--ui-space-2); }
-.queue-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--ui-space-2) var(--ui-space-3); border-radius: var(--ui-radius-md); padding: var(--ui-space-3); cursor: pointer; }
-.queue-row:hover, .queue-row:focus-visible { outline: none; background: var(--ui-color-surface-raised); }
-.queue-row__copy { display: flex; min-width: 0; align-items: center; gap: var(--ui-space-3); }
-.queue-row__copy strong { min-width: 0; overflow: hidden; color: var(--ui-color-text-strong); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.queue-row > .ui-progress { grid-column: 1 / -1; }
-.queue-row > .ui-button { justify-self: end; }
+.queue-widget{display:grid;height:100%;box-sizing:border-box;align-content:start;gap:7px;padding:49px 13px 14px}.queue-widget>button:not(.queue-widget__more):not(.queue-widget__start){position:relative;display:grid;gap:7px;min-height:45px;border:1px solid rgb(245 246 238 / 20%);border-radius:6px;padding:7px;background:#171a16;color:#f5f6ee;text-align:left;cursor:pointer}.queue-widget>button>span{display:flex;align-items:center;justify-content:space-between;gap:8px}.queue-widget strong{overflow:hidden;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.queue-widget b{color:#d9ddcf;font-size:10px}.queue-widget b[data-status='done']{color:#d7ff63}.queue-widget b[data-status='error']{color:#ff6b78}.queue-widget i{display:block;height:5px;border-radius:4px;background:#29351d}.queue-widget em{display:block;height:100%;border-radius:4px;background:#d7ff63}.queue-widget em[data-status='error']{background:#ef5b65}.queue-widget__empty{position:absolute;right:13px;bottom:55px;left:13px;height:38px;box-sizing:border-box;border:1px dashed rgb(245 246 238 / 20%);border-radius:10px;padding:10px;color:#8b9186;font-size:11px}.queue-widget__more{position:absolute;right:13px;bottom:95px}.queue-widget__start{position:absolute;right:13px;bottom:14px;border-radius:18px!important}
 </style>

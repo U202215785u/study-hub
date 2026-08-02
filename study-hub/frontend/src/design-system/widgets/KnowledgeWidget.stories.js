@@ -7,7 +7,7 @@ const items = [
 ]
 const longTitle = '这是一个用于验证知识条目在极端内容长度下仍然保持稳定截断并且不会遮挡更新时间和状态信息的六十字中文标题示例'
 
-export default { title: 'Study Hub/Widgets/KnowledgeWidget', component: KnowledgeWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页最近知识列表，对应 Figma 349:471。打开文档只抛出文档 id。' } } }, args: { items } }
+export default { title: 'Study Hub Widgets/知识库 KnowledgeWidget', component: KnowledgeWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页最近知识列表，对应 Figma 349:471。打开文档只抛出文档 id。' } } }, args: { items } }
 export const Default = {}
 export const Empty = { args: { items: [] } }
 export const Loading = { args: { loading: true } }

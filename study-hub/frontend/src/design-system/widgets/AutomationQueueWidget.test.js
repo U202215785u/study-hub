@@ -11,4 +11,9 @@ describe('AutomationQueueWidget', () => {
     expect(wrapper.emitted('open')).toEqual([['q1']])
     expect(wrapper.emitted('retry')).toEqual([['q1']])
   })
+
+  it('keeps the create action visible when the real queue is empty', () => {
+    const wrapper = mount(AutomationQueueWidget)
+    expect(wrapper.findAll('button').some((button) => button.text().includes('开始解析'))).toBe(true)
+  })
 })

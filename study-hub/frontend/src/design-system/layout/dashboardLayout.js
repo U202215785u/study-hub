@@ -11,9 +11,9 @@ export const DEFAULT_DASHBOARD_LAYOUT = Object.freeze({
     { id: 'today-focus', visible: true, order: 2, size: '2x3' },
     { id: 'automation-queue', visible: true, order: 3, size: '2x2' },
     { id: 'knowledge', visible: true, order: 4, size: '2x1' },
-    { id: 'daily-memory', visible: true, order: 5, size: '1x1' },
-    { id: 'quick-command', visible: true, order: 6, size: '1x1' },
-    { id: 'creation-entry', visible: true, order: 7, size: '2x2' },
+    { id: 'creation-entry', visible: true, order: 5, size: '2x2' },
+    { id: 'daily-memory', visible: true, order: 6, size: '1x1' },
+    { id: 'quick-command', visible: true, order: 7, size: '1x1' },
     { id: 'quick-workflow', visible: true, order: 8, size: '2x1' },
   ]),
 })
