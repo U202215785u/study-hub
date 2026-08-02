@@ -13,7 +13,7 @@ def _auto_tag_sync(title: str, content: str) -> list:
     analysis_text = (content or "")[:2000]
     api_base = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
     api_key = "sk-d703daaf15d343b88dce53a1dd4d32e4"
-    model = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+    model = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
     prompt = f"""请分析以下文档，提取 3-8 个精准标签。
 要求：

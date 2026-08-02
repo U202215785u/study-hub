@@ -19,11 +19,12 @@ WEB_BRIDGE_URL = "http://127.0.0.1:10086/command"
 def _sync_ai_chat(messages: list, temperature: float = 0.7, max_tokens: int = 2048) -> str:
     """同步调用 AI —— 直接用 requests 库（避免 httpx 在线程中的 SSL 问题）。"""
     import requests
-    from ai_client import API_KEY, API_BASE, MODEL
+    from ai_client import get_ai_config
 
-    api_base = API_BASE
-    api_key = API_KEY
-    model = MODEL
+    config = get_ai_config()
+    api_base = config["api_base"]
+    api_key = config["api_key"]
+    model = config["model"]
 
     url = f"{api_base.rstrip('/')}/chat/completions"
     headers = {

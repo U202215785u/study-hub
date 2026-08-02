@@ -100,8 +100,19 @@ export const useSettingsStore = defineStore('settings', () => {
     return res.json()
   }
 
+  function getSettingsStatus() { return apiGet('/settings/status') }
+  function saveAiSettings(payload) { return apiPut('/settings/ai', payload) }
+  function deleteAiKey() { return apiDelete('/settings/ai/key') }
+  function getSettingsCatalog() { return apiGet('/settings/catalog') }
+  function getModelRoutes() { return apiGet('/settings/model-routes') }
+  function saveModelRoute(id, payload) { return apiPut(`/settings/model-routes/${id}`, payload) }
+  function getServiceSettings() { return apiGet('/settings/services') }
+  function saveServiceSettings(id, values) { return apiPut(`/settings/services/${id}`, { values }) }
+
   return { apiBase, shortcuts, launcherItems, customCommands, guideDone,
            addShortcut, removeShortcut, addLauncher, removeLauncher,
            saveToStorage, loadFromStorage,
-           apiGet, apiPost, apiDelete, apiPut, apiUpload }
+           apiGet, apiPost, apiDelete, apiPut, apiUpload,
+           getSettingsStatus, saveAiSettings, deleteAiKey, getSettingsCatalog,
+           getModelRoutes, saveModelRoute, getServiceSettings, saveServiceSettings }
 })

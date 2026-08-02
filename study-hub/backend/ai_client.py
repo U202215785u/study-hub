@@ -1,21 +1,35 @@
-import os, json
+import os
 import httpx
 
+from database import get_db
+from services.secure_settings import load_secret
+
 # 不可变 — DeepSeek 唯一 AI 服务，禁止切换 Provider
-API_BASE = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
-API_KEY = "sk-d703daaf15d343b88dce53a1dd4d32e4"
-MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+DEFAULT_API_BASE = "https://api.deepseek.com/v1"
+DEFAULT_MODEL = "deepseek-v4-flash"
+
+
+def get_ai_config():
+    conn = get_db()
+    try:
+        return {
+            "api_base": load_secret(conn, "ai.deepseek.base_url") or os.getenv("DEEPSEEK_API_BASE", DEFAULT_API_BASE),
+            "api_key": load_secret(conn, "ai.deepseek.api_key") or os.getenv("DEEPSEEK_API_KEY", ""),
+            "model": load_secret(conn, "ai.deepseek.model") or os.getenv("DEEPSEEK_MODEL", DEFAULT_MODEL),
+        }
+    finally:
+        conn.close()
 
 
 class AIClient:
     async def chat(self, messages, temperature=0.7, max_tokens=2048):
-        url = f"{API_BASE.rstrip('/')}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json",
-        }
+        config = get_ai_config()
+        if not config["api_key"]:
+            return "AI service is not configured"
+        url = f"{config['api_base'].rstrip('/')}/chat/completions"
+        headers = {"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"}
         body = {
-            "model": MODEL,
+            "model": config["model"],
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -28,13 +42,13 @@ class AIClient:
             return data["choices"][0]["message"]["content"]
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
-        url = f"{API_BASE.rstrip('/')}/embeddings"
-        headers = {
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json",
-        }
+        config = get_ai_config()
+        if not config["api_key"]:
+            raise RuntimeError("AI service is not configured")
+        url = f"{config['api_base'].rstrip('/')}/embeddings"
+        headers = {"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"}
         body = {
-            "model": MODEL,
+            "model": config["model"],
             "input": texts,
         }
         async with httpx.AsyncClient(timeout=120) as client:

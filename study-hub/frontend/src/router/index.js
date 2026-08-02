@@ -16,6 +16,8 @@ const routes = [
   { path: '/creator', name: 'creator', component: () => import('../views/CreatorHub.vue') },
   { path: '/skills', name: 'skills', component: () => import('../views/SkillMarket.vue') },
   { path: '/journal', name: 'journal', component: () => import('../views/JournalView.vue') },
+  { path: '/workbench', name: 'workbench', component: () => import('../views/Workbench.vue') },
+  { path: '/settings', name: 'settings', component: () => import('../views/Settings.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

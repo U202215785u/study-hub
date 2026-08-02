@@ -32,6 +32,13 @@ def init_db():
     # 防重置：如果数据库文件已存在且有数据，不再执行 CREATE TABLE（DEC-023）
     db_exists = os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0
     conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS secure_settings (
+            name TEXT PRIMARY KEY,
+            encrypted_value TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     if not db_exists:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS categories (
@@ -504,6 +511,14 @@ def init_db():
     """)
     conn.commit()
     initialize_butler_schema(conn)
+    import importlib.util
+    migration_path = os.path.join(os.path.dirname(__file__), "workbench", "migrations.py")
+    migration_spec = importlib.util.spec_from_file_location(
+        "study_hub_workbench_migrations", migration_path
+    )
+    migration_module = importlib.util.module_from_spec(migration_spec)
+    migration_spec.loader.exec_module(migration_module)
+    migration_module.migrate(conn)
 
     conn.close()
 
