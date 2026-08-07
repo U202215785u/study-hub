@@ -27,6 +27,7 @@ describe('Home dashboard composition', () => {
     const pinia = createPinia()
     const settings = useSettingsStore(pinia)
     settings.apiGet = vi.fn(async (path) => {
+      if (path.startsWith('/workstation/search?')) return { groups: [], assistant: { enabled: false, label: '问一问 AI 助手', status: '暂未开放' } }
       if (path === '/ddl/tasks') return [{ id: 'd1', title: '真实日程', plan_date: toLocalDateKey(new Date()), start_time: '09:00', end_time: '10:00', status: 'in_progress', updated_at: new Date().toISOString() }]
       if (path.startsWith('/documents?')) return [{ id: 'k1', title: '设计系统笔记', created_at: '2026-06-07', status: 'ready' }]
       if (path === '/documents/k1') return { id: 'k1', title: '设计系统笔记', content: '内容' }
@@ -35,7 +36,7 @@ describe('Home dashboard composition', () => {
       if (path === '/categories') return []
       return {}
     })
-    settings.apiPost = vi.fn(async (path) => path === '/ai-search' ? { answer: '搜索结果' } : {})
+    settings.apiPost = vi.fn(async () => ({}))
     settings.apiDelete = vi.fn(async () => ({}))
     settings.apiUpload = vi.fn(async () => ({}))
 
@@ -66,7 +67,7 @@ describe('Home dashboard composition', () => {
     await wrapper.findComponent(AutomationQueueWidget).vm.$emit('retry', 'q1')
     await flushPromises()
 
-    expect(settings.apiPost).toHaveBeenCalledWith('/ai-search', { question: '原子设计' })
+    expect(settings.apiGet).toHaveBeenCalledWith('/workstation/search?q=%E5%8E%9F%E5%AD%90%E8%AE%BE%E8%AE%A1')
     expect(settings.apiGet).toHaveBeenCalledWith('/documents/k1')
     expect(settings.apiPost).toHaveBeenCalledWith('/automation/queue/retry/q1')
   })

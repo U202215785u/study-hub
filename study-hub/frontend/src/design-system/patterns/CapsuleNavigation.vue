@@ -8,7 +8,7 @@
       <RouterLink v-for="item in items" :key="item.to" :to="item.to" :class="{ 'is-active': item.to === '/' }">{{ item.label }}</RouterLink>
     </nav>
     <form class="capsule-navigation__search" role="search" @submit.prevent="$emit('search', searchText)">
-      <input v-model="searchText" aria-label="搜索知识、任务、流程" placeholder="搜索知识、任务、流程..." />
+      <input v-model="searchText" aria-label="搜索工作站内容" placeholder="搜索功能、文章与工作记录" @focus="$emit('search-focus')" @keydown.esc="$emit('search-close')" />
     </form>
     <UiButton class="capsule-navigation__notice" variant="quiet" size="sm" @click="$emit('notify')">通知</UiButton>
     <UiIconButton label="编辑首页" variant="primary" size="md" @click="$emit('edit')">章</UiIconButton>
@@ -16,12 +16,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import UiButton from '../components/general/UiButton.vue'
 import UiIconButton from '../components/general/UiIconButton.vue'
 
-defineEmits(['search', 'notify', 'edit'])
-const searchText = ref('')
+defineEmits(['search', 'search-focus', 'search-close', 'notify', 'edit'])
+const searchText = defineModel('searchText', { type: String, default: '' })
 const items = [
   { to: '/', label: '首页' }, { to: '/wiki', label: 'Wiki' }, { to: '/kb', label: '文档库' },
   { to: '/workflow', label: '自动化' }, { to: '/ddl', label: 'DDL' }, { to: '/journal', label: '手账' },

@@ -1,7 +1,10 @@
 <template>
   <WorkbenchFrame>
     <template #navigation>
-      <CapsuleNavigation @search="searchFromNavigation" @notify="showToast('暂无新通知')" @edit="beginEdit" />
+      <div class="home-navigation">
+        <CapsuleNavigation :search-text="searchInput" @update:search-text="updateSearchInput" @search="searchNow" @search-focus="openSearch" @search-close="closeSearch" @notify="showToast('暂无新通知')" @edit="beginEdit" />
+        <WorkstationSearchPanel :open="searchExpanded" :groups="searchGroups" :loading="searchLoading" :error="searchError" :assistant="searchAssistant" @navigate="navigateSearchResult" @open-document="viewDocument" @retry="retrySearch" @close="closeSearch" />
+      </div>
     </template>
     <template #greeting><GreetingBar /></template>
 
@@ -28,16 +31,6 @@
     @cancel="cancelEdit"
     @restore="restoreDefault"
   />
-
-  <div v-if="searchResult" class="home-modal" role="presentation" @click.self="clearSearchResult">
-    <section class="home-modal__panel" role="dialog" aria-modal="true" aria-labelledby="search-result-title">
-      <header><h2 id="search-result-title">搜索结果</h2><UiIconButton label="关闭搜索结果" variant="text" @click="clearSearchResult">×</UiIconButton></header>
-      <p v-if="searchLoading" class="home-muted">正在搜索...</p>
-      <p v-else-if="searchError" class="home-error">{{ searchError }}</p>
-      <MarkdownRenderer v-else-if="searchAnswer" :content="searchAnswer" />
-      <p v-else class="home-muted">没有找到可展示的结果。</p>
-    </section>
-  </div>
 
   <div v-if="reviewOpen" class="home-modal" role="presentation" @click.self="reviewOpen = false">
     <section class="home-modal__panel" role="dialog" aria-modal="true" aria-labelledby="review-title">
@@ -78,6 +71,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import MarkdownRenderer from '../components/MarkdownRenderer.vue'
+import WorkstationSearchPanel from '../components/home/WorkstationSearchPanel.vue'
 import { useSettingsStore } from '../stores/settings.js'
 import { useHomeSearch } from '../composables/home/useHomeSearch.js'
 import { useAutomationQueue } from '../composables/home/useAutomationQueue.js'
@@ -120,11 +114,14 @@ function widgetStyle(widget) {
   return { '--widget-columns': columns, '--widget-rows': rows, '--widget-height': `${getWidgetGeometry(widget.id, 1440).height}px` }
 }
 
-const categories = ref([])
-const search = useHomeSearch({ apiPost: settings.apiPost, openExternal, loadCommands: () => settings.loadFromStorage('commands', {}), notify: showToast })
-const { query: searchInput, loading: searchLoading, hasResult: searchResult, answer: searchAnswer, error: searchError, submit: doSearch } = search
-function searchFromNavigation(value) { searchInput.value = value; if (value.trim()) doSearch() }
-function clearSearchResult() { searchResult.value = false }
+const search = useHomeSearch({ apiGet: settings.apiGet })
+const { query: searchInput, expanded: searchExpanded, groups: searchGroups, loading: searchLoading, error: searchError, assistant: searchAssistant, open: openSearch, close: closeSearch, searchNow, scheduleSearch, retry: retrySearch, isSafeNavigation } = search
+function updateSearchInput(value) { searchInput.value = value; scheduleSearch() }
+function navigateSearchResult(navigation) {
+  if (!isSafeNavigation(navigation)) return showToast('无法打开不受支持的搜索结果', true)
+  closeSearch()
+  router.push({ path: navigation.path, query: navigation.query || {} })
+}
 
 let queueApi
 const knowledgeApi = useKnowledgeDocuments({ apiGet: settings.apiGet, apiPost: settings.apiPost, apiDelete: settings.apiDelete, apiUpload: settings.apiUpload, category: ref(''), notify: showToast, confirmAction: (message) => window.confirm(message), onReparseQueued: () => queueApi?.start() })
@@ -230,7 +227,6 @@ function listenersFor(id) {
 
 onMounted(async () => {
   await Promise.all([loadDocuments(), loadReviewHistory(), loadDdlTasks()])
-  try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
   startQueuePoll()
 })
 onUnmounted(() => { stopQueuePoll(); clearTimeout(toastTimer) })
@@ -238,6 +234,8 @@ onUnmounted(() => { stopQueuePoll(); clearTimeout(toastTimer) })
 
 <style scoped>
 .home-dashboard-grid { width: calc(100% + 12px); margin-top: 20px; margin-left: -6px; }
+.home-navigation { position: relative; }
+.home-navigation :deep(.workstation-search-panel) { top: 105px; right: max(24px, calc((100vw - 1320px) / 2)); }
 .home-dashboard-grid :deep(.bento-dashboard-grid) { grid-auto-flow: row dense; }
 .home-dashboard-grid__item { min-width: 0; height: var(--widget-height); grid-column: span var(--widget-columns); grid-row: span var(--widget-rows); align-self: start; }
 .home-footer { display: flex; width: calc(100% - 92px); align-items: center; justify-content: space-between; margin: 25px 46px 0; padding-bottom: 20px; color: #8b9186; font-size: 12px; }

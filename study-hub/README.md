@@ -271,7 +271,6 @@ study-hub/
 | GET | `/logs` | `admin_logs()` | lines | `58` |
 | GET | `/documents/recent` | `recent_documents()` | limit | `77` |
 | GET | `/system/info` | `system_info()` |  | `95` |
-| POST | `/ai-search` | `ai_search()` | payload | `126` |
 | GET | `/automation/modules` | `list_modules()` |  | `437` |
 | POST | `/automation/run` | `run_automation()` | payload | `442` |
 | POST | `/automation/queue` | `queue_tasks()` | payload | `472` |
@@ -2834,16 +2833,6 @@ study-hub/
 - `from database import get_db`
 
 ---
-#### `backend/endpoints/ai_search.py` (157 行)
-
-| 方法 | 路径 | 处理函数 | 参数 |
-|------|------|----------|------|
-| POST | `/ai-search` | `ai_search()` | payload |
-
-| 函数 | 签名 | 说明 |
-|------|------|------|
-| `ai_search` | `(payload: dict)` | - |
-
 **关键依赖：**
 - `from fastapi import APIRouter`
 - `from ai_client import ai_client`
@@ -3732,7 +3721,6 @@ include = ["xiaohongshu_mcp_server*"]
 | `backend/database.py` | `25e1e94c` | 139 |
 | `backend/endpoints/__init__.py` | `d41d8cd9` | 1 |
 | `backend/endpoints/admin.py` | `377129e2` | 111 |
-| `backend/endpoints/ai_search.py` | `b903d460` | 157 |
 | `backend/endpoints/automation.py` | `ac0d84f1` | 759 |
 | `backend/endpoints/brainstorm.py` | `b5bb66fc` | 279 |
 | `backend/endpoints/categories.py` | `dd0573bd` | 197 |
