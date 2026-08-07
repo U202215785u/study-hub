@@ -1,0 +1,15 @@
+[
+  {"id":"home","title":"首页","aliases":["仪表盘","主页"],"summary":"Study Hub 首页工作台总览","navigation":{"kind":"route","path":"/","query":{}}},
+  {"id":"knowledge-base","title":"知识库","aliases":["文档库","文章","资料"],"summary":"浏览和管理内部文档","navigation":{"kind":"route","path":"/kb","query":{}}},
+  {"id":"wiki","title":"Wiki","aliases":["知识图谱","百科"],"summary":"浏览结构化知识页面","navigation":{"kind":"route","path":"/wiki","query":{}}},
+  {"id":"workflow","title":"工作流","aliases":["自动化","流程"],"summary":"运行和管理工作流模板","navigation":{"kind":"route","path":"/workflow","query":{}}},
+  {"id":"ddl","title":"DDL","aliases":["任务","待办","日程"],"summary":"管理计划和待办事项","navigation":{"kind":"route","path":"/ddl","query":{}}},
+  {"id":"journal","title":"手账","aliases":["日记","记录"],"summary":"记录每日学习和生活","navigation":{"kind":"route","path":"/journal","query":{}}},
+  {"id":"workbench","title":"工作台","aliases":["案件","版本","审批"],"summary":"查看项目案件、审批和环境","navigation":{"kind":"route","path":"/workbench","query":{}}},
+  {"id":"learning","title":"学习计划","aliases":["学习","计划"],"summary":"管理学习路径和清单","navigation":{"kind":"route","path":"/learning","query":{}}},
+  {"id":"memory","title":"记忆","aliases":["长期记忆","画像"],"summary":"浏览和管理个人记忆","navigation":{"kind":"route","path":"/memory","query":{}}},
+  {"id":"sop","title":"SOP","aliases":["流程规范","标准流程"],"summary":"查看和管理流程规范","navigation":{"kind":"route","path":"/sop","query":{}}},
+  {"id":"creator","title":"创作中心","aliases":["创作","内容"],"summary":"进入内容创作工作区","navigation":{"kind":"route","path":"/creator","query":{}}},
+  {"id":"skills","title":"技能市场","aliases":["技能","skill"],"summary":"浏览可用技能","navigation":{"kind":"route","path":"/skills","query":{}}},
+  {"id":"settings","title":"设置","aliases":["配置"],"summary":"管理工作站设置","navigation":{"kind":"route","path":"/settings","query":{}}}
+]

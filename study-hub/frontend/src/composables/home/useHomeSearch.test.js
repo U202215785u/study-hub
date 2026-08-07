@@ -1,27 +1,36 @@
 import { describe, expect, it, vi } from 'vitest'
-import { useHomeSearch } from './useHomeSearch'
+import { isSafeNavigation, useHomeSearch } from './useHomeSearch'
 
 describe('useHomeSearch', () => {
-  it('submits the current mode, query and category', async () => {
-    const apiPost = vi.fn().mockResolvedValue({ answer: '结果', sources: ['笔记'] })
-    const search = useHomeSearch({ apiPost })
-    search.mode.value = 'kb'
-    search.query.value = '原子设计'
-    search.category.value = '7'
+  it('uses the unified internal endpoint and never searches blank input', async () => {
+    const apiGet = vi.fn().mockResolvedValue({ groups: [], assistant: { enabled: false } })
+    const search = useHomeSearch({ apiGet })
+    await search.searchNow()
+    expect(apiGet).not.toHaveBeenCalled()
 
-    await search.submit()
-
-    expect(apiPost).toHaveBeenCalledWith('/rag/query', { question: '原子设计', category_id: 7 })
-    expect(search.loading.value).toBe(false)
-    expect(search.hasResult.value).toBe(true)
-    expect(search.answer.value).toBe('结果')
+    search.query.value = '设计系统'
+    await search.searchNow()
+    expect(apiGet).toHaveBeenCalledWith('/workstation/search?q=%E8%AE%BE%E8%AE%A1%E7%B3%BB%E7%BB%9F')
+    expect(search.expanded.value).toBe(true)
   })
 
-  it('exposes rejected requests as an error result', async () => {
-    const search = useHomeSearch({ apiPost: vi.fn().mockRejectedValue(new Error('offline')) })
-    search.query.value = '测试'
-    await search.submit()
-    expect(search.error.value).toBe('无法连接后端服务')
-    expect(search.loading.value).toBe(false)
+  it('keeps only the latest response when searches finish out of order', async () => {
+    let resolveFirst
+    const first = new Promise((resolve) => { resolveFirst = resolve })
+    const apiGet = vi.fn().mockReturnValueOnce(first).mockResolvedValueOnce({ groups: [{ id: 'knowledge' }] })
+    const search = useHomeSearch({ apiGet })
+    search.query.value = 'first'
+    const pending = search.searchNow()
+    search.query.value = 'second'
+    await search.searchNow()
+    resolveFirst({ groups: [{ id: 'old' }] })
+    await pending
+    expect(search.groups.value).toEqual([{ id: 'knowledge' }])
+  })
+
+  it('rejects external or unknown navigation targets', () => {
+    expect(isSafeNavigation({ kind: 'route', path: '/wiki', query: {} })).toBe(true)
+    expect(isSafeNavigation({ kind: 'route', path: 'https://example.com', query: {} })).toBe(false)
+    expect(isSafeNavigation({ kind: 'route', path: '/not-real', query: {} })).toBe(false)
   })
 })
