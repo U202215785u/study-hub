@@ -37,6 +37,7 @@ from endpoints.skills import router as skills_router
 from endpoints.journal import router as journal_router
 from endpoints.operations import router as operations_router
 from endpoints.settings import router as settings_router
+from endpoints.heatmap import router as heatmap_router
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 INBOX_DIR = os.path.join(os.path.dirname(__file__), "data", "inbox")
@@ -246,6 +247,7 @@ app.include_router(skills_router)
 app.include_router(journal_router)
 app.include_router(operations_router)
 app.include_router(settings_router)
+app.include_router(heatmap_router)
 
 def _extract_plan_meta(path: str) -> dict:
     title = ""

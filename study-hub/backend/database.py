@@ -39,6 +39,15 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS heatmap_preferences (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            style_id TEXT NOT NULL DEFAULT 'grid',
+            settings_json TEXT NOT NULL DEFAULT '{}',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
     if not db_exists:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS categories (

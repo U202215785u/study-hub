@@ -84,6 +84,7 @@ import { useAutomationQueue } from '../composables/home/useAutomationQueue.js'
 import { useKnowledgeDocuments } from '../composables/home/useKnowledgeDocuments.js'
 import { useDailyReview } from '../composables/home/useDailyReview.js'
 import { createHomeDashboardData, toLocalDateKey } from '../composables/home/useHomeDashboardData.js'
+import { useHeatmap } from '../composables/heatmap/useHeatmap.js'
 import { useDashboardLayout } from '../composables/home/useDashboardLayout.js'
 import { DASHBOARD_REGISTRY } from '../design-system/layout/dashboardRegistry.js'
 import { getWidgetGeometry } from '../design-system/layout/dashboardLayout.js'
@@ -141,6 +142,8 @@ const refreshQueue = () => { fetchQueue(); showToast('已刷新') }
 const mapper = createHomeDashboardData()
 const queueItems = computed(() => mapper.mapQueue(queueTasks.value))
 const knowledgeItems = computed(() => mapper.mapDocuments(documents.value))
+const heatmapApi = useHeatmap({ apiGet: settings.apiGet, apiPut: settings.apiPut, fixedRangeDays: 196 })
+const homeHeatmapView = ref('heatmap')
 const ddlTasks = ref([])
 const ddlLoading = ref(true)
 const ddlError = ref('')
@@ -187,8 +190,8 @@ const calendarDays = computed(() => Array.from({ length: 7 }, (_, index) => {
 }))
 const agendaItems = computed(() => mapper.mapAgenda(ddlTasks.value, selectedDate.value))
 const taskItems = computed(() => mapper.mapTodayTasks(ddlTasks.value, selectedDate.value))
-const heatmapCells = computed(() => mapper.mapActivityHeatmap({ tasks: ddlTasks.value, documents: documents.value, queue: queueTasks.value }, today))
-const heatmapCaption = computed(() => `近 7 天：${heatmapCells.value.slice(-7).reduce((total, cell) => total + cell.count, 0)} 次记录`)
+const heatmapCells = computed(() => heatmapApi.data.value?.cells?.map((cell) => ({ id: cell.date, ...cell })) || [])
+const heatmapCaption = computed(() => heatmapApi.data.value?.summary ? `近 196 天：${heatmapApi.data.value.summary.total} 条记录` : '正在读取统一热力数据')
 
 const creationItems = computed(() => mapper.mapLaunchers(settings.launcherItems))
 function launchCreation(id) { const item = creationItems.value.find((entry) => entry.id === id); if (item?.url) openExternal(item.url); else router.push('/creator') }
@@ -209,7 +212,7 @@ const docContent = computed(() => activeDocument.value?.content || '')
 
 function propsFor(id) {
   const props = {
-    'work-heatmap': { cells: heatmapCells.value, caption: heatmapCaption.value, loading: ddlLoading.value, error: ddlError.value },
+    'work-heatmap': { cells: heatmapCells.value, caption: heatmapCaption.value, loading: heatmapApi.loading.value, error: heatmapApi.error.value, viewMode: homeHeatmapView.value, settings: heatmapApi.settings.value },
     'calendar-agenda': { days: calendarDays.value, agenda: agendaItems.value, monthLabel: calendarMonth, loading: ddlLoading.value, error: ddlError.value },
     'today-focus': { tasks: taskItems.value, dateLabel: `${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`, loading: ddlLoading.value, error: ddlError.value },
     'automation-queue': { items: queueItems.value }, knowledge: { items: knowledgeItems.value },
@@ -220,6 +223,7 @@ function propsFor(id) {
 }
 function listenersFor(id) {
   return {
+    'work-heatmap': { 'update:viewMode': (value) => { homeHeatmapView.value = value } },
     'calendar-agenda': { select: (date) => { selectedDate.value = date }, open: () => router.push('/ddl') },
     'today-focus': { select: () => router.push('/ddl') },
     'automation-queue': { open: () => { queuePanelOpen.value = true }, retry: retryTask, create: () => openAutomation() },
@@ -229,7 +233,7 @@ function listenersFor(id) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadDocuments(), loadReviewHistory(), loadDdlTasks()])
+  await Promise.all([loadDocuments(), loadReviewHistory(), loadDdlTasks(), heatmapApi.load()])
   try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
   startQueuePoll()
 })
