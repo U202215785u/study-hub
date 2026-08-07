@@ -11,7 +11,7 @@
 - 首页搜索不再访问互联网或调用 `/ai-search`。
 - 搜索结果覆盖工作站内部功能、文档/Wiki、任务、DDL、手账和工作流等内容。
 - 展开态按“功能入口”“文章与知识”“工作记录”分组展示。
-- 点击可用结果进入对应的内部页面或详情视图。
+- 点击可用结果进入对应的内部页面；文档结果在首页直接打开既有阅读弹窗。
 - “问一问 AI 助手”保留为置灰入口，明确显示“暂未开放”。
 - 搜索结果中的导航目标只能来自受控的站内路由目录。
 
@@ -29,9 +29,9 @@
 
 顶部输入框保留在 `CapsuleNavigation`。用户聚焦输入框时展开结果面板：
 
-- 输入为空：显示常用功能和最近使用入口；没有可用历史时显示功能入口。
+- 输入为空：显示常用功能入口；本期不记录或展示“最近使用”。
 - 输入有内容：使用短延迟触发内部检索，并按结果类型分组。
-- 按 Enter：打开当前关键词的完整结果状态；不触发外部跳转。
+- 按 Enter：立即提交当前关键词的同一内部检索，并保持结果面板展开；不导航、不触发外部跳转。
 - 按 Escape 或点击面板外部：关闭面板并恢复输入框焦点。
 
 ### 结果分组
@@ -42,15 +42,16 @@
 2. **文章与知识**：知识库文档和 Wiki 页面，展示标题、类型、摘要或匹配信息。
 3. **工作记录**：任务、DDL 事项、手账记录和工作流模板等内部记录。
 
-每组默认展示少量高相关结果，组内提供“查看全部结果”入口。无匹配时显示统一的空状态，不伪造推荐内容。
+每组默认展示最多五项高相关结果。本期不实现独立的“查看全部结果页”或组内全量展开，因此结果面板不显示“查看全部”入口。无匹配时显示统一的空状态，不伪造推荐内容。
 
 ### 结果导航
 
 每一项结果包含稳定的内部标识、显示标题、类型、摘要和受控导航目标：
 
 - 功能入口跳转到功能路由。
-- 文档和 Wiki 跳转到既有阅读页面，并携带文档 ID 或 slug。
-- 任务、DDL、手账和工作流结果跳转到既有列表或详情页面。
+- 知识库文档由首页调用既有 `viewDocument(documentId)`，在当前首页的 `DocumentReader` 弹窗内打开；不新增 `/kb/:id` 路由，也不改造 `KnowledgeBase.vue`。
+- Wiki 页面跳转到 `/wiki/:slug`。
+- 任务、DDL、手账和工作流结果只跳转到对应的既有列表页；本期不携带记录 ID，不承诺详情深链。工作台统一指 `/workbench` 路由。
 - 导航目标只能使用路由目录中的 `path` 和受控 `query` 字段，不接受任意 URL。
 
 ### AI 入口
@@ -68,7 +69,7 @@
 新增内部搜索接口：
 
 ```text
-GET /workstation/search?q=<query>&limit=<limit>
+GET /workstation/search?q=<query>
 ```
 
 响应结构：
@@ -80,24 +81,36 @@ GET /workstation/search?q=<query>&limit=<limit>
     {
       "id": "features",
       "label": "功能入口",
+      "status": "ready",
       "items": [
         {
           "id": "knowledge-base",
           "kind": "feature",
           "title": "知识库",
           "summary": "浏览和管理内部文档",
-          "navigation": { "path": "/kb", "query": {} }
+          "navigation": { "kind": "route", "path": "/kb", "query": {} }
         }
       ]
     },
     {
       "id": "knowledge",
       "label": "文章与知识",
-      "items": []
+      "status": "ready",
+      "items": [
+        {
+          "id": "document:42",
+          "kind": "document",
+          "title": "知识库交互规范",
+          "summary": "由正文截取的匹配片段",
+          "navigation": { "kind": "document", "document_id": 42 }
+        }
+      ]
     },
     {
       "id": "records",
       "label": "工作记录",
+      "status": "unavailable",
+      "message": "工作流数据暂时不可用",
       "items": []
     }
   ],
@@ -109,18 +122,18 @@ GET /workstation/search?q=<query>&limit=<limit>
 }
 ```
 
-接口负责统一收集和归一化内部结果，前端不再并行请求多个列表接口来拼装搜索结果。`limit` 只控制每组返回数量，服务端设置上限，避免一次返回过大的正文内容。
+每个分组都包含 `status`：`ready` 表示该数据源已完成检索；`unavailable` 表示该数据源检索失败且 `message` 说明原因。接口负责统一收集和归一化内部结果，前端不再并行请求多个列表接口来拼装搜索结果。服务端每组固定返回最多五项，且不返回完整正文。
 
 ### 搜索数据源
 
 搜索服务使用现有内部数据源的适配器：
 
-- 功能目录：后端维护的站内功能和路由白名单，包含名称、别名、说明和导航目标。
-- 知识库：现有 `documents` 数据，匹配标题、正文摘要、标签和分类。
+- 功能目录：使用 `study-hub/shared/workstation-search-catalog.json` 作为唯一来源，前后端共同读取。每个条目包含名称、别名、说明和受控导航目标；前端路由测试校验目录中的每个 `path` 都存在于路由表，避免与真实路由漂移。
+- 知识库：现有 `documents` 数据，匹配标题、正文、标签和分类。`documents` 没有 `summary` 字段，服务端从匹配正文截取有限长度的纯文本片段作为结果摘要。
 - Wiki：现有 `wiki_pages` 数据，匹配标题、摘要、正文和标签。
 - 工作记录：复用现有任务、DDL、手账和工作流数据的标题、描述、状态和时间字段。
 
-每个适配器只返回统一结果项，不返回完整正文。点击后沿用既有详情 API 或页面加载逻辑。
+每个适配器只返回统一结果项，不返回完整正文。文档结果的导航类型为 `document`，由首页打开现有阅读弹窗；其余结果只使用共享目录允许的 `route` 导航。
 
 ### 前端状态
 
@@ -132,15 +145,17 @@ GET /workstation/search?q=<query>&limit=<limit>
 - `groups`：按接口响应保存的分组结果。
 - `error`：请求失败状态。
 - `assistant`：置灰 AI 入口状态。
+- `lastQuery`：用于失败后的明确“重试”按钮。
 
-输入改变时使用短延迟合并请求，新的查询取消或忽略旧请求结果，避免快速输入时结果倒序覆盖。空输入不请求搜索接口。
+输入改变时使用短延迟合并请求，新的查询取消或忽略旧请求结果，避免快速输入时结果倒序覆盖。空输入不请求搜索接口。接口失败时面板展示“重试”按钮，按钮以 `lastQuery` 重新发起同一请求。
 
 ### 错误和边界
 
 - 空输入：不请求，显示默认功能入口。
-- 无结果：保留三组标题或收起空组，显示“未找到相关内容”。
-- 接口失败：显示“暂时无法搜索工作站内容”，保留输入内容，允许重试。
-- 数据源部分不可用：接口仍返回其他来源，并在对应分组显示不可用状态；不得将失败当成空结果静默吞掉。
+- 无结果：显示“未找到相关内容”。
+- 接口失败：显示“暂时无法搜索工作站内容”和“重试”按钮，保留输入内容。
+- 数据源部分不可用：接口返回 HTTP 200 和其余分组；对应分组使用 `status: "unavailable"` 和 `message` 展示不可用状态，不得将失败当成空结果静默吞掉。
+- 所有数据源均不可用或接口本身异常：接口返回错误状态，前端显示统一失败态和“重试”按钮。
 - 外部 URL：服务端不返回，前端也拒绝任何非站内导航目标。
 - AI 入口：disabled 状态下不触发点击事件。
 
@@ -148,21 +163,22 @@ GET /workstation/search?q=<query>&limit=<limit>
 
 预计修改范围：
 
-- `study-hub/frontend/src/design-system/patterns/CapsuleNavigation.vue`：搜索框展开态、结果分组展示和结果点击事件。
+- `study-hub/frontend/src/design-system/patterns/CapsuleNavigation.vue`：仅负责输入、聚焦和关闭事件；不承载结果数据或业务渲染。
+- `study-hub/frontend/src/components/home/WorkstationSearchPanel.vue`：独立渲染分组结果、不可用状态、重试与置灰 AI 入口，并通过 props/events 与首页交互。
 - `study-hub/frontend/src/views/Home.vue`：连接内部搜索 composable，并执行站内路由导航。
 - `study-hub/frontend/src/composables/home/useHomeSearch.js`：移除联网搜索分支，改为内部搜索状态管理。
-- `study-hub/backend/endpoints/`：新增工作站搜索接口及内部结果适配逻辑。
+- `study-hub/shared/workstation-search-catalog.json`：前后端共用的功能入口与受控导航目录。
+- `study-hub/backend/endpoints/`：新增工作站搜索接口及内部结果适配逻辑；移除仅供首页联网搜索使用的 `ai_search.py`、Bing 逻辑和 `/ai-search` 路由注册。
 - `study-hub/frontend/src/composables/home/useHomeSearch.test.js`、首页组件测试和后端接口测试：覆盖新响应契约及导航行为。
 
 不修改既有业务页面的功能实现，不新增 AI 服务调用，不改变数据写入接口。
 
 ## 验收标准
 
-- 首页搜索全过程没有 Bing、外部搜索 URL 或 `/ai-search` 请求。
+- 首页搜索全过程没有 Bing、外部搜索 URL 或 `/ai-search` 请求；项目中不再注册 `/ai-search` 或保留 `_bing_search` 实现。
 - 关键词可命中功能入口、文章/Wiki 和工作记录，并按三组展示。
-- 每个可用结果点击后都进入正确的站内页面或详情。
+- 功能、Wiki 和工作记录结果进入正确的站内页面；文档结果在首页现有 `DocumentReader` 弹窗中打开。
 - 结果中的导航目标不能离开本站路由白名单。
 - AI 助手入口可见且置灰，显示“暂未开放”，点击不产生请求或导航。
-- 空输入、无结果、接口失败和部分数据源失败都有明确状态。
+- 空输入、无结果、接口失败和部分数据源失败都有明确状态；失败态提供可点击的重试按钮。
 - 前端相关单元测试、首页交互测试、后端接口测试和生产构建通过。
-
