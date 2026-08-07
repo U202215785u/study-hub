@@ -21,6 +21,7 @@ from endpoints.rag import router as rag_router
 from endpoints.review import router as review_router
 from endpoints.categories import router as categories_router
 from endpoints.automation import router as automation_router
+from endpoints.content_parser import router as content_parser_router
 from endpoints.wiki import router as wiki_router
 from endpoints.ai_search import router as ai_search_router
 from endpoints.brainstorm import router as brainstorm_router
@@ -229,6 +230,7 @@ app.include_router(rag_router)
 app.include_router(review_router)
 app.include_router(categories_router)
 app.include_router(automation_router)
+app.include_router(content_parser_router)
 app.include_router(wiki_router)
 app.include_router(ai_search_router)
 app.include_router(brainstorm_router)
