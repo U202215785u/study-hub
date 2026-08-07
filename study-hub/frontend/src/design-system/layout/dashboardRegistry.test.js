@@ -8,11 +8,12 @@ describe('dashboard registry', () => {
     expect(normalizeDashboardLayout({ version: 999, widgets: [{ id: 'missing', size: '7x7' }] })).toEqual(DEFAULT_DASHBOARD_LAYOUT)
   })
 
-  it('repairs invalid module sizes without dropping valid visibility and order', () => {
+  it('derives v2 widget spans from the registry rather than persisted sizes', () => {
     const layout = normalizeDashboardLayout({
-      version: 1,
-      widgets: [{ id: 'knowledge', visible: false, order: 0, size: '7x7' }],
+      version: 2,
+      widgets: [{ id: 'knowledge', visible: false, order: 0, x: 7, y: 2, size: '7x7' }],
     })
-    expect(layout.widgets[0]).toMatchObject({ id: 'knowledge', visible: false, order: 0, size: '2x1' })
+    expect(layout.widgets.find((item) => item.id === 'knowledge')).toMatchObject({ id: 'knowledge', visible: false, x: 6, y: 2 })
+    expect(layout.widgets.find((item) => item.id === 'knowledge')).not.toHaveProperty('size')
   })
 })

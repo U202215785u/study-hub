@@ -1,5 +1,5 @@
-import os, sys, tempfile, json, re
-from fastapi import APIRouter, UploadFile, File, Form
+import base64, os, sys, tempfile, json, re
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from database import get_db
 from processing.processors import can_handle, process_bytes, sha256, is_duplicate
 from endpoints.links import sync_document_links, parse_wiki_links
@@ -218,12 +218,49 @@ async def upload_text(payload: dict):
     return {"id": doc_id, "title": title, "char_count": len(text), "category_name": category_name, "wiki_links": len(wiki_links)}
 
 
+def _encode_document_cursor(created_at, doc_id):
+    return base64.urlsafe_b64encode(json.dumps([created_at, doc_id]).encode()).decode().rstrip("=")
+
+
+def _decode_document_cursor(cursor):
+    try:
+        created_at, doc_id = json.loads(base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4)).decode())
+        if not isinstance(created_at, str) or not isinstance(doc_id, int):
+            raise ValueError
+        return created_at, doc_id
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="invalid document cursor") from exc
+
+
+@router.get("/documents/page")
+def list_document_page(page_size: int = 50, cursor: str = None):
+    if not 1 <= page_size <= 100:
+        raise HTTPException(status_code=400, detail="page_size must be between 1 and 100")
+    conditions = ["d.document_status = 'active'"]
+    params = []
+    if cursor:
+        created_at, doc_id = _decode_document_cursor(cursor)
+        conditions.append("(d.created_at < ? OR (d.created_at = ? AND d.id < ?))")
+        params.extend([created_at, created_at, doc_id])
+    where = " WHERE " + " AND ".join(conditions)
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) FROM documents d WHERE d.document_status = 'active'").fetchone()[0]
+    rows = conn.execute(
+        f"SELECT d.* FROM documents d{where} ORDER BY d.created_at DESC, d.id DESC LIMIT ?",
+        [*params, page_size + 1],
+    ).fetchall()
+    conn.close()
+    items = [dict(row) for row in rows[:page_size]]
+    next_cursor = _encode_document_cursor(items[-1]["created_at"], items[-1]["id"]) if len(rows) > page_size else None
+    return {"items": items, "next_cursor": next_cursor, "total": total}
+
+
 @router.get("/documents")
 def list_documents(category_id: int = None, search: str = None, tag: str = None,
                    date_from: str = None, date_to: str = None, limit: int = 50,
                    sort_by: str = 'created_at', sort_order: str = 'desc'):
     conn = get_db()
-    conditions = []
+    conditions = ["d.document_status = 'active'"]
     params = []
 
     if category_id:
@@ -259,38 +296,13 @@ def list_documents(category_id: int = None, search: str = None, tag: str = None,
                FROM documents d
                LEFT JOIN categories c ON d.category_id = c.id
                {where}
-               ORDER BY d.{sort_by} {sort_order} LIMIT ?"""
+               ORDER BY d.{sort_by} {sort_order}, d.id {sort_order} LIMIT ?"""
     params.append(limit)
 
     rows = conn.execute(query, params).fetchall()
 
-    # 检测 ASR 失败文档（摘要类文档且内容中包含 ASR 错误标记）
-    result = []
-    for r in rows:
-        doc = dict(r)
-        if doc.get("source") in ("douyin-summary", "bilibili-summary", "xiaohongshu-summary"):
-            content = doc.get("content", "") or ""
-            # 检测 ASR 失败的各种标记
-            content_preview = content[:1200]
-            doc["asr_failed"] = (
-                "asr_error" in content or
-                "ASR" in content and "提取失败" in content or
-                "语音识别" in content and "提取失败" in content or
-                "语音提取失败" in content or
-                "⚠️ 语音提取失败" in content or
-                "ASR 失败" in content or
-                "识别失败" in content or
-                "API调用失败" in content_preview or
-                "Invalid API-key" in content_preview or
-                ("API" in content_preview and ("不可用" in content_preview or "欠费" in content_preview or "API Key 无效" in content_preview)) or
-                ("Level 3" in content[:1000] and "基于视频标题" in content[:1000])
-            )
-        else:
-            doc["asr_failed"] = False
-        result.append(doc)
-
     conn.close()
-    return result
+    return [dict(row) for row in rows]
 
 
 @router.get("/documents/{doc_id}")
@@ -315,6 +327,7 @@ def delete_document(doc_id: int):
     doc = conn.execute("SELECT * FROM documents WHERE id = ?", (doc_id,)).fetchone()
     if not doc:
         conn.close()
+        raise HTTPException(status_code=404, detail="document not found")
         return {"error": "文档不存在"}
 
     conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))

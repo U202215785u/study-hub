@@ -21,6 +21,8 @@ describe('Faithful dashboard patterns', () => {
     expect(wrapper.get('main').find('[data-test="content"]').exists()).toBe(true)
     expect(wrapper.get('[data-test="navigation"]').exists()).toBe(true)
     expect(wrapper.get('[data-test="footer"]').exists()).toBe(true)
+    expect(wrapper.get('.workbench-viewport').exists()).toBe(true)
+    expect(wrapper.get('[data-dashboard-stage]').exists()).toBe(true)
   })
 
   it('exposes capsule navigation links and the three dashboard actions', async () => {
@@ -38,6 +40,9 @@ describe('Faithful dashboard patterns', () => {
     await wrapper.get('[aria-label="编辑首页"]').trigger('click')
 
     expect(wrapper.findAll('nav a')).toHaveLength(8)
+    expect(wrapper.get('.capsule-navigation__brand').attributes('target')).toBe('_blank')
+    expect(wrapper.findAll('nav a').every((link) => link.attributes('target') === '_blank')).toBe(true)
+    expect(wrapper.findAll('nav a').every((link) => link.attributes('rel') === 'noopener noreferrer')).toBe(true)
     expect(wrapper.emitted('search')).toEqual([['复盘']])
     expect(wrapper.emitted('notify')).toHaveLength(1)
     expect(wrapper.emitted('edit')).toHaveLength(1)
@@ -63,5 +68,8 @@ describe('Faithful dashboard patterns', () => {
 
     expect(wrapper.attributes('data-state')).toBe(state)
     expect(wrapper.find('[data-test="content"]').exists()).toBe(state === 'content')
+    if (state === 'content') {
+      expect(wrapper.get('.dashboard-module-card__content').attributes('data-card-inset')).toBe('16')
+    }
   })
 })

@@ -29,6 +29,7 @@ TASK_TYPE_LABELS = {
     "memory_update": "\u8bb0\u5fc6\u66f4\u65b0",
 }
 RISK_LEVEL_LABELS = {"normal": "\u666e\u901a", "protected": "\u53d7\u4fdd\u62a4"}
+MODE_LABELS = {"simple": "\u7b80\u5355\u903b\u8f91", "complex": "\u590d\u6742\u903b\u8f91"}
 APPROVAL_STATUS_LABELS = {
     "pending": "\u5f85\u51b3\u5b9a",
     "approved": "\u5df2\u6279\u51c6",
@@ -68,6 +69,8 @@ def _case_summary(task: dict) -> dict:
         "feature_code": task.get("feature_code", "") or "",
         "status": task["status"],
         "status_label": _label(task["status"], STATUS_LABELS, "\u672a\u77e5\u72b6\u6001"),
+        "mode": task.get("mode", "complex"),
+        "mode_label": _label(task.get("mode", "complex"), MODE_LABELS, "\u672a\u77e5\u6a21\u5f0f"),
         "risk_level": task["risk_level"],
         "risk_level_label": _label(task["risk_level"], RISK_LEVEL_LABELS, "\u672a\u77e5\u98ce\u9669\u7ea7\u522b"),
         "attempt_count": task["attempt_count"],

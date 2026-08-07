@@ -74,6 +74,21 @@ def test_cases_list_filters_and_sorts_source_tasks_by_updated_at():
     assert response.json()["data"]["items"][0]["status"] == "investigating"
 
 
+def test_cases_projection_exposes_mode_for_simple_and_legacy_full_flow_cases():
+    _reset_butler_tables()
+    runtime = _runtime()
+    simple = runtime.start_case(description="简单逻辑任务")
+    legacy = runtime.open_case(task_type="bug", description="兼容旧入口任务")
+
+    response = _client().get("/workbench/cases")
+
+    assert response.status_code == 200
+    items = {item["id"]: item for item in response.json()["data"]["items"]}
+    assert items[simple["id"]]["mode"] == "simple"
+    assert items[simple["id"]]["mode_label"] == "简单逻辑"
+    assert items[legacy["id"]]["mode"] == "complex"
+
+
 def test_case_detail_aggregates_events_files_attempts_audit_validation_and_approvals():
     _reset_butler_tables()
     runtime, case = _make_case()
@@ -115,6 +130,8 @@ def test_case_detail_aggregates_events_files_attempts_audit_validation_and_appro
     assert response.json()["meta"]["schema_version"] == "workbench.v1"
     body = response.json()["data"]
     assert body["id"] == case["id"]
+    assert body["mode"] == "complex"
+    assert body["next_action"]["mode"] == "complex"
     assert body["status"] == "verifying"
     assert {event["type"] for event in body["events"]} >= {
         "attempt_recorded",

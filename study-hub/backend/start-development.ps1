@@ -8,15 +8,22 @@ $LogFile = Join-Path $DataDir "app-dev.log"
 $Port = 8742
 $PythonExe = "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe"
 
+. (Join-Path $ProjectDir "start-background-helpers.ps1")
+
 New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 
 $PortInUse = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue |
     Where-Object { $_.State -eq "Listen" } | Select-Object -First 1
 if ($PortInUse) {
     $ExistingPid = $PortInUse.OwningProcess
-    Write-Host "[INFO] Study Hub development backend already uses port $Port (PID=$ExistingPid)" -ForegroundColor Yellow
-    Set-Content -Path $PidFile -Value $ExistingPid -NoNewline
-    exit 0
+    $ExistingProcess = Get-CimInstance Win32_Process -Filter "ProcessId = $ExistingPid" -ErrorAction SilentlyContinue
+    if ($ExistingProcess -and (Test-StudyHubBackendProcess -CommandLine $ExistingProcess.CommandLine -ProjectDir $ProjectDir)) {
+        Write-Host "[INFO] Study Hub development backend already uses port $Port (PID=$ExistingPid)" -ForegroundColor Yellow
+        Set-Content -Path $PidFile -Value $ExistingPid -NoNewline
+        exit 0
+    }
+    Write-Host "[ERROR] Port 8742 occupied by another process (PID=$ExistingPid)" -ForegroundColor Red
+    exit 1
 }
 
 $InnerCmd = "cd /d `"$ProjectDir`" && `"$PythonExe`" -m uvicorn main:app --host 0.0.0.0 --port $Port > `"$LogFile`" 2>&1"

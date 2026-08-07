@@ -15,4 +15,12 @@ describe('DashboardEditor', () => {
     expect(wrapper.emitted('cancel')).toHaveLength(1)
     expect(wrapper.emitted('restore')).toHaveLength(1)
   })
+
+  it('shows a disabled undo control until the draft has a reversible change', async () => {
+    const wrapper = mount(DashboardEditor, { props: { widgets: DEFAULT_DASHBOARD_LAYOUT.widgets, canUndo: false } })
+    expect(wrapper.get('[data-editor-undo]').attributes('disabled')).toBeDefined()
+    await wrapper.setProps({ canUndo: true })
+    await wrapper.get('[data-editor-undo]').trigger('click')
+    expect(wrapper.emitted('undo')).toHaveLength(1)
+  })
 })

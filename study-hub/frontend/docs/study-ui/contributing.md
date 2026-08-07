@@ -9,6 +9,13 @@
 - Raw colors are prohibited outside `tokens.css` and documented content assets.
 - Breaking prop or slot changes require a deprecation note before removal.
 
+### Homepage Button Standard
+
+- Use `UiButton`, `UiPillButton` or `UiIconButton` for homepage actions. Raw `button` elements are reserved for content rows whose geometry is part of the widget design, such as calendar days and task rows.
+- Keep one component, size and shape for controls with the same role. The shared typography scale is `md: 14px/700`, `sm: 12px/700` and `xs: 10px/700`, all from `--ui-font-sans`.
+- Set visual differences through public `variant`, `size`, `shape` and `block` props. Do not override a public button's `font`, `font-size`, `font-weight`, `padding`, `min-height` or `border-radius` from a widget stylesheet.
+- Navigation links that sit beside button actions must use the same semantic tokens for typography, spacing, surface, border and pill radius.
+
 ## Adding A Component
 
 1. Choose the functional category before naming the component. Do not add a new category for a single component.

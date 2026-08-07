@@ -13,4 +13,11 @@ describe('UiBadge', () => {
   it('accepts only status semantics', () => {
     expect(UiBadge.props.status.validator('content-purple')).toBe(false)
   })
+
+  it('renders a compact badge without dropping its text label', () => {
+    const wrapper = mount(UiBadge, { props: { status: 'success', size: 'compact', label: '已完成' } })
+
+    expect(wrapper.get('.ui-badge').attributes('data-size')).toBe('compact')
+    expect(wrapper.text()).toContain('已完成')
+  })
 })

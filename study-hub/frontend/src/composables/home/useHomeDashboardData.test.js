@@ -32,6 +32,18 @@ describe('home dashboard data mapping', () => {
     ])
   })
 
+  it('summarizes every selected-day task even when the widget shows only a subset', () => {
+    const dashboard = createHomeDashboardData()
+    const records = Array.from({ length: 6 }, (_, id) => ({
+      id,
+      plan_date: '2026-08-03',
+      status: id < 2 ? 'done' : 'todo',
+    }))
+
+    expect(dashboard.mapTodayTasks(records, '2026-08-03')).toHaveLength(5)
+    expect(dashboard.mapTaskSummary(records, '2026-08-03')).toEqual({ total: 6, completed: 2 })
+  })
+
   it('builds a truthful 196-day activity heatmap from persisted record dates', () => {
     const dashboard = createHomeDashboardData()
     const cells = dashboard.mapActivityHeatmap({

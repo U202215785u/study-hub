@@ -14,9 +14,10 @@ export default {
   },
   argTypes: {
     variant: { control: 'select', options: ['primary', 'secondary', 'quiet', 'text', 'danger'] },
-    size: { control: 'select', options: ['sm', 'md', 'lg'] },
+    size: { control: 'select', options: ['xs', 'sm', 'md', 'lg'] },
+    shape: { control: 'select', options: ['default', 'pill'] },
   },
-  args: { variant: 'primary', size: 'md', loading: false, disabled: false, block: false },
+  args: { variant: 'primary', size: 'md', shape: 'default', loading: false, disabled: false, block: false },
 }
 
 export const Primary = { args: {}, render: (args) => ({ components: { UiButton }, setup: () => ({ args }), template: '<UiButton v-bind="args">开始工作</UiButton>' }) }
@@ -44,3 +45,5 @@ export const Loading = { args: { loading: true }, render: Primary.render }
 export const Disabled = { args: { disabled: true }, render: Primary.render }
 export const Danger = { args: { variant: 'danger' }, render: Primary.render }
 export const Block = { args: { block: true }, render: Primary.render }
+export const ExtraSmall = { args: { size: 'xs' }, render: Primary.render }
+export const Pill = { args: { size: 'xs', shape: 'pill' }, render: Primary.render }

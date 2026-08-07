@@ -1,8 +1,8 @@
 import json
 from datetime import date, timedelta
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from database import get_db
-from ai_client import ai_client
+from ai_client import AIServiceError, ai_client
 from processing.vector_store import get_vector_store
 
 router = APIRouter()
@@ -54,7 +54,10 @@ async def polish_review(payload: dict):
         {"role": "user", "content": f"用户今天的笔记：\n\n{raw_text}\n\n{context_block}\n\n请按 JSON 格式输出。"},
     ]
 
-    answer = await ai_client.chat(messages, temperature=0.7, max_tokens=2048)
+    try:
+        answer = await ai_client.chat(messages, temperature=0.7, max_tokens=2048)
+    except AIServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     # 解析 AI 返回的 JSON
     try:

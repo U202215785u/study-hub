@@ -1,5 +1,5 @@
 <template>
-  <span class="ui-badge" :data-status="status">
+  <span class="ui-badge" :data-status="status" :data-size="size">
     <span class="ui-badge__dot" aria-hidden="true" />
     <span>{{ label }}</span>
   </span>
@@ -8,6 +8,7 @@
 <script setup>
 defineProps({
   status: { type: String, default: 'neutral', validator: (value) => ['neutral', 'info', 'success', 'warning', 'danger'].includes(value) },
+  size: { type: String, default: 'default', validator: (value) => ['default', 'compact'].includes(value) },
   label: { type: String, required: true },
 })
 </script>
@@ -19,4 +20,6 @@ defineProps({
 .ui-badge[data-status='success'] .ui-badge__dot { background: var(--ui-color-success); }
 .ui-badge[data-status='warning'] .ui-badge__dot { background: var(--ui-color-warning); }
 .ui-badge[data-status='danger'] .ui-badge__dot { background: var(--ui-color-danger); }
+.ui-badge[data-size='compact'] { min-height: 18px; gap: var(--ui-space-1); font-size: 10px; }
+.ui-badge[data-size='compact'] .ui-badge__dot { width: 5px; height: 5px; }
 </style>

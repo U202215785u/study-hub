@@ -20,10 +20,16 @@ const timeLabel = computed(() => now.value.toLocaleTimeString('zh-CN', { hour: '
 </script>
 
 <style scoped>
-.greeting-bar { display: flex; min-height: 69px; box-sizing: border-box; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.greeting-bar { display: flex; width: 1356px; height: 69px; box-sizing: border-box; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .greeting-bar h1 { margin: 0; color: #f5f6ee; font-size: 30px; line-height: 1.15; }
 .greeting-bar p { margin: 10px 0 0; color: #8b9186; font-size: 13px; }
 .greeting-bar__time { display: grid; justify-items: end; gap: 9px; padding-top: 3px; }
 .greeting-bar__time strong { color: #f5f6ee; font-size: 28px; line-height: 1; }
 .greeting-bar__time span { color: #8b9186; font-size: 12px; }
+@media (max-width: 767px) {
+  .greeting-bar { width: auto; height: auto; gap: 12px; }
+  .greeting-bar h1 { font-size: 25px; }
+  .greeting-bar p { font-size: 12px; line-height: 1.5; }
+  .greeting-bar__time { display: none; }
+}
 </style>

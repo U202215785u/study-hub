@@ -80,7 +80,7 @@
       <!-- 标题栏 -->
       <div class="flex items-center gap-3 px-6 py-4 bg-surface border-b border-border flex-wrap">
         <h3 class="text-[15px] font-semibold mr-auto">{{ currentTitle }}</h3>
-        <span class="text-text-secondary text-[13px]">{{ filteredDocs.length }} 篇文档</span>
+        <span class="text-text-secondary text-[13px]">已显示 {{ filteredDocs.length }} / {{ totalDocuments }} 篇文档</span>
         <select
           v-model="docSort"
           @change="loadDocuments"
@@ -220,7 +220,7 @@
                 <div class="flex gap-1">
                   <!-- ASR 失败：重新识别按钮 -->
                   <button
-                    v-if="doc.asr_failed"
+                    v-if="['fallback', 'failed'].includes(doc.asr_status)"
                     class="px-2 py-1 text-[11px] rounded-[6px] border border-danger bg-danger/10 text-danger cursor-pointer transition-colors hover:bg-danger hover:text-white whitespace-nowrap"
                     title="重新识别（ASR 失败）"
                     @click="reparseDoc(doc.id)"
@@ -253,6 +253,16 @@
             </tr>
           </tbody>
         </table>
+
+        <div v-if="hasMore" class="flex justify-center py-5">
+          <button
+            class="px-3.5 py-2 rounded-[8px] border border-border bg-surface text-text text-[13px] cursor-pointer transition-colors hover:bg-surface-hover hover:border-accent disabled:opacity-40"
+            :disabled="isLoadingMore"
+            @click="loadMoreDocuments"
+          >
+            {{ isLoadingMore ? '加载中…' : '加载更多' }}
+          </button>
+        </div>
 
         <!-- 空状态 -->
         <div v-if="!filteredDocs.length" class="text-center py-[60px] text-text-secondary">
@@ -343,7 +353,14 @@
       <div class="bg-surface border border-border rounded-[12px] p-5 w-[92%] md:w-[88%] max-w-[1200px] flex flex-col gap-4 max-h-[90vh]">
         <h3 class="text-base font-semibold shrink-0">{{ currentDoc?.title }}</h3>
         <div class="overflow-y-auto bg-bg p-5 rounded-[8px] flex-1 min-h-0">
-          <MarkdownRenderer v-if="currentDoc" :content="currentDoc.content || ''" />
+          <DocumentReader
+            v-if="currentDoc"
+            :summary-markdown="currentDoc.content || ''"
+            :tutorial-markdown="currentDoc.tutorial_markdown || ''"
+            :tutorial-status="currentDoc.tutorial_status || 'not_requested'"
+            :tutorial-reason="currentDoc.tutorial_reason || ''"
+            @active-content="docCopyContent = $event"
+          />
         </div>
         <div class="flex gap-2.5 justify-end shrink-0">
           <button
@@ -553,7 +570,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '../stores/settings.js'
-import MarkdownRenderer from '../components/MarkdownRenderer.vue'
+import DocumentReader from '../components/DocumentReader.vue'
 
 const settings = useSettingsStore()
 
@@ -563,6 +580,9 @@ const COLORS = ['#7c8aff', '#4ade80', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'
 // ===== 状态 =====
 const categories = ref([])
 const documents = ref([])
+const nextDocumentCursor = ref(null)
+const totalDocuments = ref(0)
+const isLoadingMore = ref(false)
 const currentCatId = ref(null)
 const selectedDocs = ref(new Set())
 const sidebarEditing = ref(false)
@@ -578,6 +598,7 @@ const catForm = ref({ name: '', icon: '📁', color: '#7c8aff', tag_rules: [] })
 
 const docModalVisible = ref(false)
 const currentDoc = ref(null)
+const docCopyContent = ref('')
 
 const tagModalVisible = ref(false)
 const editingTagDocId = ref(null)
@@ -607,8 +628,10 @@ const currentTitle = computed(() => {
 })
 
 const allDocCount = computed(() => {
-  return documents.value.length
+  return totalDocuments.value
 })
+
+const hasMore = computed(() => Boolean(nextDocumentCursor.value))
 
 const allTags = computed(() => {
   const tagSet = new Set()
@@ -664,15 +687,28 @@ async function loadCategories() {
 
 async function loadDocuments() {
   try {
-    const params = new URLSearchParams()
-    if (currentCatId.value !== null) params.append('category_id', String(currentCatId.value))
-    const [sortBy, sortOrder] = docSort.value.split(':')
-    params.append('sort_by', sortBy)
-    params.append('sort_order', sortOrder)
-    const path = '/documents?' + params.toString()
-    documents.value = await settings.apiGet(path)
+    const data = await settings.apiGet('/documents/page?page_size=50')
+    documents.value = Array.isArray(data.items) ? data.items : []
+    nextDocumentCursor.value = data.next_cursor || null
+    totalDocuments.value = Number(data.total) || 0
   } catch {
     documents.value = []
+    nextDocumentCursor.value = null
+    totalDocuments.value = 0
+  }
+}
+
+async function loadMoreDocuments() {
+  if (!nextDocumentCursor.value || isLoadingMore.value) return
+  isLoadingMore.value = true
+  try {
+    const data = await settings.apiGet(`/documents/page?page_size=50&cursor=${encodeURIComponent(nextDocumentCursor.value)}`)
+    const known = new Set(documents.value.map(doc => doc.id))
+    documents.value.push(...(data.items || []).filter(doc => !known.has(doc.id)))
+    nextDocumentCursor.value = data.next_cursor || null
+    totalDocuments.value = Number(data.total) || totalDocuments.value
+  } finally {
+    isLoadingMore.value = false
   }
 }
 
@@ -919,7 +955,7 @@ async function viewDoc(id) {
 async function copyAndOpenClaude() {
   if (!currentDoc.value) return
   try {
-    await navigator.clipboard.writeText(currentDoc.value.content || '')
+    await navigator.clipboard.writeText(docCopyContent.value || currentDoc.value.content || '')
     window.open('https://claude.ai', '_blank')
     toast('内容已复制，请粘贴到 Claude')
   } catch {

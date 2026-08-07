@@ -39,6 +39,7 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # 热力图偏好必须每次启动幂等建表，不能放入 DEC-023 的首次建库分支。
     conn.execute("""
         CREATE TABLE IF NOT EXISTS heatmap_preferences (
             id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -68,10 +69,29 @@ def init_db():
                 category_id INTEGER DEFAULT NULL,
                 tags TEXT DEFAULT '[]',
                 content_hash TEXT DEFAULT '',
+                tutorial_markdown TEXT DEFAULT '',
+                tutorial_status TEXT DEFAULT 'not_requested',
+                tutorial_reason TEXT DEFAULT '',
+                parse_options TEXT DEFAULT '{}',
+                source_key TEXT DEFAULT '',
+                source_url TEXT DEFAULT '',
+                document_status TEXT NOT NULL DEFAULT 'active',
+                duplicate_of_document_id INTEGER DEFAULT NULL,
+                asr_status TEXT NOT NULL DEFAULT 'not_applicable',
+                asr_error TEXT DEFAULT '',
                 char_count INTEGER DEFAULT 0,
                 chunk_count INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+            );
+            CREATE TABLE IF NOT EXISTS document_source_claims (
+                source TEXT NOT NULL,
+                source_key TEXT NOT NULL,
+                document_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (source, source_key),
+                FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
             );
             CREATE TABLE IF NOT EXISTS daily_reviews (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -160,11 +180,25 @@ def init_db():
         ("category_id", "ALTER TABLE documents ADD COLUMN category_id INTEGER DEFAULT NULL"),
         ("tags", "ALTER TABLE documents ADD COLUMN tags TEXT DEFAULT '[]'"),
         ("content_hash", "ALTER TABLE documents ADD COLUMN content_hash TEXT DEFAULT ''"),
+        ("tutorial_markdown", "ALTER TABLE documents ADD COLUMN tutorial_markdown TEXT DEFAULT ''"),
+        ("tutorial_status", "ALTER TABLE documents ADD COLUMN tutorial_status TEXT DEFAULT 'not_requested'"),
+        ("tutorial_reason", "ALTER TABLE documents ADD COLUMN tutorial_reason TEXT DEFAULT ''"),
+        ("parse_options", "ALTER TABLE documents ADD COLUMN parse_options TEXT DEFAULT '{}'"),
+        ("source_key", "ALTER TABLE documents ADD COLUMN source_key TEXT DEFAULT ''"),
+        ("source_url", "ALTER TABLE documents ADD COLUMN source_url TEXT DEFAULT ''"),
+        ("document_status", "ALTER TABLE documents ADD COLUMN document_status TEXT NOT NULL DEFAULT 'active'"),
+        ("duplicate_of_document_id", "ALTER TABLE documents ADD COLUMN duplicate_of_document_id INTEGER DEFAULT NULL"),
+        ("asr_status", "ALTER TABLE documents ADD COLUMN asr_status TEXT NOT NULL DEFAULT 'not_applicable'"),
+        ("asr_error", "ALTER TABLE documents ADD COLUMN asr_error TEXT DEFAULT ''"),
+        # SQLite ALTER TABLE only permits constant defaults. Backfill below retains stable pagination ordering.
+        ("updated_at", "ALTER TABLE documents ADD COLUMN updated_at TEXT DEFAULT ''"),
     ]:
         try:
             conn.execute(f"SELECT {col} FROM documents LIMIT 1")
         except:
             conn.execute(sql)
+    conn.commit()
+    conn.execute("UPDATE documents SET updated_at = created_at WHERE updated_at IS NULL OR updated_at = ''")
     conn.commit()
 
     # 兼容旧表：wiki_pages 新增框架字段
@@ -325,6 +359,11 @@ def init_db():
             api_key_error INTEGER DEFAULT 0,
             api_key_error_msg TEXT DEFAULT '',
             replace_doc_id INTEGER DEFAULT NULL,
+            include_tutorial INTEGER DEFAULT 0,
+            document_id INTEGER DEFAULT NULL,
+            reparse_mode TEXT DEFAULT '',
+            asr_status TEXT DEFAULT '',
+            asr_error TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -332,6 +371,25 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_task_input_hash ON task_queue(input_hash);
         CREATE INDEX IF NOT EXISTS idx_task_created ON task_queue(created_at);
     """)
+    conn.commit()
+
+    _add_column_if_missing(conn, "task_queue", "include_tutorial", "INTEGER DEFAULT 0")
+    _add_column_if_missing(conn, "task_queue", "document_id", "INTEGER DEFAULT NULL")
+    _add_column_if_missing(conn, "task_queue", "reparse_mode", "TEXT DEFAULT ''")
+    _add_column_if_missing(conn, "task_queue", "asr_status", "TEXT DEFAULT ''")
+    _add_column_if_missing(conn, "task_queue", "asr_error", "TEXT DEFAULT ''")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS document_source_claims (
+            source TEXT NOT NULL,
+            source_key TEXT NOT NULL,
+            document_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (source, source_key),
+            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_documents_active_source_key ON documents(source, source_key, document_status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_documents_active_created_id ON documents(document_status, created_at DESC, id DESC)")
     conn.commit()
 
     # SOP 规范化模块

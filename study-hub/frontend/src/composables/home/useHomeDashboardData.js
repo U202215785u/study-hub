@@ -1,3 +1,5 @@
+import { normalizeAutomationTask } from './automationQueueContract'
+
 const recordDate = (item) => (item?.plan_date || item?.due_date || '').slice(0, 10)
 const activityDate = (item) => (item?.updated_at || item?.created_at || '').slice(0, 10)
 const scheduleTime = (item) => {
@@ -26,12 +28,7 @@ export function createHomeDashboardData() {
       }))
     },
     mapQueue(items = []) {
-      return items.slice(0, 3).map((item) => ({
-        id: item.id || item.task_id,
-        title: item.title || item.module_id || '自动化任务',
-        status: item.status || 'pending',
-        progress: Number(item.progressValue ?? item.percent ?? item.progress ?? 0),
-      }))
+      return items.slice(0, 3).map(normalizeAutomationTask)
     },
     mapCommands(items = []) {
       return items.slice(0, 2).map((item, index) => ({
@@ -65,6 +62,13 @@ export function createHomeDashboardData() {
         status: widgetStatus(item.status),
         progress: Number(item.progress || 0),
       }))
+    },
+    mapTaskSummary(items = [], selectedDate = '') {
+      const tasks = items.filter((item) => recordDate(item) === selectedDate)
+      return {
+        total: tasks.length,
+        completed: tasks.filter((item) => item.status === 'done' || item.status === 'completed').length,
+      }
     },
     mapActivityHeatmap({ tasks = [], documents = [], queue = [] } = {}, endDate = new Date()) {
       const counts = new Map()

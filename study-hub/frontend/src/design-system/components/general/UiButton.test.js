@@ -28,4 +28,14 @@ describe('UiButton', () => {
     expect(wrapper.attributes('data-size')).toBe('lg')
     expect(wrapper.attributes('data-block')).toBe('true')
   })
+
+  it('exposes the xs size and pill shape', () => {
+    const wrapper = mount(UiButton, {
+      props: { size: 'xs', shape: 'pill' },
+      slots: { default: '复制' },
+    })
+
+    expect(wrapper.get('button').attributes('data-size')).toBe('xs')
+    expect(wrapper.get('button').attributes('data-shape')).toBe('pill')
+  })
 })

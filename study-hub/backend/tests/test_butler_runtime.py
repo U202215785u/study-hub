@@ -57,6 +57,108 @@ def test_open_case_persists_original_report_and_returns_locating_action():
     assert runtime.next_action(case["id"])["kind"] == "locate_context"
 
 
+def test_start_case_defaults_to_simple_and_enters_implementation():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.start_case(description="修复保存按钮状态")
+
+    assert case["mode"] == "simple"
+    assert case["status"] == "implementing"
+    assert runtime.next_action(case["id"])["kind"] == "finalize_case"
+    assert [event["type"] for event in runtime.events(case["id"])] == [
+        "received",
+        "implementation_started",
+    ]
+
+
+def test_start_case_complex_keeps_context_gate_for_compatibility_with_full_flow():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.start_case(description="跨模块问题需要完整协作", mode="complex")
+
+    assert case["mode"] == "complex"
+    assert case["status"] == "received"
+    assert runtime.next_action(case["id"])["kind"] == "locate_context"
+
+
+def test_set_mode_records_explicit_user_choice_and_rejects_terminal_cases():
+    from butler.runtime import ButlerRuntime
+    from butler.models import ButlerStateError
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.start_case(description="先按简单逻辑处理")
+    changed = runtime.set_mode(case["id"], mode="complex")
+
+    assert changed["mode"] == "complex"
+    assert runtime.events(case["id"])[-1]["type"] == "mode_changed"
+
+    runtime.finalize_case(
+        case["id"],
+        summary="完成简单任务",
+        files=["frontend/src/views/Home.vue"],
+        audit={key: "passed" for key in ("null", "boundary", "error", "impact", "regression", "pattern")},
+        validation={"passed": True, "evidence": "已验证"},
+    )
+    with pytest.raises(ButlerStateError, match="terminal"):
+        runtime.set_mode(case["id"], mode="simple")
+
+
+def test_simple_finalize_is_atomic_and_completes_in_one_runtime_call():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.start_case(description="修复首页保存状态")
+    outcome = runtime.finalize_case(
+        case["id"],
+        summary="修复保存后的状态刷新",
+        files=["frontend/src/views/Home.vue"],
+        audit={key: "passed" for key in ("null", "boundary", "error", "impact", "regression", "pattern")},
+        validation={"passed": True, "evidence": "回归测试通过"},
+    )
+
+    assert outcome["status"] == "completed"
+    assert [event["type"] for event in runtime.events(case["id"])] == [
+        "received",
+        "implementation_started",
+        "change_recorded",
+        "audit_recorded",
+        "validation_recorded",
+        "completed",
+    ]
+
+
+def test_simple_validation_failure_returns_to_implementation_for_repair():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.start_case(description="修复仍未通过验证的保存状态")
+    outcome = runtime.finalize_case(
+        case["id"],
+        summary="第一次修复",
+        files=["frontend/src/views/Home.vue"],
+        audit={key: "passed" for key in ("null", "boundary", "error", "impact", "regression", "pattern")},
+        validation={"passed": False, "evidence": "保存后仍然没有更新"},
+    )
+
+    assert outcome["status"] == "implementing"
+    assert outcome["attempt_count"] == 1
+
+
+def test_resume_uses_the_case_mode_after_a_block():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    simple = runtime.start_case(description="简单任务暂停")
+    runtime.block(simple["id"], reason="等待输入")
+    assert runtime.resume(simple["id"], direction="继续修复")["status"] == "implementing"
+
+    complex_case = runtime.start_case(description="复杂任务暂停", mode="complex")
+    runtime.block(complex_case["id"], reason="等待输入")
+    assert runtime.resume(complex_case["id"], direction="继续调查")["status"] == "investigating"
+
+
 def test_record_context_then_assign_debugger_records_handoff_event():
     from butler.runtime import ButlerRuntime
 
@@ -114,6 +216,23 @@ def test_high_risk_change_cannot_enter_implementation_before_confirmation():
         runtime.begin_implementation(case["id"])
 
     runtime.resolve_approval(approval["id"], approved=True, response="确认")
+    assert runtime.begin_implementation(case["id"])["status"] == "implementing"
+
+
+def test_simple_case_can_request_approval_after_implementation_has_started():
+    from butler.runtime import ButlerRuntime
+
+    runtime = ButlerRuntime(database.get_db)
+    case = runtime.start_case(description="启动本机任务板服务")
+
+    approval = runtime.request_approval(
+        case["id"],
+        risk_kind="local_service",
+        summary="需要启动本机任务板服务并验证快捷方式",
+    )
+
+    assert runtime.get_case(case["id"])["status"] == "awaiting_approval"
+    runtime.resolve_approval(approval["id"], approved=True, response="允许启动并验证")
     assert runtime.begin_implementation(case["id"])["status"] == "implementing"
 
 

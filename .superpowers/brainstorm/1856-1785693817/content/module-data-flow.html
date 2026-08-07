@@ -1,0 +1,61 @@
+<style>
+  .flow-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr); gap: 22px; align-items: stretch; }
+  .flow-canvas { border: 1px solid #3a4037; border-radius: 12px; padding: 18px; background: #11140f; }
+  .flow-row { display: grid; grid-template-columns: 1fr 34px 1fr; gap: 8px; align-items: stretch; margin-bottom: 12px; }
+  .flow-row.three { grid-template-columns: 1fr 26px 1fr 26px 1fr; }
+  .flow-node { display: grid; min-height: 82px; align-content: center; border: 1px solid #3a4037; border-radius: 8px; padding: 12px; background: #1b1d1a; }
+  .flow-node strong { color: #f5f6ee; font-size: 13px; }
+  .flow-node span { margin-top: 5px; color: #949b90; font-size: 10px; line-height: 1.45; }
+  .flow-node.primary { border-color: #7f963e; background: #202719; }
+  .flow-node.data { border-color: #7566bb; }
+  .arrow { display: grid; place-items: center; color: #d7ff63; font-size: 20px; }
+  .merge { display: grid; place-items: center; height: 34px; margin: -3px 0 9px; color: #d7ff63; font-size: 20px; }
+  .behavior { display: grid; gap: 9px; }
+  .rule-card { border: 1px solid #383e36; border-radius: 8px; padding: 11px 12px; background: #171a16; }
+  .rule-card h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 5px; font-size: 13px; }
+  .rule-card h3 i { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: #d7ff63; color: #11140f; font: 800 10px/1 monospace; }
+  .rule-card p { margin: 0; color: #a6ada1; font-size: 11px; line-height: 1.55; }
+  .schema { margin-top: 12px; border-radius: 8px; padding: 11px 12px; background: #0e110d; color: #b8c1b3; font: 10px/1.65 monospace; white-space: pre-wrap; }
+  @media (max-width: 900px) { .flow-layout { grid-template-columns: 1fr; } }
+</style>
+
+<h2>模块工作台的数据流</h2>
+<p class="subtitle">默认外观来自 Figma；用户配置只改变模块的显示、顺序和受约束尺寸；真实内容由现有业务接口提供。</p>
+
+<div class="flow-layout">
+  <div class="flow-canvas">
+    <div class="flow-row">
+      <div class="flow-node primary"><strong>Figma 默认布局</strong><span>首次进入、配置失效或用户点击“恢复默认”时使用</span></div>
+      <div class="arrow">＋</div>
+      <div class="flow-node"><strong>本地布局配置</strong><span>保存显示模块、顺序、尺寸和配置版本</span></div>
+    </div>
+    <div class="merge">↓</div>
+    <div class="flow-row three">
+      <div class="flow-node"><strong>Module Registry</strong><span>声明模块名称、组件、允许尺寸、容量和入口</span></div>
+      <div class="arrow">→</div>
+      <div class="flow-node primary"><strong>Layout Store</strong><span>校验配置、迁移旧版本、自动排位和持久化</span></div>
+      <div class="arrow">→</div>
+      <div class="flow-node"><strong>Bento Grid</strong><span>按 16:9 流式比例容器渲染；拖动时只进入合法槽位</span></div>
+    </div>
+    <div class="merge">↑</div>
+    <div class="flow-row">
+      <div class="flow-node data"><strong>真实业务数据</strong><span>知识库、自动化、DDL、手账、创作和工作流接口</span></div>
+      <div class="arrow">→</div>
+      <div class="flow-node data"><strong>View-model Adapters</strong><span>把不同接口转换为各 Widget 的稳定数据结构，不改变布局</span></div>
+    </div>
+    <div class="schema">layoutVersion: 1
+modules: [
+  { id: "work-heatmap", visible: true, size: "2x2", order: 0 },
+  { id: "calendar-agenda", visible: true, size: "1x2", order: 1 },
+  { id: "today-focus", visible: true, size: "1x3", order: 2 }
+]</div>
+  </div>
+
+  <div class="behavior">
+    <section class="rule-card"><h3><i>1</i>默认即 Figma</h3><p>用户没有自定义时，首页必须与“改3”空间结构一致，模块化能力不能改变默认视觉。</p></section>
+    <section class="rule-card"><h3><i>2</i>固定容量</h3><p>每个 Widget 声明最多展示条数；超过部分进入“查看全部”，卡片不因真实数据无限长高。</p></section>
+    <section class="rule-card"><h3><i>3</i>受约束拖动</h3><p>编辑模式中可以增减和排序；尺寸只能从模块允许列表选择，网格自动处理碰撞。</p></section>
+    <section class="rule-card"><h3><i>4</i>可靠恢复</h3><p>配置损坏、版本不兼容或模块下线时跳过无效项，并提供“一键恢复 Figma 默认布局”。</p></section>
+    <section class="rule-card"><h3><i>5</i>未来可同步</h3><p>第一阶段保存到本地；存储接口与布局数据分离，后续可切换为工作区或账号同步。</p></section>
+  </div>
+</div>

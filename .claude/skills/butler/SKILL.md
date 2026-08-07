@@ -11,6 +11,9 @@ description: Study-Hub 项目管家的 Claude 适配说明。适用于项目定�
 
 ## 可用能力
 
+- `butler_start_case`：默认以 `simple` 开始任务；只有用户明确选择复杂逻辑时传入 `mode=complex`。
+- `butler_finalize_case`：简单任务一次记录改动、审查、验证并收尾；验证失败会回到 `implementing`。
+- `butler_set_mode`：按用户明确选择切换未终止任务的模式，不自动升级。
 - `butler_open_case`：登记自然语言项目请求；任务类型可省略。
 - `butler_next_action`：读取当前建议步骤，不是普通排查的硬阻塞。
 - `butler_record_context`：记录或补充定位、记忆来源和新鲜度。
@@ -19,6 +22,7 @@ description: Study-Hub 项目管家的 Claude 适配说明。适用于项目定�
 - `butler_create_task_card`、`butler_get_task_card`：生成和读取五行任务卡。
 - `butler_accept_task_card`、`butler_report_execution_result`：认领任务卡并回收执行结果；不自动创建会话。
 - `butler_record_attempt`、`butler_record_change`、`butler_record_audit`、`butler_record_validation`、`butler_complete_case`：保留调查、改动、审查和验收记录。
+- `butler_block_case`、`butler_cancel_case`、`butler_resume_case`：两种模式共用；简单模式恢复到 `implementing`，复杂模式恢复到 `investigating`。
 - `butler_request_approval`：对删除、个人数据、权限、发布、部署等受保护操作请求确认。
 
 ## 降级

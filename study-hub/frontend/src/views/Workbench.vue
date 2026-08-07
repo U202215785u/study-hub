@@ -72,16 +72,10 @@
           </div>
 
           <div class="min-w-0 p-4 sm:p-5">
-            <slot name="module" :module="activeModule" :module-id="activeTab">
-              <slot :name="`module-${activeTab}`" :module="activeModule" :module-id="activeTab">
-                <div class="rounded-[8px] border border-dashed border-border bg-bg p-5 sm:p-6">
-                  <p class="text-sm font-medium text-text">{{ activeModule.label }}模块已准备就绪</p>
-                  <p class="mt-2 max-w-xl text-sm leading-6 text-text-secondary">
-                    这里是稳定的模块插槽。接入具体功能后，当前模块的内容会保留在这个区域。
-                  </p>
-                </div>
-              </slot>
-            </slot>
+            <component
+              :is="activeModule.component"
+              @navigate="handleModuleNavigation"
+            />
           </div>
         </section>
       </div>
@@ -92,16 +86,23 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ApprovalsPanel from './workbench/ApprovalsPanel.vue'
+import CasesPanel from './workbench/CasesPanel.vue'
+import EnvironmentPanel from './workbench/EnvironmentPanel.vue'
+import OverviewPanel from './workbench/OverviewPanel.vue'
+import RoadmapPanel from './workbench/RoadmapPanel.vue'
+import VersionsPanel from './workbench/VersionsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const modules = [
-  { id: 'overview', index: '01', label: '总览', description: '查看工作台入口与近期状态。' },
-  { id: 'tasks', index: '02', label: '任务', description: '集中处理学习任务和待办事项。' },
-  { id: 'knowledge', index: '03', label: '知识', description: '快速访问知识库、Wiki 与学习资料。' },
-  { id: 'automation', index: '04', label: '自动化', description: '为内容解析和重复工作预留操作区。' },
-  { id: 'settings', index: '05', label: '设置', description: '管理工作台相关的偏好与连接。' },
+  { id: 'overview', index: '01', label: '总览', description: '查看工作台入口与近期状态。', component: OverviewPanel },
+  { id: 'tasks', index: '02', label: '案件', description: '只读查看案件事实、审查与验证记录。', component: CasesPanel },
+  { id: 'approvals', index: '03', label: '审批', description: '处理需要确认后才能继续的工作台操作。', component: ApprovalsPanel },
+  { id: 'versions', index: '04', label: '版本', description: '查看正式版本、测试版本与发布审批条件。', component: VersionsPanel },
+  { id: 'environment', index: '05', label: '环境', description: '查看脱敏运行环境与健康检查结果。', component: EnvironmentPanel },
+  { id: 'roadmap', index: '06', label: '规划', description: '查看项目规划来源、时间和 Markdown 内容。', component: RoadmapPanel },
 ]
 
 const moduleIds = new Set(modules.map((module) => module.id))
@@ -119,5 +120,9 @@ function selectModule(tab) {
     name: 'workbench',
     query: { ...route.query, tab },
   })
+}
+
+function handleModuleNavigation({ module } = {}) {
+  if (moduleIds.has(module)) selectModule(module)
 }
 </script>

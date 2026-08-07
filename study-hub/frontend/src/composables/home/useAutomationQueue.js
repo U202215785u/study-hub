@@ -1,30 +1,34 @@
 import { ref } from 'vue'
+import { normalizeAutomationTask } from './automationQueueContract'
 
 export function useAutomationQueue({ apiGet, apiPost, apiDelete, interval = 3000, onCompleted = () => {}, notify = () => {}, onApiKeyInvalid = () => {} }) {
   const items = ref([])
   const stats = ref({ total: 0, pending: 0, running: 0, done: 0, error: 0 })
   const stepsByTask = ref({})
   const progressByTask = ref({})
-  const seenCompleted = new Set()
+  const terminalStateByTask = new Map()
   let timer = null
 
   async function refresh() {
     try {
       const data = await apiGet('/automation/queue/status')
       if (data.stats) stats.value = { ...stats.value, ...data.stats }
-      if (!data.tasks) return
+      if (!Array.isArray(data.tasks)) return
 
-      items.value = data.tasks.map((task) => ({ ...task, id: task.id || task.task_id }))
-      let hasNewCompletion = false
-      for (const task of data.tasks) {
-        if (task.steps) stepsByTask.value[task.task_id] = task.steps
-        if (task.progress) progressByTask.value[task.task_id] = task.progress
-        if ((task.status === 'done' || task.status === 'error') && !seenCompleted.has(task.task_id)) {
-          seenCompleted.add(task.task_id)
-          hasNewCompletion = true
+      items.value = data.tasks.map(normalizeAutomationTask)
+      const completedTasks = []
+      for (const task of items.value) {
+        const taskId = task.id || task.task_id
+        if (task.steps) stepsByTask.value[taskId] = task.steps
+        if (task.progressText) progressByTask.value[taskId] = task.progressText
+        if (task.status === 'done' && terminalStateByTask.get(taskId) !== 'done') completedTasks.push(task)
+        if (task.status === 'done' || task.status === 'error') {
+          terminalStateByTask.set(taskId, task.status)
+        } else {
+          terminalStateByTask.delete(taskId)
         }
       }
-      if (hasNewCompletion) onCompleted()
+      for (const task of completedTasks) await onCompleted(task)
     } catch {
       // Polling is best-effort; the next interval retries.
     }

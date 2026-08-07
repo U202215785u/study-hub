@@ -96,6 +96,15 @@ SERVICE_CONFIGS = [
             {"id": "api_key", "label": "密钥", "setting": "ai.dashscope.api_key", "env": "DASHSCOPE_API_KEY", "default": "", "kind": "secret"},
         ],
     },
+    {
+        "id": "vision_fallback",
+        "provider": "OpenAI-compatible vision fallback",
+        "fields": [
+            {"id": "base_url", "label": "服务地址", "setting": "ai.vision_fallback.base_url", "env": "VISION_FALLBACK_API_BASE", "default": "https://dasuapi.com/v1", "kind": "url"},
+            {"id": "model", "label": "模型", "setting": "ai.vision_fallback.model", "env": "VISION_FALLBACK_MODEL", "default": "gpt-5.6-terra", "kind": "text"},
+            {"id": "api_key", "label": "密钥", "setting": "ai.vision_fallback.api_key", "env": "VISION_FALLBACK_API_KEY", "default": "", "kind": "secret"},
+        ],
+    },
 ]
 
 

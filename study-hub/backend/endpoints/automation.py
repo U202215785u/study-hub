@@ -1,4 +1,4 @@
-import os, sys, json, subprocess, re, tempfile, time, requests, uuid, threading, hashlib, base64
+import asyncio, os, sys, json, subprocess, re, tempfile, time, requests, uuid, threading, hashlib, base64
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, Future
 from fastapi import APIRouter
@@ -6,6 +6,8 @@ from database import get_db
 from processing.chunker import chunk_text
 from processing.vector_store import get_vector_store
 from social_parsers import BilibiliParser, XiaohongshuParser, QwenASR, HEADERS_BILIBILI
+from ai_client import ai_client
+from knowledge_identity import extract_source_url, source_identity
 # douyin_mcp_server 模块可能未安装，延迟导入
 try:
     from douyin_mcp_server.server import DouyinProcessor
@@ -14,10 +16,72 @@ except ImportError:
 
 router = APIRouter()
 
+
+def _resolved_source_identity(source: str, submitted_url: str, raw: dict) -> tuple[str, str | None]:
+    """Use parser-provided canonical IDs for new imports; never infer historical IDs."""
+    if source == "douyin-summary" and raw.get("video_id"):
+        video_id = str(raw["video_id"])
+        return f"https://www.douyin.com/video/{video_id}", f"douyin:{video_id}"
+    return submitted_url, source_identity(source, submitted_url)
+
+MAX_DOUYIN_IMAGES = 9
+MAX_DOUYIN_IMAGE_BYTES = 6 * 1024 * 1024
+MAX_DOUYIN_IMAGE_TOTAL_BYTES = 20 * 1024 * 1024
+ALLOWED_DOUYIN_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+def _download_douyin_images(image_urls: list[str]) -> tuple[list[str], int]:
+    """Download a bounded image-note set and return transient data URLs only."""
+    selected = list(dict.fromkeys(image_urls))[:MAX_DOUYIN_IMAGES]
+
+    def fetch(url: str) -> tuple[str, int] | None:
+        if not url.startswith("https://"):
+            return None
+        try:
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=30)
+            response.raise_for_status()
+            mime = response.headers.get("Content-Type", "").split(";", 1)[0].lower()
+            if mime not in ALLOWED_DOUYIN_IMAGE_TYPES:
+                return None
+            declared_size = int(response.headers.get("Content-Length", "0") or 0)
+            if declared_size > MAX_DOUYIN_IMAGE_BYTES:
+                return None
+            content = bytearray()
+            for chunk in response.iter_content(64 * 1024):
+                content.extend(chunk)
+                if len(content) > MAX_DOUYIN_IMAGE_BYTES:
+                    return None
+            return (url, len(content)) if content else None
+        except (requests.RequestException, TypeError, ValueError):
+            return None
+
+    if not selected:
+        return [], 0
+    with ThreadPoolExecutor(max_workers=min(3, len(selected))) as pool:
+        downloaded = list(pool.map(fetch, selected))
+    validated_urls, total = [], 0
+    for downloaded_image in downloaded:
+        if not downloaded_image:
+            continue
+        image_url, byte_count = downloaded_image
+        if total + byte_count > MAX_DOUYIN_IMAGE_TOTAL_BYTES:
+            continue
+        total += byte_count
+        validated_urls.append(image_url)
+    return validated_urls, len(selected) - len(validated_urls)
+
+
+def _douyin_visual_context(raw: dict) -> str:
+    return (
+        "分析这组抖音图集，只描述图片中可直接观察到的内容、图中文字、对象、步骤和不确定处。"
+        f"\n标题：{raw.get('title', '')}\n文案：{raw.get('description', '')}"
+    )
+
 PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SUMMARIES_DIR = os.path.join(PROJECT_DIR, "douyin-summaries")
 BILIBILI_DIR = os.path.join(PROJECT_DIR, "bilibili-summaries")
 XHS_DIR = os.path.join(PROJECT_DIR, "xiaohongshu-summaries")
+TUTORIAL_FRAMES_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "tutorial_frames")
 CLAUDE_CMD = r"C:\Users\Administrator\AppData\Roaming\npm\claude.cmd"
 
 # ffmpeg 路径自动检测（避免 MinGW/MSYS nohup 等隔离环境丢失 PATH）
@@ -110,6 +174,63 @@ MODULES = {
         "source_tag": "xiaohongshu-summary", "engine": "deep",
     },
 }
+
+
+def _input_hash(user_input: str, include_tutorial: bool = False) -> str:
+    """Keep summary-only and tutorial requests distinct in every deduplication path."""
+    value = f"{user_input}\ninclude_tutorial={bool(include_tutorial)}"
+    return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _include_tutorial_from_options(parse_options: str | dict | None) -> bool:
+    if isinstance(parse_options, dict):
+        options = parse_options
+    else:
+        try:
+            options = json.loads(parse_options or "{}")
+        except (TypeError, json.JSONDecodeError):
+            options = {}
+    return bool(options.get("include_tutorial"))
+
+
+def _split_summary_tutorial(content: str, include_tutorial: bool = False) -> dict:
+    """Split one model response without allowing tutorial text into summary search chunks."""
+    start = "<!-- TUTORIAL_START -->"
+    end = "<!-- TUTORIAL_END -->"
+    if not include_tutorial:
+        return {"summary": content.strip(), "tutorial": "", "status": "not_requested", "reason": ""}
+
+    if start not in content or end not in content or content.index(start) >= content.index(end):
+        return {
+            "summary": content.strip(),
+            "tutorial": "",
+            "status": "failed",
+            "reason": "模型输出缺少完整的图文教程区块标记",
+        }
+
+    summary, tutorial = content.split(start, 1)
+    tutorial, trailing = tutorial.split(end, 1)
+    if trailing.strip():
+        summary = f"{summary.rstrip()}\n\n{trailing.strip()}"
+    tutorial = tutorial.strip()
+    if not tutorial:
+        return {
+            "summary": summary.strip(),
+            "tutorial": "",
+            "status": "failed",
+            "reason": "模型输出的图文教程区块为空",
+        }
+    return {"summary": summary.strip(), "tutorial": tutorial, "status": "ready", "reason": ""}
+
+
+def _cleanup_tutorial_workspace(path: str, include_tutorial: bool) -> None:
+    if not include_tutorial or not path:
+        return
+    import shutil
+    try:
+        shutil.rmtree(path, ignore_errors=True)
+    except Exception:
+        pass
 
 
 # ====== Data extraction (native) ======
@@ -315,7 +436,33 @@ def _volcengine_asr(audio_path: str) -> dict:
     return {"success": False, "text": "", "error": f"火山引擎 ASR 失败: {last_error}"}
 
 
-def _extract_douyin_raw(user_input: str) -> dict:
+def _extract_tutorial_frames(video_path: str, task_id: str) -> list[str]:
+    """Extract stable key frames before temporary media is removed."""
+    import ffmpeg as ffmpeg_mod
+
+    frame_dir = os.path.join(TUTORIAL_FRAMES_DIR, task_id)
+    os.makedirs(frame_dir, exist_ok=True)
+    try:
+        probe = ffmpeg_mod.probe(video_path)
+        duration = float(probe.get("format", {}).get("duration") or 0)
+    except Exception:
+        duration = 0
+    timestamps = [0, duration / 2, max(duration - 1, 0)] if duration else [0]
+    urls = []
+    for index, timestamp in enumerate(dict.fromkeys(timestamps), start=1):
+        filename = f"{index:02d}.jpg"
+        frame_path = os.path.join(frame_dir, filename)
+        ffmpeg_mod.input(video_path, ss=timestamp).output(
+            frame_path, vframes=1, format="image2", **{"q:v": 3}
+        ).run(cmd=FFMPEG_CMD, capture_stdout=True, capture_stderr=True, overwrite_output=True)
+        if os.path.isfile(frame_path):
+            urls.append(f"/tutorial-frames/{task_id}/{filename}")
+    if not urls:
+        raise RuntimeError("未提取到可用关键帧")
+    return urls
+
+
+def _extract_douyin_raw(user_input: str, task_id: str | None = None, include_tutorial: bool = False) -> dict:
     """用 DouyinProcessor 解析抖音视频，提取元数据 + ASR 文本。
 
     ASR 优先火山引擎（无 60s/10MB 限制），回退 DashScope（55s trim）。
@@ -325,33 +472,61 @@ def _extract_douyin_raw(user_input: str) -> dict:
             "platform": "抖音", "type": "视频",
             "url": user_input,
             "title": "抖音解析暂不可用",
-            "asr_error": "douyin_mcp_server 模块未安装，抖音解析功能暂不可用。请安装该模块或联系管理员。"
+            "asr_error": "douyin_mcp_server 模块未安装，抖音解析功能暂不可用。请安装该模块或联系管理员。",
+            "tutorial_status": "unavailable" if include_tutorial else "not_requested",
+            "tutorial_reason": "抖音解析模块不可用" if include_tutorial else "",
         }
     processor = DouyinProcessor("")
     cleaned_input = _preprocess_douyin_input(user_input)
     info = processor.parse_share_url(cleaned_input)
+
+    if info.get("content_type") == "image_note":
+        raw = {
+            "platform": "抖音", "type": "图文", "url": info.get("canonical_url", cleaned_input),
+            "title": info.get("title", "无标题"), "video_id": info.get("video_id", ""),
+            "description": info.get("description", ""), "author": info.get("author", ""),
+            "stats": info.get("stats", {}), "images": info.get("image_urls", [])[:MAX_DOUYIN_IMAGES],
+        }
+        image_data_urls, failed_images = _download_douyin_images(raw["images"])
+        if not image_data_urls:
+            raise RuntimeError("未能下载可供视觉分析的抖音图集图片")
+        try:
+            raw["visual_analysis"] = asyncio.run(ai_client.describe_images(image_data_urls, _douyin_visual_context(raw)))
+        except Exception as exc:
+            raise RuntimeError("图集视觉分析失败，请检查视觉模型配置后重试") from exc
+        raw["image_download_failures"] = failed_images
+        return raw
+    if info.get("content_type") != "video":
+        raise RuntimeError("该抖音内容类型暂不支持解析")
 
     raw = {
         "platform": "抖音", "type": "视频",
         "url": f"https://www.douyin.com/video/{info['video_id']}",
         "title": info["title"],
         "video_id": info["video_id"],
+        "tutorial_status": "not_requested" if not include_tutorial else "unavailable",
+        "tutorial_reason": "" if not include_tutorial else "尚未提取关键帧",
     }
 
     # 检测 ASR 引擎：火山引擎优先，否则 DashScope
     use_volc = bool(os.getenv("VOLC_APP_KEY", "").strip())
     if not use_volc and not os.getenv("DASHSCOPE_API_KEY"):
         raw["asr_error"] = "DASHSCOPE_API_KEY 或 VOLC_APP_KEY 未配置，请在 .env 中设置"
-        return raw
+        if not include_tutorial:
+            return raw
 
     asr = QwenASR(os.getenv("DASHSCOPE_API_KEY", "")) if not use_volc else None
-    video_url = info["url"]
+    video_url = info.get("video_url") or info["url"]
     tmp_video = tmp_audio = None
+    task_id = task_id or str(uuid.uuid4())
+    task_dir = os.path.join(SUMMARIES_DIR, task_id) if include_tutorial else tempfile.gettempdir()
+    if include_tutorial:
+        os.makedirs(task_dir, exist_ok=True)
 
     try:
         import ffmpeg as ffmpeg_mod
-        tmp_video = os.path.join(tempfile.gettempdir(), f"douyin_{info['video_id']}.mp4")
-        tmp_audio = os.path.join(tempfile.gettempdir(), f"douyin_{info['video_id']}.mp3")
+        tmp_video = os.path.join(task_dir, f"douyin_{info['video_id']}.mp4")
+        tmp_audio = os.path.join(task_dir, f"douyin_{info['video_id']}.mp3")
 
         # 下载视频
         resp = requests.get(video_url, headers={
@@ -387,25 +562,38 @@ def _extract_douyin_raw(user_input: str) -> dict:
                 tmp_audio, vn=None, acodec="libmp3lame", audio_bitrate="64k"
             ).run(cmd=FFMPEG_CMD, capture_stdout=True, capture_stderr=True, overwrite_output=True)
             result = _volcengine_asr(tmp_audio)
-        else:
+        elif asr:
             # DashScope flash：60s/10MB 限制，截取前 55 秒
             ffmpeg_mod.input(tmp_video).output(
                 tmp_audio, vn=None, acodec="libmp3lame", audio_bitrate="64k",
                 **{"t": "55"}
             ).run(cmd=FFMPEG_CMD, capture_stdout=True, capture_stderr=True, overwrite_output=True)
             result = asr.recognize(tmp_audio, language="zh")
-
-        if result["success"] and result["text"]:
-            raw["asr_text"] = result["text"]
-        elif result["success"] and not result["text"]:
-            raw["asr_error"] = "视频无语音或语音过短，无法识别"
         else:
+            result = None
+
+        if result and result["success"] and result["text"]:
+            raw["asr_text"] = result["text"]
+        elif result and result["success"] and not result["text"]:
+            raw["asr_error"] = "视频无语音或语音过短，无法识别"
+        elif result:
             raw["asr_error"] = result.get("error", "识别失败")
             if "overdue" in raw["asr_error"].lower() or "access denied" in raw["asr_error"].lower():
                 raw["asr_error"] += "（阿里云百炼账号欠费，请充值后重试）"
 
+        if include_tutorial:
+            try:
+                raw["tutorial_frames"] = _extract_tutorial_frames(tmp_video, task_id)
+                raw["tutorial_status"] = "ready"
+                raw["tutorial_reason"] = ""
+            except Exception as frame_error:
+                raw["tutorial_status"] = "unavailable"
+                raw["tutorial_reason"] = f"关键帧提取失败：{str(frame_error)[:300]}"
+
     except FileNotFoundError as e:
         raw["asr_error"] = f"ffmpeg 未找到（{e}）。请安装 ffmpeg 并确保其在系统 PATH 中，或重启后端以刷新 PATH。"
+        if include_tutorial:
+            raw["tutorial_reason"] = "ffmpeg 不可用，无法提取关键帧"
     except Exception as e:
         error_msg = str(e)
         # 提取 ffmpeg 详细错误信息
@@ -423,6 +611,8 @@ def _extract_douyin_raw(user_input: str) -> dict:
                     "请尝试重新复制抖音分享链接后重试。"
                 )
         raw["asr_error"] = f"语音提取失败：{error_msg}"
+        if include_tutorial:
+            raw["tutorial_reason"] = raw.get("tutorial_reason") or "视频处理失败，无法提取关键帧"
 
     finally:
         # 确保临时文件始终被清理
@@ -437,12 +627,21 @@ def _extract_douyin_raw(user_input: str) -> dict:
     if "invalid api-key" in raw.get("asr_error", "").lower():
         raw["asr_api_key_invalid"] = True
 
+    if include_tutorial and raw.get("tutorial_status") != "ready":
+        raw["tutorial_status"] = "unavailable"
+        raw["tutorial_reason"] = raw.get("tutorial_reason") or "未能提取关键帧"
+
     return raw
 
 
 # ====== Deep Summary Prompt ======
 
-def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
+def _build_deep_prompt(
+    module_id: str,
+    raw: dict,
+    user_input: str,
+    include_tutorial: bool = False,
+) -> str:
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     raw_json = json.dumps(raw, ensure_ascii=False, indent=2)
 
@@ -469,6 +668,21 @@ def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
             "然后继续基于现有信息生成其余章节。"
         )
 
+    tutorial_note = ""
+    tutorial_format = ""
+    if include_tutorial:
+        tutorial_note = (
+            "\n\n同时生成一个可执行的图文教程。只使用原始数据中给出的关键帧，"
+            "不要虚构不存在的画面或链接。教程必须包含目标、准备工作、分步操作、"
+            "验证结果和常见问题；每个关键步骤优先引用对应的关键帧 URL。"
+        )
+        tutorial_format = (
+            "\n\n<!-- TUTORIAL_START -->\n"
+            "## 图文教程\n\n"
+            "（教程正文，至少包含准备工作、操作步骤、验证结果和常见问题）\n"
+            "<!-- TUTORIAL_END -->"
+        )
+
     return f"""请根据以下从{platform}提取的原始数据，生成一份结构化的深度总结 Markdown 文档。
 
 ## 原始数据
@@ -482,7 +696,7 @@ def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
 
 ## 要求
 
-你需要直接输出一份完整的 Markdown 文档，不要输出任何开头语、结尾语或解释说明。你的整个回复就是这份文档本身。
+你需要直接输出一份完整的 Markdown 文档，不要输出任何开头语、结尾语或解释说明。你的整个回复就是这份文档本身。{tutorial_note}
 
 按以下步骤思考，但只输出最终文档：
 1. 理解内容（2-3 句话概括核心观点）
@@ -539,7 +753,7 @@ def _build_deep_prompt(module_id: str, raw: dict, user_input: str) -> str:
 - 所有链接必须用 WebSearch 验证
 - 扩展阅读 3-5 条，标注时效性（截至 {now_str[:7]}）
 - 章节标题必须严格按照以上内容，禁止自创标题
-- 直接输出以上格式的 Markdown 文档，不要任何额外内容"""
+- 直接输出以上格式的 Markdown 文档，不要任何额外内容{tutorial_format}"""
 
 
 # ====== ASR failure fallback ======
@@ -710,21 +924,26 @@ def _task_to_db(task: dict):
             INSERT INTO task_queue (task_id, module_id, module_name, input_text, input_hash,
                 status, progress, error, result_doc_id, result_title,
                 steps_json, current_step, api_key_error, api_key_error_msg,
-                replace_doc_id, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                replace_doc_id, include_tutorial, document_id, reparse_mode,
+                asr_status, asr_error, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(task_id) DO UPDATE SET
                 status=excluded.status, progress=excluded.progress,
                 error=excluded.error, result_doc_id=excluded.result_doc_id,
                 result_title=excluded.result_title, steps_json=excluded.steps_json,
                 current_step=excluded.current_step, api_key_error=excluded.api_key_error,
                 api_key_error_msg=excluded.api_key_error_msg,
-                replace_doc_id=excluded.replace_doc_id, updated_at=datetime('now')
+                replace_doc_id=excluded.replace_doc_id,
+                include_tutorial=excluded.include_tutorial,
+                document_id=excluded.document_id, reparse_mode=excluded.reparse_mode,
+                asr_status=excluded.asr_status, asr_error=excluded.asr_error,
+                updated_at=datetime('now')
         """, (
             task.get("task_id", ""),
             task.get("module_id", ""),
             task.get("module_name", ""),
             task.get("input", "")[:500],
-            hashlib.sha256(task.get("input", "").encode("utf-8", errors="replace")).hexdigest(),
+            _input_hash(task.get("input", ""), task.get("include_tutorial", False)),
             task.get("status", "pending"),
             task.get("progress", ""),
             task.get("error", ""),
@@ -735,6 +954,11 @@ def _task_to_db(task: dict):
             1 if task.get("api_key_error") else 0,
             task.get("api_key_error_msg", ""),
             task.get("replace_doc_id"),
+            1 if task.get("include_tutorial") else 0,
+            task.get("document_id"),
+            task.get("reparse_mode", ""),
+            task.get("asr_status", ""),
+            task.get("asr_error", ""),
         ))
         conn.commit()
         conn.close()
@@ -768,6 +992,11 @@ def _load_pending_tasks_from_db() -> list[dict]:
                 "api_key_error": bool(r["api_key_error"]),
                 "api_key_error_msg": r["api_key_error_msg"],
                 "replace_doc_id": r["replace_doc_id"],
+                "include_tutorial": bool(r["include_tutorial"]),
+                "document_id": r["document_id"],
+                "reparse_mode": r["reparse_mode"],
+                "asr_status": r["asr_status"],
+                "asr_error": r["asr_error"],
             })
         return tasks
     except Exception as e:
@@ -808,6 +1037,13 @@ def _update_step(task_id: str, step_key: str, step_status: str, progress_msg: st
         task = _tasks.get(task_id)
         if not task:
             return
+        stage_status = {
+            "extract_meta": "extracting",
+            "summarize": "summarizing",
+            "import": "importing",
+        }.get(step_key)
+        if stage_status and task.get("status") not in ("done", "error"):
+            task["status"] = stage_status
         task["current_step"] = step_key
         if task.get("steps"):
             for s in task["steps"]:
@@ -834,13 +1070,20 @@ def _process_single_task(task_id: str):
     _init_task_steps(task_id)
     module_id = task["module_id"]
     user_input = task["input"]
+    include_tutorial = bool(task.get("include_tutorial", False))
     module = MODULES[module_id]
     engine = module.get("engine", "claude")
     output_dir = module["output_dir"]
+    if include_tutorial:
+        output_dir = os.path.join(output_dir, task_id)
 
     # 早期去重：基于输入链接的哈希检查是否已处理过
-    input_hash = hashlib.sha256(user_input.encode("utf-8", errors="replace")).hexdigest()
+    input_hash = _input_hash(user_input, include_tutorial)
     placeholder_doc_id = None  # 占位文档 ID，用于后续更新
+    in_place_reparse = task.get("reparse_mode") == "in_place"
+    target_doc_id = task.get("document_id") if in_place_reparse else None
+    if in_place_reparse and not target_doc_id:
+        raise ValueError("in-place reparse task is missing document_id")
 
     try:
         # Step 1: Extract meta
@@ -851,11 +1094,13 @@ def _process_single_task(task_id: str):
             elif module_id == "xiaohongshu-summary":
                 raw = _extract_xiaohongshu_raw(user_input)
             elif module_id == "douyin-summary":
-                raw = _extract_douyin_raw(user_input)
+                raw = _extract_douyin_raw(user_input, task_id, include_tutorial)
             else:
                 raise ValueError(f"未知 deep 模块: {module_id}")
         else:
             raw = {"platform": "未知", "type": ""}
+
+        source_url, source_key = _resolved_source_identity(module["source_tag"], user_input, raw)
 
         # 检查 API Key 无效错误
         if _check_api_key_error(raw):
@@ -872,6 +1117,7 @@ def _process_single_task(task_id: str):
             "_placeholder": True,
             "task_id": task_id,
             "input": user_input,
+            "include_tutorial": include_tutorial,
             "raw_meta": {k: v for k, v in raw.items() if k not in ("asr_text",)},
         }, ensure_ascii=False)
         placeholder_hash = hashlib.sha256(placeholder_content.encode("utf-8", errors="replace")).hexdigest()
@@ -883,11 +1129,13 @@ def _process_single_task(task_id: str):
                 "SELECT id FROM documents WHERE content_hash = ? AND source = ? LIMIT 1",
                 (placeholder_hash, module["source_tag"]),
             ).fetchone()
-            if not existing:
+            if in_place_reparse:
+                placeholder_doc_id = target_doc_id
+            elif not existing:
                 cur = conn.execute(
-                    "INSERT INTO documents (title, content, content_type, source, char_count, content_hash) VALUES (?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO documents (title, content, content_type, source, char_count, content_hash, source_url, source_key, asr_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')",
                     (placeholder_title[:200], placeholder_content, "text", module["source_tag"],
-                     len(placeholder_content), placeholder_hash),
+                     len(placeholder_content), placeholder_hash, source_url, source_key),
                 )
                 placeholder_doc_id = cur.lastrowid
                 conn.commit()
@@ -903,12 +1151,19 @@ def _process_single_task(task_id: str):
         _update_step(task_id, "summarize", "running", "正在 AI 深度分析…")
 
         # ASR 致命失败时降级为元数据卡片
-        if engine == "deep" and _should_fallback_to_meta_card(raw):
+        is_fallback = engine == "deep" and _should_fallback_to_meta_card(raw)
+        if is_fallback:
             result = _build_meta_card(raw, user_input)
+            parsed_result = {
+                "summary": result["content"],
+                "tutorial": "",
+                "status": "unavailable" if include_tutorial else "not_requested",
+                "reason": raw.get("tutorial_reason", "视频或语音不可用") if include_tutorial else "",
+            }
             _update_step(task_id, "summarize", "done")
         else:
             if engine == "deep":
-                prompt = _build_deep_prompt(module_id, raw, user_input)
+                prompt = _build_deep_prompt(module_id, raw, user_input, include_tutorial)
             else:
                 prompt = module["prompt_template"].format(input=user_input)
 
@@ -918,11 +1173,19 @@ def _process_single_task(task_id: str):
                 raise RuntimeError(result["error"])
             if result.get("status") == "no_output":
                 raise RuntimeError(result.get("message", "输出内容过短"))
+            parsed_result = _split_summary_tutorial(result["content"], include_tutorial)
+            if include_tutorial and raw.get("tutorial_status") == "unavailable":
+                parsed_result["tutorial"] = ""
+                parsed_result["status"] = "unavailable"
+                parsed_result["reason"] = raw.get("tutorial_reason", "关键帧不可用")
             _update_step(task_id, "summarize", "done")
 
         # Step 3: Import / Update placeholder
         _update_step(task_id, "import", "running", "正在入库 + 向量化…")
-        content = result["content"]
+        content = parsed_result["summary"]
+        tutorial_markdown = parsed_result["tutorial"]
+        tutorial_status = parsed_result["status"]
+        tutorial_reason = parsed_result["reason"]
         md_path = result.get("md_path", "")
 
         title = os.path.basename(md_path).replace(".md", "") if md_path else ""
@@ -938,8 +1201,12 @@ def _process_single_task(task_id: str):
             vid = raw.get("video_id") or raw.get("bvid") or raw.get("note_id") or ""
             title = f"未知标题（{platform} {vid}）" if vid else f"未知标题（{platform}）"
 
+        _cleanup_tutorial_workspace(output_dir, include_tutorial)
+
         # 计算内容哈希，用于去重
         content_hash = hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()
+        processing_status = "fallback" if is_fallback else "succeeded"
+        asr_error = _sanitize_asr_error(raw.get("asr_error", "")) if is_fallback else ""
 
         conn = get_db()
         # 入库前查重：同一来源 + 相同内容视为重复
@@ -947,7 +1214,7 @@ def _process_single_task(task_id: str):
             "SELECT id FROM documents WHERE source = ? AND content_hash = ? AND id != ? LIMIT 1",
             (module["source_tag"], content_hash, placeholder_doc_id or -1),
         ).fetchone()
-        if dup:
+        if dup and not in_place_reparse:
             doc_id = dup["id"]
             # 删除占位文档（已存在更早的完整记录）
             if placeholder_doc_id:
@@ -970,15 +1237,19 @@ def _process_single_task(task_id: str):
         if placeholder_doc_id:
             # 更新占位文档为完整内容
             conn.execute(
-                "UPDATE documents SET title = ?, content = ?, char_count = ?, content_hash = ? WHERE id = ?",
-                (title[:200], content, len(content), content_hash, placeholder_doc_id),
+                "UPDATE documents SET title = ?, content = ?, tutorial_markdown = ?, tutorial_status = ?, tutorial_reason = ?, parse_options = ?, char_count = ?, content_hash = ?, source_url = ?, source_key = ?, asr_status = ?, asr_error = ?, updated_at = datetime('now') WHERE id = ?",
+                (title[:200], content, tutorial_markdown, tutorial_status, tutorial_reason,
+                 json.dumps({"include_tutorial": include_tutorial}), len(content), content_hash,
+                 source_url, source_key, processing_status, asr_error, placeholder_doc_id),
             )
             conn.commit()
             doc_id = placeholder_doc_id
         else:
             cur = conn.execute(
-                "INSERT INTO documents (title, content, content_type, source, char_count, content_hash) VALUES (?, ?, ?, ?, ?, ?)",
-                (title, content, "text", module["source_tag"], len(content), content_hash),
+                "INSERT INTO documents (title, content, tutorial_markdown, tutorial_status, tutorial_reason, parse_options, content_type, source, char_count, content_hash, source_url, source_key, asr_status, asr_error) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (title, content, tutorial_markdown, tutorial_status, tutorial_reason,
+                 json.dumps({"include_tutorial": include_tutorial}), "text", module["source_tag"], len(content), content_hash,
+                 source_url, source_key, processing_status, asr_error),
             )
             doc_id = cur.lastrowid
             conn.commit()
@@ -1002,28 +1273,43 @@ def _process_single_task(task_id: str):
         conn.close()
 
         # 删除被替换的旧文档（如果是重新解析任务）
-        _delete_replaced_doc(task_id)
+        if not in_place_reparse:
+            _delete_replaced_doc(task_id)
 
         with _lock:
             _tasks[task_id]["status"] = "done"
             _tasks[task_id]["progress"] = "完成"
             _tasks[task_id]["result"] = {"doc_id": doc_id, "title": title}
+            _tasks[task_id]["asr_status"] = processing_status
+            _tasks[task_id]["asr_error"] = asr_error
         _update_step(task_id, "import", "done")
         _task_to_db(_tasks[task_id])
 
     except Exception as e:
         error_msg = str(e)
+        _cleanup_tutorial_workspace(output_dir, include_tutorial)
         with _lock:
             _tasks[task_id]["status"] = "error"
             _tasks[task_id]["progress"] = "失败"
             _tasks[task_id]["error"] = error_msg
         # 标记占位文档为错误状态（保留以便排查）
-        if placeholder_doc_id:
+        if placeholder_doc_id and not in_place_reparse:
             try:
                 conn = get_db()
                 conn.execute(
                     "UPDATE documents SET title = ? WHERE id = ?",
                     (f"[解析失败] {raw.get('title', '未知')}"[:200], placeholder_doc_id),
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+        elif in_place_reparse and target_doc_id:
+            try:
+                conn = get_db()
+                conn.execute(
+                    "UPDATE documents SET asr_status = 'failed', asr_error = ?, updated_at = datetime('now') WHERE id = ?",
+                    (_sanitize_asr_error(error_msg), target_doc_id),
                 )
                 conn.commit()
                 conn.close()
@@ -1037,6 +1323,13 @@ def _process_single_task(task_id: str):
                     if s["key"] == t["current_step"] and s["status"] == "running":
                         s["status"] = "error"
         _task_to_db(_tasks[task_id])
+
+
+def _sanitize_asr_error(error: object) -> str:
+    """Keep an actionable failure reason without persisting credentials."""
+    text = str(error or "")
+    text = re.sub(r"(?i)(authorization|api[_ -]?key|token)\s*[:=]\s*[^\s,;]+", r"\1=[redacted]", text)
+    return text.replace("\x00", " ").strip()[:500]
 
 
 def _check_api_key_error(raw: dict) -> bool:
@@ -1059,8 +1352,8 @@ def _check_existing_by_input_hash(input_hash: str, module_id: str) -> dict | Non
         conn = get_db()
         # 1. 检查 task_queue 中已完成的记录
         row = conn.execute(
-            "SELECT result_doc_id, result_title FROM task_queue WHERE input_hash = ? AND status = 'done' AND result_doc_id IS NOT NULL LIMIT 1",
-            (input_hash,),
+            "SELECT result_doc_id, result_title FROM task_queue WHERE module_id = ? AND input_hash = ? AND status = 'done' AND result_doc_id IS NOT NULL LIMIT 1",
+            (module_id, input_hash),
         ).fetchone()
         if row and row["result_doc_id"]:
             conn.close()
@@ -1081,7 +1374,7 @@ def _check_existing_by_input_hash(input_hash: str, module_id: str) -> dict | Non
                     data = json.loads(content)
                     if data.get("_placeholder") or data.get("input"):
                         doc_input = data.get("input", "")
-                        doc_hash = hashlib.sha256(doc_input.encode("utf-8", errors="replace")).hexdigest()
+                        doc_hash = _input_hash(doc_input, bool(data.get("include_tutorial")))
                         if doc_hash == input_hash:
                             return {"doc_id": doc["id"], "title": doc["title"]}
             except (json.JSONDecodeError, KeyError):
@@ -1137,8 +1430,20 @@ def recover_orphan_summaries() -> dict:
 
                 # 计算内容哈希
                 content_hash = hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()
+                source_url = extract_source_url(content)
+                source_key = source_identity(source_tag, source_url or "") if source_url else None
+                if not source_key:
+                    recovered.append({"status": "unresolved", "source": source_tag, "file": fname})
+                    continue
 
                 conn = get_db()
+                existing = conn.execute(
+                    "SELECT id FROM documents WHERE source = ? AND source_key = ? AND document_status = 'active' LIMIT 1",
+                    (source_tag, source_key),
+                ).fetchone()
+                if existing:
+                    conn.close()
+                    continue
                 # 检查是否已入库（通过 content_hash 或 title 匹配）
                 existing = conn.execute(
                     "SELECT id FROM documents WHERE (content_hash = ?) OR (title = ? AND source = ?) LIMIT 1",
@@ -1158,15 +1463,15 @@ def recover_orphan_summaries() -> dict:
                 if placeholder:
                     # 更新占位文档
                     conn.execute(
-                        "UPDATE documents SET title = ?, content = ?, char_count = ?, content_hash = ? WHERE id = ?",
-                        (title[:200], content, len(content), content_hash, placeholder["id"]),
+                        "UPDATE documents SET title = ?, content = ?, char_count = ?, content_hash = ?, source_url = ?, source_key = ?, updated_at = datetime('now') WHERE id = ?",
+                        (title[:200], content, len(content), content_hash, source_url, source_key, placeholder["id"]),
                     )
                     doc_id = placeholder["id"]
                 else:
                     # 新建文档
                     cur = conn.execute(
-                        "INSERT INTO documents (title, content, content_type, source, char_count, content_hash) VALUES (?, ?, ?, ?, ?, ?)",
-                        (title[:200], content, "text", source_tag, len(content), content_hash),
+                        "INSERT INTO documents (title, content, content_type, source, char_count, content_hash, source_url, source_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (title[:200], content, "text", source_tag, len(content), content_hash, source_url, source_key),
                     )
                     doc_id = cur.lastrowid
 
@@ -1212,7 +1517,7 @@ def recover_tasks_on_startup():
         for task in pending_tasks:
             task_id = task["task_id"]
             # 检查是否已有对应的孤儿文档被恢复了（避免重复处理）
-            input_hash = hashlib.sha256(task["input"].encode("utf-8", errors="replace")).hexdigest()
+            input_hash = _input_hash(task["input"], task.get("include_tutorial", False))
             existing = _check_existing_by_input_hash(input_hash, task["module_id"])
             if existing:
                 with _lock:
@@ -1243,6 +1548,7 @@ def run_automation(payload: dict):
     """同步执行（保持向后兼容）—— 单任务阻塞等待。"""
     module_id = payload.get("module_id", "")
     user_input = (payload.get("input") or "").strip()
+    include_tutorial = bool(payload.get("include_tutorial", False)) if module_id == "douyin-summary" else False
 
     if module_id not in MODULES:
         return {"error": f"未知模块: {module_id}"}
@@ -1252,7 +1558,7 @@ def run_automation(payload: dict):
         return {"error": "输入内容过长，请限制在 10000 字以内"}
 
     # 早期去重：检查是否已有相同输入的任务（已完成或进行中）
-    input_hash = hashlib.sha256(user_input.encode("utf-8", errors="replace")).hexdigest()
+    input_hash = _input_hash(user_input, include_tutorial)
     existing = _check_existing_by_input_hash(input_hash, module_id)
     if existing:
         return {"status": "done", "task_id": "cached", **existing}
@@ -1262,6 +1568,7 @@ def run_automation(payload: dict):
         "task_id": task_id, "status": "pending", "module_id": module_id,
         "module_name": MODULES[module_id]["name"],
         "input": user_input, "progress": "排队中…",
+        "include_tutorial": include_tutorial,
         "created_at": datetime.now().isoformat(),
     }
     with _lock:
@@ -1282,6 +1589,7 @@ def queue_tasks(payload: dict):
     """批量提交任务，立即返回任务 ID 列表。支持多个链接（\\n 分隔或数组）。"""
     module_id = payload.get("module_id", "")
     inputs = payload.get("inputs", [])
+    include_tutorial = bool(payload.get("include_tutorial", False)) if module_id == "douyin-summary" else False
 
     # 支持单个 input 字符串（换行分隔）
     if not inputs:
@@ -1310,7 +1618,7 @@ def queue_tasks(payload: dict):
         if len(inp) > 10000:
             continue
         # 跨批次去重：检查是否已有相同输入的已完成任务
-        input_hash = hashlib.sha256(inp.encode("utf-8", errors="replace")).hexdigest()
+        input_hash = _input_hash(inp, include_tutorial)
         existing = _check_existing_by_input_hash(input_hash, module_id)
         if existing:
             skipped += 1
@@ -1321,6 +1629,7 @@ def queue_tasks(payload: dict):
             "task_id": task_id, "status": "pending", "module_id": module_id,
             "module_name": MODULES[module_id]["name"],
             "input": inp[:500], "progress": "排队中…",
+            "include_tutorial": include_tutorial,
             "created_at": datetime.now().isoformat(),
         }
         with _lock:
@@ -1339,6 +1648,40 @@ def queue_tasks(payload: dict):
         "skipped": skipped,
         "task_ids": tasks_created,
         "message": msg + f"，最多 {MAX_WORKERS} 个并行处理",
+    }
+
+
+def _queue_task_dto(task: dict) -> dict:
+    status = task.get("status") or "pending"
+    raw_progress = task.get("progress", "")
+    if isinstance(raw_progress, (int, float)):
+        progress = min(100, max(0, float(raw_progress)))
+    else:
+        match = re.search(r"(\d+(?:\.\d+)?)", str(raw_progress))
+        if match:
+            progress = min(100, max(0, float(match.group(1))))
+        else:
+            progress = {"pending": 0, "extracting": 25, "summarizing": 60, "importing": 85, "done": 100, "error": 100}.get(status, 0)
+    result = task.get("result") or {}
+    module_name = task.get("module_name") or task.get("module_id") or "Automation task"
+    title = result.get("title") or task.get("title") or module_name
+    return {
+        "task_id": task.get("task_id"),
+        "module_id": task.get("module_id", ""),
+        "module_name": module_name,
+        "title": title,
+        "status": status,
+        "input": (task.get("input") or "")[:100],
+        "progress": progress,
+        "progress_text": str(raw_progress or status),
+        "error": task.get("error", ""),
+        "doc_id": result.get("doc_id") if result else None,
+        "created_at": task.get("created_at", ""),
+        "steps": task.get("steps"),
+        "current_step": task.get("current_step"),
+        "api_key_error": task.get("api_key_error", False),
+        "api_key_error_msg": task.get("api_key_error_msg", ""),
+        "include_tutorial": bool(task.get("include_tutorial", False)),
     }
 
 
@@ -1364,20 +1707,7 @@ def queue_status():
     # 精简返回字段
     items = []
     for t in recent:
-        items.append({
-            "task_id": t["task_id"], "status": t["status"],
-            "module_name": t.get("module_name", ""),
-            "input": t.get("input", "")[:100],
-            "progress": t.get("progress", ""),
-            "error": t.get("error", ""),
-            "doc_id": (t.get("result") or {}).get("doc_id") if t.get("result") else None,
-            "title": (t.get("result") or {}).get("title") if t.get("result") else None,
-            "created_at": t.get("created_at", ""),
-            "steps": t.get("steps"),
-            "current_step": t.get("current_step"),
-            "api_key_error": t.get("api_key_error", False),
-            "api_key_error_msg": t.get("api_key_error_msg", ""),
-        })
+        items.append(_queue_task_dto(t))
 
     return {"stats": stats, "tasks": items}
 
@@ -1398,6 +1728,37 @@ def task_status(task_id: str):
         "created_at": task.get("created_at", ""),
         "steps": task.get("steps"),
         "current_step": task.get("current_step"),
+        "include_tutorial": bool(task.get("include_tutorial", False)),
+    }
+
+
+@router.get("/automation/tasks/{task_id}")
+def get_task_processing_status(task_id: str):
+    """Return durable task lifecycle plus the associated document's ASR outcome."""
+    conn = get_db()
+    row = conn.execute(
+        """
+        SELECT q.task_id, q.status, q.progress, q.error, q.result_doc_id, q.document_id,
+               q.reparse_mode, q.asr_status AS task_asr_status, q.asr_error AS task_asr_error,
+               d.asr_status AS document_asr_status, d.asr_error AS document_asr_error
+        FROM task_queue q
+        LEFT JOIN documents d ON d.id = COALESCE(q.document_id, q.result_doc_id)
+        WHERE q.task_id = ?
+        """,
+        (task_id,),
+    ).fetchone()
+    conn.close()
+    if not row:
+        return {"error": "任务不存在"}
+    document_id = row["document_id"] or row["result_doc_id"]
+    return {
+        "task_id": row["task_id"],
+        "status": row["status"],
+        "progress": row["progress"],
+        "document_id": document_id,
+        "reparse_mode": row["reparse_mode"],
+        "asr_status": row["document_asr_status"] or row["task_asr_status"] or "not_applicable",
+        "asr_error": _sanitize_asr_error(row["document_asr_error"] or row["task_asr_error"] or row["error"]),
     }
 
 
@@ -1526,7 +1887,7 @@ _REPARSE_MODULE_MAP = {
 def reparse_document(doc_id: int):
     """
     重新解析失败的摘要文档（支持抖音/B站/小红书）。
-    提取原始链接 → 删除旧文档 → 重新提交自动化任务。
+    提取原始链接并原地更新；旧正文保留到新识别结果可用为止。
     """
     import re
 
@@ -1540,6 +1901,7 @@ def reparse_document(doc_id: int):
         content = doc["content"] or ""
         title = doc["title"] or ""
         source = doc["source"] if "source" in doc.keys() else ""
+        include_tutorial = _include_tutorial_from_options(doc["parse_options"] if "parse_options" in doc.keys() else "{}")
 
         # 根据 source 确定平台和提取规则
         patterns = _REPARSE_LINK_PATTERNS.get(source, [])
@@ -1563,15 +1925,25 @@ def reparse_document(doc_id: int):
 
         conn.close()
 
-        # 提交新任务（携带旧文档 ID，等新文档创建成功后再删除旧文档）
+        # 原地重识别在成功前保留旧正文，绝不排队删除目标行。
         module_id, module_name = module_info
         task_id = str(uuid.uuid4())[:8]
+        conn = get_db()
+        conn.execute(
+            "UPDATE documents SET asr_status = 'pending', asr_error = '', updated_at = datetime('now') WHERE id = ?",
+            (doc_id,),
+        )
+        conn.commit()
+        conn.close()
         task = {
             "task_id": task_id, "status": "pending", "module_id": module_id,
             "module_name": module_name,
             "input": original_link, "progress": "排队中…",
             "created_at": datetime.now().isoformat(),
-            "replace_doc_id": doc_id,  # 新任务完成后替换此文档
+            "document_id": doc_id,
+            "reparse_mode": "in_place",
+            "asr_status": "pending",
+            "include_tutorial": include_tutorial,
         }
         with _lock:
             _tasks[task_id] = task
@@ -1581,6 +1953,7 @@ def reparse_document(doc_id: int):
         return {
             "status": "queued",
             "task_id": task_id,
+            "document_id": doc_id,
             "message": f"已重新提交识别任务（原文档：{title}），处理中…",
             "original_link": original_link,
         }
@@ -1596,29 +1969,25 @@ def list_reparseable():
     """列出可以重新解析的文档（ASR 失败或内容不完整）。"""
     conn = get_db()
     rows = conn.execute(
-        "SELECT id, title, content, source, char_count, created_at FROM documents "
+        "SELECT id, title, source, char_count, created_at, asr_status, asr_error FROM documents "
         "WHERE source IN ('douyin-summary', 'bilibili-summary', 'xiaohongshu-summary') "
+        "AND document_status = 'active' AND asr_status IN ('fallback', 'failed') "
         "ORDER BY created_at DESC LIMIT 100"
     ).fetchall()
     conn.close()
 
-    import re
-    result = []
-    for r in rows:
-        content = r["content"] or ""
-        is_failed = "语音提取失败" in content or "⚠️ 语音提取失败" in content
-        is_api_fail = "API" in content[:500] and ("不可用" in content[:500] or "欠费" in content[:500])
-        is_level3 = "Level 3" in content[:1000] and "基于视频标题" in content[:1000]
-        has_link = bool(re.search(r'https?://v\.douyin\.com/[^\s)\]]+', content))
-
-        if is_failed or is_api_fail or is_level3:
-            result.append({
-                "doc_id": r["id"], "title": r["title"],
-                "source": r["source"], "char_count": r["char_count"],
-                "created_at": r["created_at"],
-                "fail_reason": "API不可用" if is_api_fail else ("ASR失败" if is_failed else "仅标题推断"),
-                "has_link": has_link,
-            })
+    result = [
+        {
+            "doc_id": r["id"],
+            "title": r["title"],
+            "source": r["source"],
+            "char_count": r["char_count"],
+            "created_at": r["created_at"],
+            "asr_status": r["asr_status"],
+            "fail_reason": r["asr_error"] or r["asr_status"],
+        }
+        for r in rows
+    ]
 
     return {"count": len(result), "documents": result}
 

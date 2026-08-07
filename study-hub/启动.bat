@@ -42,7 +42,7 @@ if not exist "%BACKEND_DIR%\data\inbox" mkdir "%BACKEND_DIR%\data\inbox"
 
 echo.
 echo 🚀 启动服务...
-echo    主页面:    http://localhost:8741
+echo    Study Hub 稳定入口: http://localhost:8741
 echo    管理后台:  http://localhost:8741/admin
 echo    API 文档:  http://localhost:8741/docs
 echo    日志文件:  %BACKEND_DIR%\data\app.log

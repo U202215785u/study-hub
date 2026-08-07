@@ -1,0 +1,78 @@
+
+> study-hub-vue@0.0.0 dev
+> vite --port 5181
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m1067[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5181[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m12:39:31[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/patterns/WorkbenchFrame.vue?vue&type=style&index=0&scoped=43ff1f96&lang.css, /src/design-system/patterns/WorkbenchFrame.vue, /src/assets/main.css[22m
+[2m12:39:31[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/patterns/DashboardModuleCard.vue?vue&type=style&index=0&scoped=50d0baa1&lang.css[22m
+[2m12:39:31[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/assets/main.css[22m
+[2m12:40:00[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/patterns/WorkbenchFrame.stories.js[22m
+[2m12:40:40[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m12:40:40[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m12:40:40[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m12:40:40[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m12:40:43[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m12:40:48[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m12:40:48[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m12:40:50[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m12:41:35[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/patterns/BentoBackground.test.js[22m
+[2m12:41:35[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/patterns/WorkbenchFrame.vue?vue&type=style&index=0&scoped=43ff1f96&lang.css[22m
+[2m12:48:06[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue?vue&type=style&index=0&scoped=2dc54a20&lang.css[22m
+[2m12:49:12[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/patterns/WorkbenchFrame.vue?vue&type=style&index=0&scoped=43ff1f96&lang.css[22m
+[2m12:53:07[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m12:53:07[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m12:53:07[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m12:53:07[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m12:53:09[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m12:53:12[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m12:53:14[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m12:53:14[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m12:53:14[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m12:53:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m12:53:21[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m13:00:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/assets/main.css[22m
+[2m13:00:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/assets/main.css[22m
+[2m13:03:05[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/Home.test.js[22m
+[2m13:03:18[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m13:03:18[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m13:03:18[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m13:03:18[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m13:03:21[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m13:03:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m13:03:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m13:03:28[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m13:04:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue?vue&type=style&index=0&scoped=2dc54a20&lang.css, /src/views/Home.vue, /src/assets/main.css[22m
+[2m13:04:42[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/assets/main.css[22m
+[2m13:50:09[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/assets/main.css[22m
+[2m13:55:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/assets/main.css[22m
+[2m13:55:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/Home.test.js[22m
+[2m13:56:32[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/assets/main.css[22m
+[2m13:57:12[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/Home.test.js[22m
+[2m13:58:41[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/composables/home/useHomeEntrance.test.js[22m
+[2m13:59:46[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/views/Home.vue[22m
+[2m14:01:27[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m14:01:27[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m14:01:27[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m14:01:27[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m14:01:29[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/index.html[22m
+[2m14:01:34[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/admin/admin.html[22m
+[2m14:01:34[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/second-self/index.html[22m
+[2m14:01:36[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mstorybook-static/iframe.html[22m
+[2m14:01:54[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/workbench/CasesPanel.vue[22m
+[2m14:03:10[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33m@vueuse/core, motion-v[32m[39m
+[2m14:03:10[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m14:28:35[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/patterns/MotionWrapper.test.js[22m
+[2m14:29:12[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/patterns/MotionWrapper.vue, /src/assets/main.css[22m
+[2m14:29:20[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/widgets/WorkHeatmapWidget.test.js[22m
+[2m14:29:20[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/components/data-display/UiCompactHeader.test.js[22m
+[2m14:29:38[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/patterns/MotionWrapper.test.js[22m
+[2m14:30:06[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/design-system/patterns/MotionWrapper.test.js[22m
+[2m14:30:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/components/data-display/UiCompactHeader.vue, /src/assets/main.css[22m
+[2m14:30:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/design-system/widgets/WorkHeatmapWidget.vue, /src/assets/main.css, /src/design-system/widgets/WorkHeatmapWidget.vue?vue&type=style&index=0&scoped=91785133&lang.css[22m
+[2m14:33:34[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m14:34:22[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/assets/main.css[22m
+[2m14:35:23[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/Home.test.js[22m

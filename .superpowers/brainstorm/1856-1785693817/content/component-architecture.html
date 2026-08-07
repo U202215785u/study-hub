@@ -1,0 +1,67 @@
+<style>
+  .architecture { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, .85fr); gap: 22px; align-items: start; }
+  .dashboard-map { padding: 16px; border: 1px solid #353a33; border-radius: 12px; background: #0a0d09; color: #f5f6ee; }
+  .map-nav { display: flex; align-items: center; gap: 7px; height: 46px; border: 1px solid #30352e; border-radius: 999px; padding: 0 12px; background: #151814; }
+  .map-brand { color: #d7ff63; font-weight: 800; }
+  .map-chip { border: 1px solid #3b4038; border-radius: 999px; padding: 5px 9px; color: #b8beb2; font-size: 10px; }
+  .map-search { width: 120px; height: 24px; margin-left: auto; border-radius: 999px; background: #252824; }
+  .map-greeting { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; padding: 9px 4px; border-bottom: 1px solid #343a31; }
+  .map-greeting strong { font-size: 17px; }
+  .map-greeting span { font: 700 15px/1 monospace; }
+  .bento { display: grid; min-height: 420px; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1.65fr 1fr; gap: 8px; }
+  .zone { position: relative; overflow: hidden; border: 1px solid #3a4037; border-radius: 9px; padding: 10px; background: #1b1d1a; }
+  .zone::after { content: attr(data-component); position: absolute; right: 7px; bottom: 7px; border-radius: 4px; padding: 3px 5px; background: #d7ff63; color: #11140f; font: 700 9px/1 monospace; }
+  .zone h4 { margin: 0; color: #f5f6ee; font-size: 12px; }
+  .zone p { margin: 7px 0 0; color: #8b9186; font-size: 10px; }
+  .zone.heat { background-image: radial-gradient(circle, #d7ff63 0 3px, transparent 3.5px), radial-gradient(circle, #8b73ff 0 3px, transparent 3.5px), radial-gradient(circle, #ff855f 0 3px, transparent 3.5px); background-position: 14px 54px, 21px 61px, 28px 54px; background-size: 22px 22px; }
+  .zone.task { grid-column: 3; grid-row: 1; }
+  .zone.queue { grid-column: 1; grid-row: 2; }
+  .nested { display: grid; grid-column: 2; grid-row: 2; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 7px; }
+  .nested .zone:first-child { grid-column: 1 / -1; }
+  .nested .zone { padding: 7px; }
+  .nested .zone::after { font-size: 7px; }
+  .zone.flow { grid-column: 3; grid-row: 2; }
+  .layers { display: grid; gap: 8px; }
+  .layer { border: 1px solid #394037; border-radius: 8px; padding: 10px 12px; background: #171a16; }
+  .layer h3 { margin: 0 0 5px; font-size: 13px; }
+  .layer p { margin: 0; color: #aab1a4; font-size: 11px; line-height: 1.55; }
+  .layer[data-status="keep"] { border-left: 4px solid #52d5a1; }
+  .layer[data-status="rebuild"] { border-left: 4px solid #d7ff63; }
+  .legend { display: flex; gap: 12px; margin: 10px 0 0; color: #99a092; font-size: 11px; }
+  .legend b:first-child { color: #52d5a1; }
+  .legend b:last-child { color: #d7ff63; }
+  @media (max-width: 950px) { .architecture { grid-template-columns: 1fr; } }
+</style>
+
+<h2>方案 B：从 Figma 重新建立正确的组件边界</h2>
+<p class="subtitle">首页结构不再迁就通用组件；公共组件从设计稿中真实重复的规则派生。</p>
+
+<div class="architecture">
+  <div class="dashboard-map">
+    <div class="map-nav"><span class="map-brand">Study Hub</span><span class="map-chip">首页</span><span class="map-chip">Wiki</span><span class="map-chip">自动化</span><span class="map-chip">DDL</span><span class="map-search"></span></div>
+    <div class="map-greeting"><strong>早上好，章</strong><span>6月7日 11:20</span></div>
+    <div class="bento">
+      <section class="zone heat" data-component="WorkHeatmapWidget"><h4>工作热力</h4><p>真实活动数据映射到固定热力格</p></section>
+      <section class="zone" data-component="CalendarAgendaWidget"><h4>2026年6月</h4><p>周历 + 当日日程</p></section>
+      <section class="zone task" data-component="TodayFocusWidget"><h4>今日任务</h4><p>时间轴 + 堆叠任务卡</p></section>
+      <section class="zone queue" data-component="AutomationQueueWidget"><h4>自动化队列</h4><p>固定三行 + 输入 + 查看队列</p></section>
+      <div class="nested">
+        <section class="zone" data-component="KnowledgeWidget"><h4>知识库</h4></section>
+        <section class="zone" data-component="DailyMemoryWidget"><h4>今日手账</h4></section>
+        <section class="zone" data-component="QuickCommandWidget"><h4>快捷指令</h4></section>
+      </div>
+      <section class="zone flow" data-component="QuickWorkflowWidget"><h4>快捷工作流</h4><p>步骤链 + 地址输入</p></section>
+    </div>
+  </div>
+
+  <div>
+    <div class="layers">
+      <section class="layer" data-status="rebuild"><h3>Page</h3><p><b>HomeDashboard</b>：只负责真实数据映射、路由和弹层，不定义视觉规则。</p></section>
+      <section class="layer" data-status="rebuild"><h3>Widgets</h3><p>热力、日程、今日任务、队列、知识库、手账、快捷指令、创作入口、工作流。每个 Widget 保留自己的内部结构。</p></section>
+      <section class="layer" data-status="rebuild"><h3>Patterns</h3><p><b>WorkbenchFrame</b>、<b>CapsuleNavigation</b>、<b>GreetingBar</b>、<b>BentoDashboardGrid</b>。这里重建，替换错误的全屏 Dock 和均匀网格。</p></section>
+      <section class="layer" data-status="keep"><h3>Composites</h3><p>QueueRow、ScheduleRow、KnowledgeRow、ThumbnailStrip、WorkflowChain。只在确有重复时提取。</p></section>
+      <section class="layer" data-status="keep"><h3>Primitives + Foundations</h3><p>Button、IconButton、Input、Pill、StatusDot、Progress，以及经过 Figma 校准的颜色、间距、圆角和字体令牌。</p></section>
+    </div>
+    <div class="legend"><b>绿色：可保留和校准</b><b>黄绿色：必须重建</b></div>
+  </div>
+</div>

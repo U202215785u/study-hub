@@ -12,15 +12,15 @@ defineProps({ ariaLabel: { type: String, default: '首页模块' } })
 .bento-dashboard-grid {
   display: grid;
   width: 100%;
+  height: auto;
+  min-height: 656px;
   min-width: 0;
   grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(4, 153.36px);
   grid-auto-rows: 153.36px;
   gap: 14.31px;
 }
-@media (max-width: 1100px) {
-  .bento-dashboard-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); min-width: 1010px; }
-}
 @media (max-width: 767px) {
-  .bento-dashboard-grid { min-width: 1010px; }
+  .bento-dashboard-grid { min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: auto; }
 }
 </style>

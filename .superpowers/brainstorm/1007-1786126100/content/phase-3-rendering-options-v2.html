@@ -1,0 +1,41 @@
+<style>
+  .phase3 { color: #eef3ec; max-width: 1200px; margin: 0 auto; font-family: system-ui, sans-serif; }
+  .phase3 h2 { font-size: 28px; margin: 0 0 8px; }
+  .phase3 p { color: #b9c5b7; line-height: 1.55; }
+  .phase3-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+  .phase3-option { overflow: hidden; border: 1px solid #3c493a; border-radius: 8px; cursor: pointer; background: #151a17; transition: transform .18s ease, border-color .18s ease; }
+  .phase3-option:hover { border-color: #d2f36a; transform: translateY(-2px); }
+  .phase3-scene { position: relative; min-height: 350px; overflow: hidden; background: #0d1210; }
+  .phase3-copy { padding: 18px; border-top: 1px solid #303a30; }
+  .phase3-copy h3 { margin: 0; font-size: 18px; }
+  .phase3-copy p { margin: 8px 0 0; font-size: 14px; }
+  .phase3-tag { position: absolute; z-index: 6; top: 16px; left: 16px; color: #d7f77b; font-size: 12px; letter-spacing: .08em; }
+  .phase3-aurora { position: absolute; inset: -20%; background: radial-gradient(circle at 22% 25%, rgb(205 245 101 / 46%), transparent 26%), radial-gradient(circle at 80% 28%, rgb(75 145 255 / 28%), transparent 30%), radial-gradient(circle at 50% 90%, rgb(73 214 163 / 24%), transparent 32%); filter: blur(22px); animation: phase3-drift 8s ease-in-out infinite alternate; }
+  .phase3-stars { position: absolute; inset: 0; opacity: .6; background-image: radial-gradient(circle, #efffe5 1px, transparent 1.5px); background-size: 42px 42px; }
+  @keyframes phase3-drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(2%, 1%, 0) scale(1.09); } }
+  .phase3-dashboard { position: absolute; inset: 45px 32px 30px; display: grid; grid-template-columns: 1.35fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 9px; z-index: 2; }
+  .phase3-card { border: 1px solid rgb(238 255 223 / 16%); border-radius: 7px; background: rgb(19 27 22 / 78%); box-shadow: 0 14px 28px rgb(0 0 0 / 20%); }
+  .phase3-card:first-child { grid-row: span 2; }
+  .phase3-card:last-child { grid-column: span 2; }
+  .phase3-bar { height: 7px; margin: 16px; border-radius: 2px; background: rgb(230 255 213 / 17%); }
+  .phase3-bar.short { width: 46%; }
+  .phase3-heat { display: grid; place-items: center; perspective: 750px; }
+  .phase3-floor { position: relative; width: 76%; height: 220px; transform: rotateX(58deg) rotateZ(-16deg); background-image: linear-gradient(rgb(193 236 155 / 16%) 1px, transparent 1px), linear-gradient(90deg, rgb(193 236 155 / 16%) 1px, transparent 1px); background-size: 10% 14.285%; border: 1px solid rgb(211 244 108 / 35%); }
+  .phase3-bars { position: absolute; inset: 19px; display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(7, 1fr); gap: 5px; align-items: end; }
+  .phase3-column { height: var(--h); background: linear-gradient(90deg, #326c6f, #84e3cb, #ddf06d); border: 1px solid rgb(245 255 209 / 42%); box-shadow: 0 0 18px rgb(203 255 111 / 26%); transform: translateZ(calc(var(--h) / 2)); }
+  @media (max-width: 760px) { .phase3-grid { grid-template-columns: 1fr; } .phase3-scene { min-height: 300px; } }
+</style>
+<section class="phase3">
+  <h2>Phase 3 效果预览</h2>
+  <p>点击卡片选择优先实现的目标。两种方案都会保留 CSS 静态降级。</p>
+  <div class="phase3-grid">
+    <article class="phase3-option" data-choice="webgl-background" onclick="toggleSelect(this)">
+      <div class="phase3-scene"><span class="phase3-tag">A / 全页单 canvas</span><div class="phase3-aurora"></div><div class="phase3-stars"></div><div class="phase3-dashboard"><div class="phase3-card"><div class="phase3-bar"></div><div class="phase3-bar short"></div></div><div class="phase3-card"><div class="phase3-bar short"></div></div><div class="phase3-card"><div class="phase3-bar"></div></div><div class="phase3-card"><div class="phase3-bar"></div></div></div></div>
+      <div class="phase3-copy"><h3>轻量动态背景</h3><p>慢速流场和星点在九个仪表盘卡片背后建立空间感，内容仍保持清晰与可访问。</p></div>
+    </article>
+    <article class="phase3-option" data-choice="webgl-heatmap" onclick="toggleSelect(this)">
+      <div class="phase3-scene phase3-heat"><span class="phase3-tag">B / 单卡数据视图</span><div class="phase3-floor"><div class="phase3-bars"><i class="phase3-column" style="--h:24px"></i><i class="phase3-column" style="--h:58px"></i><i class="phase3-column" style="--h:93px"></i><i class="phase3-column" style="--h:38px"></i><i class="phase3-column" style="--h:73px"></i><i class="phase3-column" style="--h:28px"></i><i class="phase3-column" style="--h:86px"></i><i class="phase3-column" style="--h:48px"></i><i class="phase3-column" style="--h:21px"></i><i class="phase3-column" style="--h:66px"></i><i class="phase3-column" style="--h:43px"></i><i class="phase3-column" style="--h:78px"></i><i class="phase3-column" style="--h:31px"></i><i class="phase3-column" style="--h:61px"></i><i class="phase3-column" style="--h:91px"></i><i class="phase3-column" style="--h:23px"></i><i class="phase3-column" style="--h:55px"></i><i class="phase3-column" style="--h:70px"></i><i class="phase3-column" style="--h:36px"></i><i class="phase3-column" style="--h:64px"></i></div></div></div>
+      <div class="phase3-copy"><h3>3D 工作热力图</h3><p>把已有学习活跃度映射为柱状地形，成为可旋转观察的单卡数据亮点。</p></div>
+    </article>
+  </div>
+</section>

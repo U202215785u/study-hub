@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from threading import Lock
 
 from mcp.types import TextContent, Tool
 
@@ -12,11 +13,18 @@ from .models import ButlerStateError
 from .runtime import ButlerRuntime
 from .storage import initialize_butler_schema
 
+_schema_ready = False
+_schema_lock = Lock()
 
 def _connection():
-    """Provide a database connection with the additive Butler schema available."""
+    """Provide a connection; bootstrap the additive schema once per process."""
+    global _schema_ready
     conn = get_db()
-    initialize_butler_schema(conn)
+    if not _schema_ready:
+        with _schema_lock:
+            if not _schema_ready:
+                initialize_butler_schema(conn)
+                _schema_ready = True
     return conn
 
 
@@ -25,6 +33,9 @@ def _runtime() -> ButlerRuntime:
 
 
 _TOOL_SPECS = (
+    ("butler_start_case", "开始一个 Butler 任务；默认走 simple，只有用户明确指定 complex 才进入完整协作链。", {"description": {"type": "string"}, "mode": {"type": "string", "enum": ["simple", "complex"]}, "task_type": {"type": "string"}, "feature_code": {"type": "string"}, "title": {"type": "string"}}, ("description",)),
+    ("butler_finalize_case", "在一个事务中记录改动、六项审查、原始问题验证并按结果收尾。", {"case_id": {"type": "string"}, "summary": {"type": "string"}, "files": {"type": "array", "items": {"type": "string"}}, "audit": {"type": "object"}, "validation": {"type": "object"}}, ("case_id", "summary", "files", "audit", "validation")),
+    ("butler_set_mode", "按用户明确选择切换当前未终止任务的处理模式。", {"case_id": {"type": "string"}, "mode": {"type": "string", "enum": ["simple", "complex"]}}, ("case_id", "mode")),
     ("butler_open_case", "登记一个项目问题、改动或检查任务。任务类型可留空或使用自然语言，管家会归类。", {"task_type": {"type": "string", "description": "可选；支持排查、调查、研究等自然语言。"}, "description": {"type": "string"}, "feature_code": {"type": "string"}, "title": {"type": "string"}}, ("description",)),
     ("butler_get_case", "读取一项管家任务的当前记录。", {"case_id": {"type": "string"}}, ("case_id",)),
     ("butler_list_cases", "列出尚未归档的管家任务。", {"include_archived": {"type": "boolean"}}, ()),
@@ -111,6 +122,9 @@ async def call_butler_tool(name: str, arguments: dict | None) -> list[TextConten
     runtime = _runtime()
     try:
         handlers = {
+            "butler_start_case": lambda: runtime.start_case(description=args["description"], mode=args.get("mode", "simple"), task_type=args.get("task_type", ""), feature_code=args.get("feature_code", ""), title=args.get("title", "")),
+            "butler_finalize_case": lambda: runtime.finalize_case(args["case_id"], summary=args["summary"], files=args["files"], audit=args["audit"], validation=args["validation"]),
+            "butler_set_mode": lambda: runtime.set_mode(args["case_id"], mode=args["mode"]),
             "butler_open_case": lambda: runtime.open_case(task_type=args.get("task_type", ""), description=args["description"], feature_code=args.get("feature_code", ""), title=args.get("title", "")),
             "butler_get_case": lambda: runtime.get_case(args["case_id"]),
             "butler_list_cases": lambda: runtime.list_cases(include_archived=args.get("include_archived", False)),

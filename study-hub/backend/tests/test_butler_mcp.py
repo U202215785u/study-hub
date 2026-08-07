@@ -20,6 +20,9 @@ def test_mcp_exposes_all_butler_lifecycle_groups():
         "butler_recommend_chain",
         "butler_accept_task_card",
         "butler_report_execution_result",
+        "butler_start_case",
+        "butler_finalize_case",
+        "butler_set_mode",
     } <= names
 
 
@@ -44,6 +47,93 @@ def test_open_case_mcp_response_contains_case_id_and_next_action():
     payload = json.loads(content[0].text)
     assert payload["case_id"]
     assert payload["next_action"]["kind"] == "locate_context"
+
+
+def test_start_case_mcp_uses_simple_path_without_a_second_next_action_call():
+    from butler.mcp_tools import call_butler_tool
+
+    content = asyncio.run(
+        call_butler_tool(
+            "butler_start_case", {"description": "修复保存按钮状态"}
+        )
+    )
+
+    payload = json.loads(content[0].text)
+    assert payload["result"]["mode"] == "simple"
+    assert payload["result"]["status"] == "implementing"
+    assert payload["next_action"]["kind"] == "finalize_case"
+
+
+def test_finalize_case_mcp_returns_completed_case():
+    from butler.mcp_tools import call_butler_tool
+
+    started = asyncio.run(
+        call_butler_tool("butler_start_case", {"description": "修复保存按钮状态"})
+    )
+    case_id = json.loads(started[0].text)["case_id"]
+    content = asyncio.run(
+        call_butler_tool(
+            "butler_finalize_case",
+            {
+                "case_id": case_id,
+                "summary": "修复保存后的状态刷新",
+                "files": ["frontend/src/views/Home.vue"],
+                "audit": {key: "passed" for key in ("null", "boundary", "error", "impact", "regression", "pattern")},
+                "validation": {"passed": True, "evidence": "回归测试通过"},
+            },
+        )
+    )
+
+    payload = json.loads(content[0].text)
+    assert payload["result"]["status"] == "completed"
+
+
+def test_set_mode_mcp_changes_only_the_requested_case():
+    from butler.mcp_tools import call_butler_tool
+
+    started = asyncio.run(
+        call_butler_tool("butler_start_case", {"description": "显式切换复杂逻辑"})
+    )
+    case_id = json.loads(started[0].text)["case_id"]
+    content = asyncio.run(
+        call_butler_tool("butler_set_mode", {"case_id": case_id, "mode": "complex"})
+    )
+
+    assert json.loads(content[0].text)["result"]["mode"] == "complex"
+
+
+def test_mcp_approval_can_be_requested_from_simple_implementation():
+    from butler.mcp_tools import call_butler_tool
+
+    started = asyncio.run(
+        call_butler_tool("butler_start_case", {"description": "启动本机任务板服务"})
+    )
+    started_payload = json.loads(started[0].text)
+    case_id = started_payload["case_id"]
+
+    requested = asyncio.run(
+        call_butler_tool(
+            "butler_request_approval",
+            {
+                "case_id": case_id,
+                "risk_kind": "local_service",
+                "summary": "启动本机任务板服务并验证快捷方式",
+            },
+        )
+    )
+    approval_payload = json.loads(requested[0].text)
+    approval_id = approval_payload["result"]["id"]
+
+    resolved = asyncio.run(
+        call_butler_tool(
+            "butler_resolve_approval",
+            {"approval_id": approval_id, "approved": True, "response": "允许"},
+        )
+    )
+    assert json.loads(resolved[0].text)["result"]["status"] == "approved"
+
+    begun = asyncio.run(call_butler_tool("butler_begin_implementation", {"case_id": case_id}))
+    assert json.loads(begun[0].text)["result"]["status"] == "implementing"
 
 
 def test_mcp_returns_a_readable_error_without_a_stack_trace():

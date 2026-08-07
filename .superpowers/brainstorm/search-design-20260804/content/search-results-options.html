@@ -1,0 +1,92 @@
+<style>
+  .search-options { display: grid; gap: 18px; }
+  .search-options .intro { margin-bottom: 2px; }
+  .search-options .intro h2 { margin-bottom: 6px; }
+  .search-options .intro p { max-width: 760px; }
+  .search-options .cards { gap: 16px; }
+  .search-options .card { padding: 0; overflow: hidden; }
+  .search-options .card-body { padding: 16px; }
+  .search-options .card-body h3 { margin: 0 0 6px; }
+  .search-options .card-body p { margin: 0 0 14px; }
+  .search-shell { border: 1px solid #d9ded8; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(22, 32, 26, .08); overflow: hidden; }
+  .search-input { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid #e7ebe5; color: #1e291f; font-size: 14px; }
+  .search-input .icon { color: #718171; font-size: 16px; }
+  .search-input .query { flex: 1; font-weight: 700; }
+  .search-input .esc { color: #9aa69b; font-size: 11px; }
+  .result-section { padding: 12px 16px 14px; }
+  .result-section + .result-section { border-top: 1px solid #eef1ec; }
+  .result-label { display: flex; align-items: center; justify-content: space-between; color: #7d897e; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .result-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; color: #233126; }
+  .result-row strong { display: block; font-size: 13px; }
+  .result-row span { display: block; margin-top: 3px; color: #829083; font-size: 11px; }
+  .result-row .arrow { margin-left: auto; color: #94a093; }
+  .result-icon { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; background: #edf5df; color: #55721e; font-size: 13px; }
+  .result-icon.article { background: #eef0fa; color: #5864a6; }
+  .result-icon.ai { background: #fff3d9; color: #a56d12; }
+  .ai-bar { display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-top: 1px solid #e7ebe5; color: #5f6f61; font-size: 12px; }
+  .ai-bar strong { color: #304534; }
+  .columns { display: grid; grid-template-columns: 1fr 1fr; }
+  .columns .result-section + .result-section { border-top: 0; border-left: 1px solid #eef1ec; }
+  .answer { padding: 13px 16px; color: #3d4c40; font-size: 12px; line-height: 1.55; background: #fffaf0; }
+  .answer button { margin-top: 9px; border: 0; border-radius: 7px; padding: 7px 10px; background: #d7ff63; color: #17200f; font-size: 11px; font-weight: 800; }
+</style>
+
+<div class="search-options">
+  <div class="intro">
+    <h2>搜索展开态：选择第一层结构</h2>
+    <p class="subtitle">三个方向都只面向 Study Hub 内部内容；点击卡片可以记录你的偏好。</p>
+  </div>
+
+  <div class="cards">
+    <div class="card" data-choice="grouped" onclick="toggleSelect(this)">
+      <div class="search-shell">
+        <div class="search-input"><span class="icon">⌕</span><span class="query">知识库交互</span><span class="esc">ESC</span></div>
+        <div class="result-section">
+          <div class="result-label"><span>功能入口</span><span>2</span></div>
+          <div class="result-row"><div class="result-icon">⌂</div><div><strong>知识库</strong><span>打开文档库，继续筛选</span></div><span class="arrow">↗</span></div>
+          <div class="result-row"><div class="result-icon">◎</div><div><strong>Study UI 组件</strong><span>进入设计系统文档</span></div><span class="arrow">↗</span></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label"><span>文章与知识</span><span>3</span></div>
+          <div class="result-row"><div class="result-icon article">▤</div><div><strong>知识库交互规范</strong><span>文档 · 2026-08-03</span></div><span class="arrow">→</span></div>
+          <div class="result-row"><div class="result-icon article">▤</div><div><strong>首页搜索设计记录</strong><span>Wiki · 相关度 92%</span></div><span class="arrow">→</span></div>
+        </div>
+        <div class="ai-bar"><div class="result-icon ai">✦</div><span><strong>问一问 AI 助手</strong>　让 AI 帮你找到入口</span><span class="arrow">→</span></div>
+      </div>
+      <div class="card-body"><h3>A · 分组列表</h3><p>最接近参考图。先给出功能入口，再给出文章，底部固定 AI 问答。</p></div>
+    </div>
+
+    <div class="card" data-choice="columns" onclick="toggleSelect(this)">
+      <div class="search-shell">
+        <div class="search-input"><span class="icon">⌕</span><span class="query">知识库交互</span><span class="esc">ESC</span></div>
+        <div class="columns">
+          <div class="result-section">
+            <div class="result-label"><span>功能</span><span>2</span></div>
+            <div class="result-row"><div class="result-icon">⌂</div><div><strong>知识库</strong><span>打开文档库</span></div><span class="arrow">↗</span></div>
+            <div class="result-row"><div class="result-icon">◎</div><div><strong>Study UI</strong><span>设计系统</span></div><span class="arrow">↗</span></div>
+          </div>
+          <div class="result-section">
+            <div class="result-label"><span>文章</span><span>3</span></div>
+            <div class="result-row"><div class="result-icon article">▤</div><div><strong>交互规范</strong><span>文档 · 92%</span></div><span class="arrow">→</span></div>
+            <div class="result-row"><div class="result-icon article">▤</div><div><strong>搜索记录</strong><span>Wiki · 87%</span></div><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="ai-bar"><div class="result-icon ai">✦</div><span><strong>问一问 AI</strong>　描述目标，直接进入页面</span><span class="arrow">→</span></div>
+      </div>
+      <div class="card-body"><h3>B · 双栏扫描</h3><p>功能和文章并列，适合熟练用户快速比较，面板更紧凑。</p></div>
+    </div>
+
+    <div class="card" data-choice="ai-first" onclick="toggleSelect(this)">
+      <div class="search-shell">
+        <div class="search-input"><span class="icon">⌕</span><span class="query">我想整理今天的学习记录</span><span class="esc">ESC</span></div>
+        <div class="answer"><strong>问一问 AI 助手</strong><br>可以打开“每日复盘”，也可以先查看最近的学习记录。<br><button>打开每日复盘</button></div>
+        <div class="result-section">
+          <div class="result-label"><span>相关入口</span><span>2</span></div>
+          <div class="result-row"><div class="result-icon">◷</div><div><strong>每日复盘</strong><span>记录、润色并生成周报</span></div><span class="arrow">↗</span></div>
+          <div class="result-row"><div class="result-icon article">▤</div><div><strong>学习记录</strong><span>文章 · 最近更新</span></div><span class="arrow">→</span></div>
+        </div>
+      </div>
+      <div class="card-body"><h3>C · AI 主入口</h3><p>自然语言目标优先由 AI 解释，并给出一个明确的可执行入口。</p></div>
+    </div>
+  </div>
+</div>

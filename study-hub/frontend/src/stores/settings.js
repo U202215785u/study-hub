@@ -45,6 +45,22 @@ export const useSettingsStore = defineStore('settings', () => {
   // Electron IPC 可用时通过主进程代理请求，否则直接用 fetch
   const _electronAPI = typeof window !== 'undefined' ? window.electronAPI : null
 
+  function apiErrorMessage(payload, fallback) {
+    if (typeof payload === 'string' && payload.trim()) return payload
+    if (payload && typeof payload === 'object') {
+      const message = payload.detail || payload.error || payload.message
+      if (typeof message === 'string' && message.trim()) return message
+    }
+    return fallback
+  }
+
+  async function readJsonResponse(res) {
+    let data = null
+    try { data = await res.json() } catch {}
+    if (!res.ok) throw new Error(apiErrorMessage(data, `Request failed (${res.status})`))
+    return data
+  }
+
   async function apiGet(path) {
     if (_electronAPI) {
       const result = await _electronAPI.apiRequest('GET', path)
@@ -52,7 +68,7 @@ export const useSettingsStore = defineStore('settings', () => {
       return result.data
     }
     const res = await fetch(`${apiBase.value}${path}`)
-    return res.json()
+    return readJsonResponse(res)
   }
 
   async function apiPost(path, body) {
@@ -66,7 +82,7 @@ export const useSettingsStore = defineStore('settings', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
-    return res.json()
+    return readJsonResponse(res)
   }
 
   async function apiDelete(path) {
@@ -76,7 +92,7 @@ export const useSettingsStore = defineStore('settings', () => {
       return result.data
     }
     const res = await fetch(`${apiBase.value}${path}`, { method: 'DELETE' })
-    return res.json()
+    return readJsonResponse(res)
   }
 
   async function apiPut(path, body) {
@@ -90,14 +106,14 @@ export const useSettingsStore = defineStore('settings', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
-    return res.json()
+    return readJsonResponse(res)
   }
 
   async function apiUpload(path, formData) {
     // FormData 无法通过 IPC 序列化，始终用直接 fetch
     // Electron 中 BrowserWindow 的 webSecurity=false 允许直连 localhost
     const res = await fetch(`${apiBase.value}${path}`, { method: 'POST', body: formData })
-    return res.json()
+    return readJsonResponse(res)
   }
 
   function getSettingsStatus() { return apiGet('/settings/status') }

@@ -130,6 +130,8 @@ cd backend && python main.py
 - 管理控制台：**http://localhost:8741/admin.html** ← 看状态、日志、数据量
 - API 文档：**http://localhost:8741/docs**
 
+端口分配和开发/测试入口见 [端口规范](docs/端口规范.md)。日常使用只需访问 `http://localhost:8741`。
+
 > 首次启动会自动下载中文 embedding 模型（~95MB），日志会显示进度。
 
 ## Claude Desktop 深度集成（MCP）

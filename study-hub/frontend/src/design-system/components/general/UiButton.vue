@@ -7,6 +7,7 @@
     :aria-busy="loading ? 'true' : undefined"
     :data-variant="variant"
     :data-size="size"
+    :data-shape="shape"
     :data-block="block ? 'true' : undefined"
     @click="onClick"
   >
@@ -31,7 +32,12 @@ const props = defineProps({
   size: {
     type: String,
     default: 'md',
-    validator: (value) => ['sm', 'md', 'lg'].includes(value),
+    validator: (value) => ['xs', 'sm', 'md', 'lg'].includes(value),
+  },
+  shape: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['default', 'pill'].includes(value),
   },
   type: {
     type: String,
@@ -75,6 +81,16 @@ function onClick(event) {
   min-height: 32px;
   padding: 0 var(--ui-space-3);
   font-size: 12px;
+}
+
+.ui-button[data-size='xs'] {
+  min-height: 24px;
+  padding: 0 var(--ui-space-2);
+  font-size: 10px;
+}
+
+.ui-button[data-shape='pill'] {
+  border-radius: 999px;
 }
 
 .ui-button[data-size='md'] {

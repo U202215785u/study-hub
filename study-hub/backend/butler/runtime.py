@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from .catalog import EXTERNAL_EXPERTS, INTERNAL_ROLES, recommend_chain as catalog_recommend_chain, resolve_experts
-from .models import NO_PROGRESS_RESULTS, TASK_TYPES, ButlerStateError, normalize_task_type, validate_transition
+from .models import MODES, NO_PROGRESS_RESULTS, TASK_TYPES, ButlerStateError, normalize_mode, normalize_task_type, validate_transition
 from .storage import (
     append_event,
     create_approval,
@@ -51,10 +51,11 @@ class ButlerRuntime:
             raise ButlerStateError(f"unknown Butler case: {case_id}")
         return case
 
-    def open_case(self, *, task_type: str = "", description: str, feature_code="", title="") -> dict:
+    def open_case(self, *, task_type: str = "", description: str, feature_code="", title="", mode="complex") -> dict:
         if not description or not description.strip():
             raise ButlerStateError("a case needs a user-reported description")
         task_type = normalize_task_type(task_type, description)
+        mode = normalize_mode(mode)
 
         def create(conn):
             case = create_task(
@@ -66,6 +67,7 @@ class ButlerRuntime:
                     "description": description.strip(),
                     "feature_code": feature_code.strip(),
                     "status": "received",
+                    "mode": mode,
                     "risk_level": "normal",
                     "attempt_count": 0,
                     "current_role": "butler",
@@ -77,6 +79,49 @@ class ButlerRuntime:
             return self._case(conn, case["id"])
 
         return self._with_connection(create)
+
+    def start_case(
+        self,
+        *,
+        description: str,
+        mode: str = "simple",
+        task_type: str = "",
+        feature_code: str = "",
+        title: str = "",
+    ) -> dict:
+        """Open a case and enter the user-selected execution path."""
+        mode = normalize_mode(mode)
+        case = self.open_case(
+            task_type=task_type,
+            description=description,
+            feature_code=feature_code,
+            title=title,
+            mode=mode,
+        )
+        if mode == "simple":
+            return self.begin_implementation(case["id"])
+        return case
+
+    def set_mode(self, case_id: str, *, mode: str) -> dict:
+        mode = normalize_mode(mode)
+
+        def change(conn):
+            case = self._case(conn, case_id)
+            if case["status"] in {"completed", "cancelled", "archived"}:
+                raise ButlerStateError("terminal cases cannot change mode")
+            if case["mode"] == mode:
+                return case
+            case = update_task(conn, case_id, mode=mode)
+            append_event(
+                conn,
+                case_id,
+                "mode_changed",
+                "已按用户明确选择切换处理模式",
+                payload={"mode": mode},
+            )
+            return case
+
+        return self._with_connection(change)
 
     def get_case(self, case_id: str) -> dict:
         return self._with_connection(lambda conn: self._case(conn, case_id))
@@ -418,9 +463,16 @@ class ButlerRuntime:
 
         def continue_case(conn):
             case = self._case(conn, case_id)
-            validate_transition(case["status"], "investigating")
+            target_status = "implementing" if case["mode"] == "simple" else "investigating"
+            validate_transition(case["status"], target_status)
             context = {**case["context"], "resume_direction": direction.strip()}
-            case = update_task(conn, case_id, status="investigating", current_role="debugger", context=context)
+            case = update_task(
+                conn,
+                case_id,
+                status=target_status,
+                current_role="implementer" if target_status == "implementing" else "debugger",
+                context=context,
+            )
             append_event(
                 conn,
                 case_id,
@@ -555,7 +607,13 @@ class ButlerRuntime:
                 raise ButlerStateError("validation can only be recorded while verifying")
             context = {**case["context"], "validation": {"passed": passed, "evidence": evidence.strip()}}
             count = case["attempt_count"] if passed else case["attempt_count"] + 1
-            status = "verifying" if passed else ("blocked" if count >= 3 else "investigating")
+            status = "verifying" if passed else (
+                "blocked"
+                if count >= 3
+                else ("implementing" if case["mode"] == "simple" else "investigating")
+            )
+            if status != case["status"]:
+                validate_transition(case["status"], status)
             case = update_task(conn, case_id, status=status, attempt_count=count, context=context)
             append_event(
                 conn,
@@ -579,6 +637,78 @@ class ButlerRuntime:
             return case
 
         return self._with_connection(record)
+
+    def finalize_case(
+        self,
+        case_id: str,
+        *,
+        summary: str,
+        files: list[str] | tuple[str, ...] = (),
+        audit: dict | None = None,
+        validation: dict | None = None,
+    ) -> dict:
+        """Record the compact code-task tail in one transaction."""
+        if not summary.strip() or not files:
+            raise ButlerStateError("finalization needs a summary and changed files")
+        if not isinstance(audit, dict):
+            raise ButlerStateError("finalization needs an audit checklist")
+        required_checks = {"null", "boundary", "error", "impact", "regression", "pattern"}
+        if not required_checks <= set(audit):
+            missing = ", ".join(sorted(required_checks - set(audit)))
+            raise ButlerStateError(f"audit is missing checklist items: {missing}")
+        if not isinstance(validation, dict) or not validation.get("evidence", "").strip():
+            raise ButlerStateError("finalization needs validation evidence")
+        passed = bool(validation.get("passed"))
+
+        def finish(conn):
+            case = self._case(conn, case_id)
+            validate_transition(case["status"], "auditing")
+            change = {"summary": summary.strip(), "files": list(files)}
+            update_task(conn, case_id, status="auditing", context={**case["context"], "change": change})
+            append_event(conn, case_id, "change_recorded", "已记录本次改动，等待审查", actor="implementer", payload=change)
+
+            validate_transition("auditing", "verifying")
+            audit_payload = {"verdict": "passed", "checklist": dict(audit)}
+            context = {**case["context"], "change": change, "audit": audit_payload}
+            update_task(conn, case_id, status="verifying", current_role="smoke-tester", context=context)
+            append_event(conn, case_id, "audit_recorded", "审查通过，等待按原始问题验证", actor="auditor", payload=audit_payload)
+
+            count = case["attempt_count"] if passed else case["attempt_count"] + 1
+            target_status = "verifying" if passed else (
+                "blocked" if count >= 3 else ("implementing" if case["mode"] == "simple" else "investigating")
+            )
+            if target_status != "verifying":
+                validate_transition("verifying", target_status)
+            validation_payload = {"passed": passed, "evidence": validation["evidence"].strip()}
+            context = {**context, "validation": validation_payload}
+            update_task(conn, case_id, status=target_status, attempt_count=count, context=context)
+            append_event(
+                conn,
+                case_id,
+                "validation_recorded",
+                "原始问题验证通过" if passed else "原始问题验证未通过，返回继续处理",
+                actor="smoke-tester",
+                payload=validation_payload,
+            )
+            if not passed:
+                append_event(
+                    conn,
+                    case_id,
+                    "attempt_recorded",
+                    "验证失败已计入一次尝试",
+                    actor="smoke-tester",
+                    payload={"action": "validation", "result": "failed", "learned": validation_payload["evidence"], "attempt_count": count},
+                )
+                if target_status == "blocked":
+                    append_event(conn, case_id, "blocked", "连续三次未通过，已停止继续尝试")
+                return self._case(conn, case_id)
+
+            validate_transition("verifying", "completed")
+            case = update_task(conn, case_id, status="completed")
+            append_event(conn, case_id, "completed", "任务已完成并通过验证")
+            return case
+
+        return self._with_connection(finish)
 
     def complete(self, case_id: str) -> dict:
         def finish(conn):
@@ -692,9 +822,9 @@ class ButlerRuntime:
                 "summary": "等待用户确认或拒绝受保护的操作。",
             },
             "implementing": {
-                "kind": "record_change",
-                "required": ("summary", "files"),
-                "summary": "记录实际改动和涉及文件，交给审查。",
+                "kind": "finalize_case" if case["mode"] == "simple" else "record_change",
+                "required": ("summary", "files", "audit", "validation") if case["mode"] == "simple" else ("summary", "files"),
+                "summary": "完成修复、审查和原始问题验证。" if case["mode"] == "simple" else "记录实际改动和涉及文件，交给审查。",
             },
             "auditing": {
                 "kind": "record_audit",
@@ -712,7 +842,8 @@ class ButlerRuntime:
                 "summary": "任务已停止，等待用户决定是否恢复或换一种方式。",
             },
         }
-        return actions.get(
+        action = actions.get(
             case["status"],
             {"kind": "inspect_case", "required": (), "summary": "查看当前任务记录后再继续。"},
         )
+        return {**action, "mode": case["mode"]}

@@ -2,3 +2,9 @@
 command = 'C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe'
 args = ['F:/360MoveData/Users/Administrator/Desktop/代码项目/study web/study-hub/backend/mcp_server.py']
 cwd = 'F:/360MoveData/Users/Administrator/Desktop/代码项目/study web/study-hub'
+
+[mcp_servers.study-hub.tools.butler_request_approval]
+approval_mode = "approve"
+
+[mcp_servers.study-hub.tools.butler_resolve_approval]
+approval_mode = "approve"

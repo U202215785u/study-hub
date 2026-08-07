@@ -1,0 +1,652 @@
+INFO:     Started server process [10068]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8741 (Press CTRL+C to quit)
+[08/04/26 12:32:42] INFO     No device provided, using cpu         model.py:177
+[08/04/26 12:32:44] INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/modules.js                
+                             on "HTTP/1.1 308 Permanent                        
+                             Redirect"                                         
+[08/04/26 12:32:45] INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/config_sen                
+                             tence_transformers.json "HTTP/1.1                 
+                             308 Permanent Redirect"                           
+                    INFO     Loading SentenceTransformer model     model.py:973
+                             from BAAI/bge-small-zh-v1.5.                      
+[08/04/26 12:32:46] INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/config_sen                
+                             tence_transformers.json "HTTP/1.1                 
+                             308 Permanent Redirect"                           
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/README.md                 
+                             "HTTP/1.1 308 Permanent Redirect"                 
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/modules.js                
+                             on "HTTP/1.1 308 Permanent                        
+                             Redirect"                                         
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/sentence_b                
+                             ert_config.json "HTTP/1.1 308                     
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/adapter_co                
+                             nfig.json "HTTP/1.1 308 Permanent                 
+                             Redirect"                                         
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/config.jso                
+                             n "HTTP/1.1 308 Permanent                         
+                             Redirect"                                         
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]Loading weights: 100%|██████████| 71/71 [00:00<00:00, 71005.15it/s]
+[08/04/26 12:32:47] INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/processor_                
+                             config.json "HTTP/1.1 308                         
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/preprocess                
+                             or_config.json "HTTP/1.1 308                      
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/video_prep                
+                             rocessor_config.json "HTTP/1.1 308                
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/preprocess                
+                             or_config.json "HTTP/1.1 308                      
+                             Permanent Redirect"                               
+[08/04/26 12:32:48] INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/tokenizer_                
+                             config.json "HTTP/1.1 308                         
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/config.jso                
+                             n "HTTP/1.1 308 Permanent                         
+                             Redirect"                                         
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/config.jso                
+                             n "HTTP/1.1 308 Permanent                         
+                             Redirect"                                         
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/tokenizer_                
+                             config.json "HTTP/1.1 308                         
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: GET                  _client.py:1025
+                             https://hf-mirror.com/api/models/B                
+                             AAI/bge-small-zh-v1.5/tree/main/ad                
+                             ditional_chat_templates?recursive=                
+                             false&expand=false "HTTP/1.1 308                  
+                             Permanent Redirect"                               
+[08/04/26 12:32:49] INFO     HTTP Request: GET                  _client.py:1025
+                             https://huggingface.co/api/models/                
+                             BAAI/bge-small-zh-v1.5/tree/main/a                
+                             dditional_chat_templates?recursive                
+                             =false&expand=false "HTTP/1.1 404                 
+                             Not Found"                                        
+                    INFO     HTTP Request: GET                  _client.py:1025
+                             https://hf-mirror.com/api/models/B                
+                             AAI/bge-small-zh-v1.5/tree/main?re                
+                             cursive=true&expand=false                         
+                             "HTTP/1.1 308 Permanent Redirect"                 
+[08/04/26 12:32:50] INFO     HTTP Request: GET                  _client.py:1025
+                             https://huggingface.co/api/models/                
+                             BAAI/bge-small-zh-v1.5/tree/main?r                
+                             ecursive=true&expand=false                        
+                             "HTTP/1.1 200 OK"                                 
+                    INFO     HTTP Request: HEAD                 _client.py:1025
+                             https://hf-mirror.com/BAAI/bge-sma                
+                             ll-zh-v1.5/resolve/main/1_Pooling/                
+                             config.json "HTTP/1.1 308                         
+                             Permanent Redirect"                               
+                    INFO     HTTP Request: GET                  _client.py:1025
+                             https://hf-mirror.com/api/models/B                
+                             AAI/bge-small-zh-v1.5 "HTTP/1.1                   
+                             308 Permanent Redirect"                           
+                    INFO     HTTP Request: GET                  _client.py:1025
+                             https://huggingface.co/api/models/                
+                             BAAI/bge-small-zh-v1.5 "HTTP/1.1                  
+                             200 OK"                                           
+[08/04/26 12:32:53] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 12:37:53] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 12:41:30] INFO     [url_monitor] 检查了 0 个 URL，无变更   main.py:79
+[08/04/26 12:41:36] INFO     HTTP Request: GET                  _client.py:1740
+                             https://cn.bing.com/search?q=1&cou                
+                             nt=10 "HTTP/1.1 200 OK"                           
+[08/04/26 12:41:37] INFO     HTTP Request: POST                 _client.py:1740
+                             https://api.deepseek.com/v1/chat/c                
+                             ompletions "HTTP/1.1 401                          
+                             Authorization Required"                           
+[08/04/26 12:41:41] INFO     HTTP Request: GET                  _client.py:1740
+                             https://cn.bing.com/search?q=1&cou                
+                             nt=10 "HTTP/1.1 200 OK"                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             https://api.deepseek.com/v1/chat/c                
+                             ompletions "HTTP/1.1 401                          
+                             Authorization Required"                           
+[08/04/26 12:42:53] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 12:47:53] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 12:52:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 12:57:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:02:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:07:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:12:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:17:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:22:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:27:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:32:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:37:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:42:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:47:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:52:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 13:57:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:02:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:07:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:12:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:17:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:22:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:27:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:32:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:37:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:42:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:47:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:52:54] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 14:57:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:02:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:07:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:12:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:17:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:22:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:27:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:32:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:37:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:42:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:47:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:52:55] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 15:57:56] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:02:56] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:07:56] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:12:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:17:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:22:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:27:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:32:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:37:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:42:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:47:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:52:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 16:57:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:02:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:07:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:12:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:17:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:22:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:27:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:32:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:37:57] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:42:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:47:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:52:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 17:57:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:02:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:07:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:12:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:17:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:22:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:27:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:32:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:37:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:41:30] INFO     [url_monitor] 检查了 0 个 URL，无变更   main.py:79
+[08/04/26 18:42:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:47:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:52:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 18:57:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:02:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:07:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:12:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:17:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:22:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:27:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:32:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:37:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:42:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:47:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:52:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 19:57:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:02:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:07:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:12:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:17:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:22:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:27:58] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:32:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:37:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:42:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:47:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:52:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 20:57:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:02:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:07:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:12:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:17:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:22:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:27:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:32:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:37:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:42:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:47:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:52:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 21:57:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:02:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:07:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:12:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:17:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:22:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:27:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:32:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:37:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:42:59] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:48:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:53:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 22:58:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:03:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:08:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:13:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:18:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:23:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:28:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:33:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:38:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:43:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:48:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:53:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/04/26 23:58:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:03:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:08:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:13:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:18:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:23:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:28:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:33:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:38:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:41:30] INFO     [url_monitor] 检查了 0 个 URL，无变更   main.py:79
+[08/05/26 00:43:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:48:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:53:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 00:58:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:03:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:08:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:13:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:18:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:23:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:28:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:33:00] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:38:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:43:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:48:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:53:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 01:58:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:03:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:08:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:13:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:18:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:23:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:28:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:33:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:38:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             
+[08/05/26 02:43:01] ERROR    [file_injector] 定时任务异常:          main.py:100
+                             'sqlite3.Row' object has no attribute             
+                             'get'                                             

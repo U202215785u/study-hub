@@ -3,6 +3,7 @@
 TASK_TYPES = frozenset(
     {"bug", "change", "research", "health_check", "deploy", "memory_update"}
 )
+MODES = frozenset({"simple", "complex"})
 
 # These names are intentionally accepted at the boundary.  A user or agent should
 # never have to guess the internal canonical value merely to record a case.
@@ -79,13 +80,13 @@ STATUSES = frozenset(
 TERMINAL_STATUSES = frozenset({"completed", "cancelled", "archived"})
 
 ALLOWED_TRANSITIONS = {
-    "received": {"located", "blocked", "cancelled"},
+    "received": {"located", "implementing", "blocked", "cancelled"},
     "located": {"investigating", "awaiting_approval", "blocked", "cancelled"},
     "investigating": {"awaiting_approval", "implementing", "verifying", "blocked", "cancelled"},
     "awaiting_approval": {"investigating", "implementing", "blocked", "cancelled"},
-    "implementing": {"investigating", "auditing", "blocked", "cancelled"},
+    "implementing": {"investigating", "awaiting_approval", "auditing", "blocked", "cancelled"},
     "auditing": {"investigating", "verifying", "blocked", "cancelled"},
-    "verifying": {"investigating", "completed", "blocked", "cancelled"},
+    "verifying": {"investigating", "implementing", "completed", "blocked", "cancelled"},
     "blocked": {"investigating", "implementing", "cancelled", "archived"},
     "completed": set(),
     "cancelled": set(),
@@ -115,6 +116,13 @@ def normalize_task_type(task_type: str | None, description: str = "") -> str:
     if not raw_type:
         return "bug"
     raise ButlerStateError(f"unsupported task type: {task_type}; describe the issue in natural language or use bug/change/research")
+
+
+def normalize_mode(mode: str | None) -> str:
+    value = (mode or "").strip().lower()
+    if value in MODES:
+        return value
+    raise ButlerStateError("mode must be simple or complex")
 
 
 def validate_transition(current: str, target: str) -> None:

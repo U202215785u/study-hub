@@ -37,6 +37,7 @@ from endpoints.skills import router as skills_router
 from endpoints.journal import router as journal_router
 from endpoints.operations import router as operations_router
 from endpoints.settings import router as settings_router
+from endpoints.workbench import router as workbench_router
 from endpoints.heatmap import router as heatmap_router
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
@@ -247,6 +248,7 @@ app.include_router(skills_router)
 app.include_router(journal_router)
 app.include_router(operations_router)
 app.include_router(settings_router)
+app.include_router(workbench_router)
 app.include_router(heatmap_router)
 
 def _extract_plan_meta(path: str) -> dict:
@@ -438,6 +440,10 @@ def open_inbox():
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "data", "images")
 if os.path.isdir(IMAGES_DIR):
     app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
+
+TUTORIAL_FRAMES_DIR = os.path.join(os.path.dirname(__file__), "data", "tutorial_frames")
+os.makedirs(TUTORIAL_FRAMES_DIR, exist_ok=True)
+app.mount("/tutorial-frames", StaticFiles(directory=TUTORIAL_FRAMES_DIR), name="tutorial_frames")
 
 if os.path.isdir(LEARNING_DIR):
     app.mount("/mods/learning", StaticFiles(directory=LEARNING_DIR), name="mods_learning")

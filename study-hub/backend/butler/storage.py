@@ -14,6 +14,7 @@ def initialize_butler_schema(conn) -> None:
             description TEXT NOT NULL,
             feature_code TEXT DEFAULT '',
             status TEXT NOT NULL,
+            mode TEXT NOT NULL DEFAULT 'simple',
             risk_level TEXT NOT NULL DEFAULT 'normal',
             attempt_count INTEGER NOT NULL DEFAULT 0,
             current_role TEXT DEFAULT '',
@@ -80,6 +81,11 @@ def initialize_butler_schema(conn) -> None:
             ON butler_memory_drafts(status, task_id);
         """
     )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(butler_tasks)").fetchall()}
+    if "mode" not in columns:
+        # Existing tasks retain the old full-flow behavior during migration.
+        conn.execute("ALTER TABLE butler_tasks ADD COLUMN mode TEXT NOT NULL DEFAULT 'complex'")
+    conn.execute("UPDATE butler_tasks SET mode = 'complex' WHERE mode IS NULL OR mode = ''")
     conn.commit()
 
 
@@ -98,6 +104,7 @@ def task_from_row(row) -> dict | None:
     if row is None:
         return None
     task = dict(row)
+    task.setdefault("mode", "complex")
     task["context"] = decode(task.pop("context_json"), {})
     task["experts"] = tuple(filter(None, task.pop("current_expert").split(",")))
     return task
@@ -114,13 +121,13 @@ def create_task(conn, task: dict) -> dict:
     conn.execute(
         """
         INSERT INTO butler_tasks (
-            id, task_type, title, description, feature_code, status, risk_level,
+            id, task_type, title, description, feature_code, status, mode, risk_level,
             attempt_count, current_role, current_expert, context_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             task["id"], task["task_type"], task["title"], task["description"],
-            task["feature_code"], task["status"], task["risk_level"],
+            task["feature_code"], task["status"], task["mode"], task["risk_level"],
             task["attempt_count"], task["current_role"], task["current_expert"],
             encode(task["context"]),
         ),

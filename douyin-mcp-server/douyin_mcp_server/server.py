@@ -98,8 +98,11 @@ class DouyinProcessor:
         except requests.RequestException as e:
             log_error(logger, DY_2002_HTTP_REQUEST_FAILED, f"请求分享链接失败: {share_url}", exc=e)
             raise DouyinError(DY_2002_HTTP_REQUEST_FAILED, detail=f"{share_url}: {e}") from e
-        video_id = share_response.url.split("?")[0].strip("/").split("/")[-1]
-        share_url = f'https://www.iesdouyin.com/share/video/{video_id}'
+        resolved_value = share_response.url if isinstance(share_response.url, str) else share_url
+        resolved_url = resolved_value.split("?")[0].rstrip("/")
+        video_id = resolved_url.split("/")[-1]
+        share_match = re.search(r"/(?:share/)?(?:video|note)/[^/?]+", resolved_url)
+        share_url = resolved_url if share_match else f"https://www.iesdouyin.com/share/video/{video_id}"
 
         # 获取视频页面内容
         try:
@@ -131,8 +134,10 @@ class DouyinProcessor:
         loader_data = json_data.get("loaderData", {})
         if VIDEO_ID_PAGE_KEY in loader_data:
             original_video_info = loader_data[VIDEO_ID_PAGE_KEY].get("videoInfoRes")
+            page_type = "video"
         elif NOTE_ID_PAGE_KEY in loader_data:
             original_video_info = loader_data[NOTE_ID_PAGE_KEY].get("videoInfoRes")
+            page_type = "note"
         else:
             log_error(logger, DY_2004_JSON_PARSE_FAILED, "无法从JSON中解析视频或图集信息", context=f"url={share_url}")
             raise DouyinError(DY_2004_JSON_PARSE_FAILED, detail="loaderData 中未找到 video/note 页面键")
@@ -143,22 +148,43 @@ class DouyinProcessor:
 
         data = original_video_info["item_list"][0]
 
-        # 获取视频信息
-        try:
-            video_url = data["video"]["play_addr"]["url_list"][0].replace("playwm", "play")
-        except (KeyError, IndexError, TypeError) as e:
-            log_error(logger, DY_2005_INVALID_VIDEO_INFO, "视频播放地址缺失", exc=e, context=f"url={share_url}")
-            raise DouyinError(DY_2005_INVALID_VIDEO_INFO, detail="video.play_addr.url_list 缺失") from e
         desc = data.get("desc", "").strip() or f"douyin_{video_id}"
         
         # 替换文件名中的非法字符
         desc = re.sub(r'[\\/:*?"<>|]', '_', desc)
         
-        return {
-            "url": video_url,
+        base_info = {
             "title": desc,
-            "video_id": video_id
+            "video_id": video_id,
+            "canonical_url": share_url,
+            "description": data.get("desc", "").strip(),
+            "author": data.get("author", {}).get("nickname", ""),
+            "stats": data.get("statistics", {}),
         }
+        video_urls = data.get("video", {}).get("play_addr", {}).get("url_list", [])
+        if video_urls:
+            video_url = video_urls[0].replace("playwm", "play")
+            return {**base_info, "content_type": "video", "url": video_url, "video_url": video_url}
+
+        images = data.get("images") or data.get("image_post_info", {}).get("images") or []
+        image_urls = []
+        for image in images:
+            if not isinstance(image, dict):
+                continue
+            candidates = image.get("url_list") or image.get("urlList") or [image.get("url", "")]
+            for image_url in candidates:
+                if not isinstance(image_url, str) or not image_url:
+                    continue
+                image_url = "https:" + image_url if image_url.startswith("//") else image_url
+                if image_url not in image_urls:
+                    image_urls.append(image_url)
+                break
+        if image_urls:
+            return {**base_info, "content_type": "image_note", "url": share_url, "image_urls": image_urls}
+
+        detail = "note images missing" if page_type == "note" else "video.play_addr.url_list missing"
+        log_error(logger, DY_2005_INVALID_VIDEO_INFO, "内容没有可处理的媒体", context=f"url={share_url}")
+        raise DouyinError(DY_2005_INVALID_VIDEO_INFO, detail=detail)
     
     async def download_video(self, video_info: dict, ctx: Context) -> Path:
         """异步下载视频到临时目录"""

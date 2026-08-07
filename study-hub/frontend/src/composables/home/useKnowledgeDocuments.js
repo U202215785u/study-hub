@@ -1,5 +1,13 @@
 import { ref } from 'vue'
 
+function responseError(data, fallback) {
+  if (data && typeof data === 'object') {
+    const message = data.error || data.detail || data.message
+    if (typeof message === 'string' && message.trim()) return message
+  }
+  return fallback
+}
+
 export function useKnowledgeDocuments({ apiGet, apiPost, apiDelete, apiUpload, category = ref(''), notify = () => {}, confirmAction = () => true, clipboard = globalThis.navigator?.clipboard, onReparseQueued = () => {} }) {
   const documents = ref([])
   const sort = ref('created_at:desc')
@@ -8,9 +16,12 @@ export function useKnowledgeDocuments({ apiGet, apiPost, apiDelete, apiUpload, c
   async function reload() {
     try {
       const [sortBy, sortOrder] = sort.value.split(':')
-      documents.value = await apiGet(`/documents?sort_by=${sortBy}&sort_order=${sortOrder}`)
-    } catch {
+      const data = await apiGet(`/documents?sort_by=${sortBy}&sort_order=${sortOrder}`)
+      if (!Array.isArray(data)) throw new Error(responseError(data, 'Documents response is invalid'))
+      documents.value = data
+    } catch (error) {
       documents.value = []
+      if (error?.message) notify(error.message, true)
     }
   }
 
@@ -42,7 +53,8 @@ export function useKnowledgeDocuments({ apiGet, apiPost, apiDelete, apiUpload, c
   async function remove(id) {
     if (!confirmAction('确定要删除这篇文档吗？')) return
     try {
-      await apiDelete(`/documents/${id}`)
+      const data = await apiDelete(`/documents/${id}`)
+      if (data?.error || data?.detail) throw new Error(responseError(data, 'Document deletion failed'))
       notify('文档已删除')
       await reload()
     } catch {

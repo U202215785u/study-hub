@@ -7,7 +7,7 @@ const items = [
 ]
 const longTitle = '这是一个用于验证自动化队列条目在极端内容长度下仍能截断且不会遮挡状态和重试操作区域的六十字中文标题示例'
 
-export default { title: 'Study Hub Widgets/自动化队列 AutomationQueueWidget', component: AutomationQueueWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页自动化队列，对应 Figma 349:369。打开和重试事件只抛出队列 id。' } } }, args: { items } }
+export default { title: '仪表盘组件/自动化队列 AutomationQueueWidget', component: AutomationQueueWidget, tags: ['autodocs'], parameters: { docs: { description: { component: '首页自动化队列，对应 Figma 349:369。打开和重试事件只抛出队列 id。' } } }, args: { items } }
 export const Default = {}
 export const Empty = { args: { items: [] } }
 export const Loading = { args: { loading: true } }

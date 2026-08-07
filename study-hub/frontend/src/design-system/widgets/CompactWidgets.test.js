@@ -1,5 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import UiCompactHeader from '../components/data-display/UiCompactHeader.vue'
+import UiInsetSurface from '../components/data-display/UiInsetSurface.vue'
 import DailyMemoryWidget from './DailyMemoryWidget.vue'
 import QuickCommandWidget from './QuickCommandWidget.vue'
 
@@ -16,5 +18,7 @@ describe('compact dashboard widgets', () => {
     ] } })
     expect(wrapper.attributes('data-figma-node')).toBe('349:510')
     expect(wrapper.findAll('[data-command-id]')).toHaveLength(2)
+    expect(wrapper.findComponent(UiCompactHeader).exists()).toBe(true)
+    expect(wrapper.findAllComponents(UiInsetSurface)).toHaveLength(2)
   })
 })
