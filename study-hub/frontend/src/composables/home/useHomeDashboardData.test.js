@@ -44,6 +44,28 @@ describe('home dashboard data mapping', () => {
     expect(dashboard.mapTaskSummary(records, '2026-08-03')).toEqual({ total: 6, completed: 2 })
   })
 
+  it('can map all selected-day tasks for category counts while keeping the visible default capped', () => {
+    const dashboard = createHomeDashboardData()
+    const records = Array.from({ length: 6 }, (_, id) => ({
+      id,
+      plan_date: '2026-08-03',
+      category_id: 'work',
+      status: id === 5 ? 'done' : 'todo',
+    }))
+
+    expect(dashboard.mapTodayTasks(records, '2026-08-03')).toHaveLength(5)
+    expect(dashboard.mapTodayTasks(records, '2026-08-03', Infinity)).toHaveLength(6)
+    expect(dashboard.mapTodayTasks(records, '2026-08-03', Infinity).at(-1)).toMatchObject({ id: 5, category_id: 'work' })
+  })
+
+  it('preserves category_id when mapping today tasks for category cards', () => {
+    const dashboard = createHomeDashboardData()
+
+    expect(dashboard.mapTodayTasks([{ id: 1, plan_date: '2026-08-03', category_id: 'work' }], '2026-08-03')).toMatchObject([
+      { id: 1, category_id: 'work' },
+    ])
+  })
+
   it('builds a truthful 196-day activity heatmap from persisted record dates', () => {
     const dashboard = createHomeDashboardData()
     const cells = dashboard.mapActivityHeatmap({

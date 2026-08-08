@@ -125,6 +125,43 @@ describe('Home dashboard composition', () => {
     expect(settings.apiPost).toHaveBeenCalledWith('/automation/queue/retry/q1')
   })
 
+  it('keeps all selected-day tasks in category counts while capping visible tasks', async () => {
+    const pinia = createPinia()
+    const settings = useSettingsStore(pinia)
+    const selectedDate = toLocalDateKey(new Date())
+    const tasks = Array.from({ length: 6 }, (_, id) => ({
+      id: `task-${id}`,
+      title: `任务 ${id}`,
+      plan_date: selectedDate,
+      category_id: 'work',
+      status: id === 5 ? 'done' : 'todo',
+    }))
+    settings.apiGet = vi.fn(async (path) => {
+      if (path === '/ddl/tasks') return tasks
+      if (path === '/ddl/categories') return [{ id: 'work', name: '工作' }]
+      if (path === '/automation/queue/status') return { stats: {}, tasks: [] }
+      if (path === '/review/list' || path.startsWith('/sop/suggestions') || path.startsWith('/documents?')) return []
+      if (path === '/heatmap/catalog') return { default_style_id: 'grid', styles: [] }
+      if (path === '/heatmap/preferences') return { style_id: 'grid', settings: { range_days: 196, sources: ['tasks'] } }
+      if (path.startsWith('/heatmap/data?')) return { cells: [], grid: { rows: 7, columns: 28, slot_count: 196 }, summary: { total: 0, active_days: 0 } }
+      return {}
+    })
+    settings.apiPost = vi.fn(async () => ({}))
+    settings.apiDelete = vi.fn(async () => ({}))
+    settings.apiUpload = vi.fn(async () => ({}))
+
+    const EmptyRoute = { template: '<div />' }
+    const router = createRouter({ history: createMemoryHistory(), routes: ['/', '/kb', '/wiki', '/workflow', '/ddl', '/journal', '/brainstorm', '/settings', '/creator'].map((path) => ({ path, component: path === '/' ? Home : EmptyRoute })) })
+    await router.push('/')
+    await router.isReady()
+    wrapper = mount(Home, { attachTo: document.body, global: { plugins: [pinia, router] } })
+    await flushPromises()
+
+    const todayFocus = wrapper.findComponent(TodayFocusWidget)
+    expect(todayFocus.props('tasks')).toHaveLength(5)
+    expect(todayFocus.props('categories')[0].tasks).toHaveLength(6)
+  })
+
   it('keeps calendar, review, creation, workflow and automation entry actions reachable', async () => {
     const pinia = createPinia()
     const settings = useSettingsStore(pinia)

@@ -6,7 +6,7 @@
       <div class="today-focus__layers" aria-hidden="true"><i class="today-focus__layer"/><i class="today-focus__layer"/></div>
       <div class="today-focus__stack" data-testid="today-card-stack" tabindex="0" role="group" aria-label="今日任务分类" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="finishDrag" @pointercancel="cancelDrag" @keydown.left.prevent="rotate(-1)" @keydown.right.prevent="rotate(1)">
         <section v-for="(category, index) in stackedCategories" :key="category.id" class="today-focus__task" :class="`today-focus__task--${index}`" :data-category-id="category.id" :style="index === 0 ? { '--drag-x': `${dragOffset}px` } : undefined" @click="index && rotate(index)">
-          <header><h3 data-testid="today-card-title">{{ category.name }}</h3><b><AnimatedNumber :value="completedFor(category)" />/<AnimatedNumber :value="category.tasks.length" /></b></header>
+          <header><h3 data-testid="today-card-title">{{ category.name }}</h3><b><AnimatedNumber :value="completedFor(category)" />/<AnimatedNumber :value="totalFor(category)" /></b></header>
           <p v-if="!category.tasks.length" class="today-focus__empty">今天暂无任务</p>
           <button v-for="task in category.tasks.slice(0, 4)" :key="task.id" type="button" :data-task-id="task.id" @click.stop="$emit('select', task.id)"><span><strong>{{ task.title }}</strong><small>{{ task.time || '待安排' }}</small></span><i :data-status="task.status"/></button>
           <button v-if="index === 0" type="button" class="today-focus__create" @click.stop="$emit('create', category.id)">建立任务</button>
@@ -32,7 +32,8 @@ const visibleTasks = computed(() => props.tasks.slice(0, 4))
 const currentTask = computed(() => visibleTasks.value[0])
 const completedCount = computed(() => props.completedTaskCount ?? visibleTasks.value.filter((task) => task.status === 'done').length)
 const totalCount = computed(() => props.totalTaskCount ?? visibleTasks.value.length)
-function completedFor(category) { return category.tasks.filter((task) => task.status === 'done').length }
+function completedFor(category) { return category.id === 'all' ? completedCount.value : category.tasks.filter((task) => task.status === 'done').length }
+function totalFor(category) { return category.id === 'all' ? totalCount.value : category.tasks.length }
 function rotate(offset) { const count = categoryList.value.length; if (count) activeIndex.value = (activeIndex.value + offset + count) % count }
 function startDrag(event) { dragStartX.value = event.clientX; event.currentTarget.setPointerCapture?.(event.pointerId) }
 function moveDrag(event) { if (dragStartX.value !== null) dragOffset.value = event.clientX - dragStartX.value }

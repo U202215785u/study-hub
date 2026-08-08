@@ -12,4 +12,17 @@ describe('TodayFocusWidget', () => {
 
     expect(wrapper.findAllComponents(AnimatedNumber).map((component) => component.props('value'))).toEqual([3, 8])
   })
+
+  it('uses the active category task counts when category cards are supplied', () => {
+    const wrapper = mount(TodayFocusWidget, {
+      props: {
+        totalTaskCount: 8,
+        completedTaskCount: 3,
+        categories: [{ id: 'work', name: '工作', tasks: [{ id: 'a', status: 'done' }, { id: 'b', status: 'pending' }] }],
+      },
+      global: { stubs: { RouterLink: true } },
+    })
+
+    expect(wrapper.findAllComponents(AnimatedNumber).map((component) => component.props('value'))).toEqual([1, 2])
+  })
 })

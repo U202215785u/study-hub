@@ -382,9 +382,10 @@ const calendarDays = computed(() => Array.from({ length: 7 }, (_, index) => {
 }))
 const agendaItems = computed(() => mapper.mapAgenda(ddlTasks.value, selectedDate.value))
 const taskItems = computed(() => mapper.mapTodayTasks(ddlTasks.value, selectedDate.value))
+const allTaskItems = computed(() => mapper.mapTodayTasks(ddlTasks.value, selectedDate.value, Infinity))
 const todayTaskCategories = computed(() => ddlCategories.value.slice(0, 3).map((category) => ({
   ...category,
-  tasks: taskItems.value.filter((task) => task.category_id === category.id),
+  tasks: allTaskItems.value.filter((task) => task.category_id === category.id),
 })))
 const taskSummary = computed(() => mapper.mapTaskSummary(ddlTasks.value, selectedDate.value))
 const heatmapCells = computed(() => heatmapApi.data.value?.cells?.map((cell) => ({ id: cell.date, ...cell })) || [])

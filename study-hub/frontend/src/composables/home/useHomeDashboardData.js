@@ -54,13 +54,14 @@ export function createHomeDashboardData() {
         tone: item.status === 'done' ? 'purple' : 'lime',
       }))
     },
-    mapTodayTasks(items = [], selectedDate = '') {
-      return items.filter((item) => recordDate(item) === selectedDate).slice(0, 5).map((item) => ({
+    mapTodayTasks(items = [], selectedDate = '', limit = 5) {
+      return items.filter((item) => recordDate(item) === selectedDate).slice(0, limit).map((item) => ({
         id: item.id,
         title: item.title || '未命名任务',
         time: scheduleTime(item),
         status: widgetStatus(item.status),
         progress: Number(item.progress || 0),
+        ...(item.category_id !== undefined ? { category_id: item.category_id } : {}),
       }))
     },
     mapTaskSummary(items = [], selectedDate = '') {
