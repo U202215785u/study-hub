@@ -21,6 +21,7 @@ def test_orphan_recovery_deduplicates_same_douyin_short_link(monkeypatch, tmp_pa
     monkeypatch.setattr(automation, "chunk_text", lambda content: [content])
     monkeypatch.setattr(automation, "get_vector_store", lambda: VectorStore())
     conn = database.get_db()
+    conn.execute("DELETE FROM document_source_claims WHERE source = 'douyin-summary' AND source_key = 'douyin:short:recovery-contract'")
     conn.execute("DELETE FROM documents WHERE source_key = 'douyin:short:recovery-contract' OR title IN ('First', 'Second')")
     conn.commit()
     conn.close()
@@ -29,6 +30,7 @@ def test_orphan_recovery_deduplicates_same_douyin_short_link(monkeypatch, tmp_pa
     second = automation.recover_orphan_summaries()
 
     conn = database.get_db()
+    conn.execute("DELETE FROM document_source_claims WHERE source = 'douyin-summary' AND source_key = 'douyin:short:recovery-contract'")
     docs = conn.execute(
         "SELECT id, source_key FROM documents WHERE source_key = 'douyin:short:recovery-contract' AND document_status = 'active'"
     ).fetchall()

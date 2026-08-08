@@ -61,3 +61,13 @@ def test_new_douyin_import_uses_parser_video_id_as_its_canonical_identity():
 
     assert source_url == "https://www.douyin.com/video/7634595063334554889"
     assert source_key == "douyin:7634595063334554889"
+
+
+def test_source_claim_returns_the_existing_document_for_the_same_identity(isolated_database):
+    identity = importlib.import_module("knowledge_identity")
+    isolated_database.execute("INSERT INTO documents (id, title, content, source) VALUES (11, 'one', 'body', 'douyin-summary')")
+    isolated_database.execute("INSERT INTO documents (id, title, content, source) VALUES (12, 'two', 'body', 'douyin-summary')")
+    isolated_database.commit()
+
+    assert identity.claim_source_identity(isolated_database, "douyin-summary", "douyin:123", 11) == 11
+    assert identity.claim_source_identity(isolated_database, "douyin-summary", "douyin:123", 12) == 11

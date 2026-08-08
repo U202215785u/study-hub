@@ -233,18 +233,31 @@ def _decode_document_cursor(cursor):
 
 
 @router.get("/documents/page")
-def list_document_page(page_size: int = 50, cursor: str = None):
+def list_document_page(page_size: int = 50, cursor: str = None, category_id: int = None,
+                       search: str = None, tag: str = None):
     if not 1 <= page_size <= 100:
         raise HTTPException(status_code=400, detail="page_size must be between 1 and 100")
     conditions = ["d.document_status = 'active'"]
     params = []
+    if category_id is not None:
+        conditions.append("d.category_id = ?")
+        params.append(category_id)
+    if search:
+        conditions.append("(d.title LIKE ? OR d.content LIKE ?)")
+        params.extend([f"%{search}%", f"%{search}%"])
+    if tag:
+        conditions.append("d.tags LIKE ?")
+        params.append(f"%{tag}%")
+    total_conditions = list(conditions)
+    total_params = list(params)
     if cursor:
         created_at, doc_id = _decode_document_cursor(cursor)
         conditions.append("(d.created_at < ? OR (d.created_at = ? AND d.id < ?))")
         params.extend([created_at, created_at, doc_id])
     where = " WHERE " + " AND ".join(conditions)
     conn = get_db()
-    total = conn.execute("SELECT COUNT(*) FROM documents d WHERE d.document_status = 'active'").fetchone()[0]
+    total_where = " WHERE " + " AND ".join(total_conditions)
+    total = conn.execute(f"SELECT COUNT(*) FROM documents d{total_where}", total_params).fetchone()[0]
     rows = conn.execute(
         f"SELECT d.* FROM documents d{where} ORDER BY d.created_at DESC, d.id DESC LIMIT ?",
         [*params, page_size + 1],

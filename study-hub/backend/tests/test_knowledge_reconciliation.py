@@ -48,3 +48,26 @@ def test_dry_run_groups_same_source_key_without_writing_rows():
     assert report["groups"][0]["keep_id"] == 2
     assert report["groups"][0]["archive_ids"] == [1]
     assert report["unresolved"] == [{"id": 3, "title": "unknown", "source": "douyin-summary"}]
+
+
+def test_archive_duplicates_only_changes_explicitly_approved_keys():
+    reconciliation = importlib.import_module("knowledge_reconciliation")
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.executescript("""
+        CREATE TABLE documents (
+            id INTEGER PRIMARY KEY, source TEXT, source_key TEXT, document_status TEXT,
+            duplicate_of_document_id INTEGER, asr_status TEXT, created_at TEXT, title TEXT, content TEXT,
+            source_url TEXT DEFAULT '', content_hash TEXT DEFAULT '', updated_at TEXT DEFAULT ''
+        );
+        INSERT INTO documents VALUES
+          (1, 'douyin-summary', 'douyin:1', 'active', NULL, 'succeeded', '2026-08-01 10:00:00', 'keeper', 'a', '', '', ''),
+          (2, 'douyin-summary', 'douyin:1', 'active', NULL, 'failed', '2026-08-01 09:00:00', 'duplicate', 'b', '', '', ''),
+          (3, 'douyin-summary', 'douyin:2', 'active', NULL, 'succeeded', '2026-08-01 10:00:00', 'other', 'c', '', '', '');
+    """)
+
+    manifest = reconciliation.archive_duplicates(conn, {"douyin:1"})
+    rows = conn.execute("SELECT id, document_status, duplicate_of_document_id FROM documents ORDER BY id").fetchall()
+
+    assert manifest == [{"source": "douyin-summary", "source_key": "douyin:1", "keep_id": 1, "archived_ids": [2]}]
+    assert [tuple(row) for row in rows] == [(1, "active", None), (2, "archived_duplicate", 1), (3, "active", None)]

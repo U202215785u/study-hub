@@ -126,3 +126,33 @@ def backfill_asr_statuses(conn: sqlite3.Connection) -> dict[str, int]:
         result[status] += 1
     conn.commit()
     return result
+
+
+def archive_duplicates(conn: sqlite3.Connection, approved_keys: set[str]) -> list[dict[str, Any]]:
+    """Reversibly archive only duplicate groups explicitly selected from a dry-run report."""
+    manifest: list[dict[str, Any]] = []
+    for group in build_reconciliation_report(conn)["groups"]:
+        if group["source_key"] not in approved_keys:
+            continue
+        archive_ids = group["archive_ids"]
+        if not archive_ids:
+            continue
+        placeholders = ",".join("?" for _ in archive_ids)
+        conn.execute(
+            f"""
+            UPDATE documents
+            SET document_status = 'archived_duplicate', duplicate_of_document_id = ?, updated_at = datetime('now')
+            WHERE id IN ({placeholders}) AND document_status = 'active'
+            """,
+            [group["keep_id"], *archive_ids],
+        )
+        manifest.append(
+            {
+                "source": group["source"],
+                "source_key": group["source_key"],
+                "keep_id": group["keep_id"],
+                "archived_ids": archive_ids,
+            }
+        )
+    conn.commit()
+    return manifest

@@ -28,3 +28,21 @@ def test_document_page_reaches_all_active_documents_in_stable_order():
     assert first["next_cursor"] is not None
     assert second["next_cursor"] is None
     assert [item["title"] for item in first["items"][:3]] == ["pagination-contract-2", "pagination-contract-1", "pagination-contract-0"]
+
+
+def test_document_page_keeps_the_selected_category_filter():
+    conn = database.get_db()
+    conn.execute("DELETE FROM documents WHERE title LIKE 'pagination-category-contract-%'")
+    conn.execute("INSERT INTO documents (title, content, source, category_id, document_status) VALUES ('pagination-category-contract-match', 'body', 'upload', 991, 'active')")
+    conn.execute("INSERT INTO documents (title, content, source, category_id, document_status) VALUES ('pagination-category-contract-other', 'body', 'upload', 992, 'active')")
+    conn.commit()
+    conn.close()
+
+    page = upload.list_document_page(page_size=50, category_id=991)
+
+    conn = database.get_db()
+    conn.execute("DELETE FROM documents WHERE title LIKE 'pagination-category-contract-%'")
+    conn.commit()
+    conn.close()
+    assert page["total"] == 1
+    assert [item["title"] for item in page["items"]] == ["pagination-category-contract-match"]

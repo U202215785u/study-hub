@@ -7,7 +7,7 @@ from processing.chunker import chunk_text
 from processing.vector_store import get_vector_store
 from social_parsers import BilibiliParser, XiaohongshuParser, QwenASR, HEADERS_BILIBILI
 from ai_client import ai_client
-from knowledge_identity import extract_source_url, source_identity
+from knowledge_identity import claim_source_identity, extract_source_url, source_identity
 # douyin_mcp_server 模块可能未安装，延迟导入
 try:
     from douyin_mcp_server.server import DouyinProcessor
@@ -1138,6 +1138,10 @@ def _process_single_task(task_id: str):
                      len(placeholder_content), placeholder_hash, source_url, source_key),
                 )
                 placeholder_doc_id = cur.lastrowid
+                claimed_doc_id = claim_source_identity(conn, module["source_tag"], source_key, placeholder_doc_id)
+                if claimed_doc_id != placeholder_doc_id:
+                    conn.execute("DELETE FROM documents WHERE id = ?", (placeholder_doc_id,))
+                    placeholder_doc_id = claimed_doc_id
                 conn.commit()
             else:
                 placeholder_doc_id = existing["id"]
@@ -1474,6 +1478,10 @@ def recover_orphan_summaries() -> dict:
                         (title[:200], content, "text", source_tag, len(content), content_hash, source_url, source_key),
                     )
                     doc_id = cur.lastrowid
+                    claimed_doc_id = claim_source_identity(conn, source_tag, source_key, doc_id)
+                    if claimed_doc_id != doc_id:
+                        conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+                        doc_id = claimed_doc_id
 
                 conn.commit()
 

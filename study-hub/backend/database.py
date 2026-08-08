@@ -28,6 +28,20 @@ def _migrate_ddl_tasks(conn):
     conn.commit()
 
 
+def _migrate_ddl_categories(conn):
+    conn.execute("CREATE TABLE IF NOT EXISTS ddl_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, sort_order INTEGER NOT NULL DEFAULT 0, is_system INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(ddl_tasks)").fetchall()}
+    if "category_id" not in columns:
+        conn.execute("ALTER TABLE ddl_tasks ADD COLUMN category_id INTEGER DEFAULT NULL")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ddl_category_id ON ddl_tasks(category_id)")
+    for name, order, system in (("待办", 0, 0), ("学习任务", 1, 0), ("里程碑", 2, 0), ("未分类", 3, 1)):
+        conn.execute("INSERT OR IGNORE INTO ddl_categories (name, sort_order, is_system) VALUES (?, ?, ?)", (name, order, system))
+    for legacy, name in (("todo", "待办"), ("learning", "学习任务"), ("milestone", "里程碑")):
+        conn.execute("UPDATE ddl_tasks SET category_id = (SELECT id FROM ddl_categories WHERE name = ?) WHERE category_id IS NULL AND task_type = ?", (name, legacy))
+    conn.execute("UPDATE ddl_tasks SET category_id = (SELECT id FROM ddl_categories WHERE is_system = 1 LIMIT 1) WHERE category_id IS NULL")
+    conn.commit()
+
+
 def init_db():
     # 防重置：如果数据库文件已存在且有数据，不再执行 CREATE TABLE（DEC-023）
     db_exists = os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0
@@ -339,6 +353,7 @@ def init_db():
     """)
     # 迁移：为已有 ddl_tasks 表增加时间计划字段（plan_type, plan_date, start_time, end_time）
     _migrate_ddl_tasks(conn)
+    _migrate_ddl_categories(conn)
     conn.commit()
 
     # 任务队列持久化（防止重启丢失解析任务）

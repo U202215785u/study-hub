@@ -1,4 +1,5 @@
 import re
+import sqlite3
 from urllib.parse import urlparse
 
 
@@ -39,3 +40,18 @@ def source_identity(source: str, url: str) -> str | None:
             return f"xiaohongshu:{match.group(1)}"
 
     return None
+
+
+def claim_source_identity(conn: sqlite3.Connection, source: str, source_key: str | None, document_id: int) -> int:
+    """Claim an import identity or return the document that already owns it."""
+    if not source_key:
+        return document_id
+    conn.execute(
+        "INSERT OR IGNORE INTO document_source_claims (source, source_key, document_id) VALUES (?, ?, ?)",
+        (source, source_key, document_id),
+    )
+    row = conn.execute(
+        "SELECT document_id FROM document_source_claims WHERE source = ? AND source_key = ?",
+        (source, source_key),
+    ).fetchone()
+    return int(row[0])

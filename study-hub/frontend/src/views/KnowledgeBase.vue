@@ -215,6 +215,13 @@
               </td>
               <td class="px-3 py-2.5 border-b border-border text-text-secondary text-xs">
                 {{ doc.char_count || 0 }}字<br>{{ formatDate(doc.created_at) }}
+                <span
+                  v-if="asrLabel(doc.asr_status)"
+                  class="block mt-1 text-[11px]"
+                  :class="asrStatusClass(doc.asr_status)"
+                >
+                  {{ asrLabel(doc.asr_status) }}
+                </span>
               </td>
               <td class="px-3 py-2.5 border-b border-border">
                 <div class="flex gap-1">
@@ -676,6 +683,23 @@ function formatDate(dateStr) {
   return (dateStr || '').slice(0, 10)
 }
 
+function asrLabel(status) {
+  return {
+    pending: '处理中',
+    processing: '处理中',
+    succeeded: '转写完成',
+    fallback: '仅元数据摘要',
+    failed: '识别失败',
+  }[status] || ''
+}
+
+function asrStatusClass(status) {
+  if (status === 'failed') return 'text-danger'
+  if (status === 'fallback') return 'text-amber-500'
+  if (status === 'succeeded') return 'text-success'
+  return 'text-accent'
+}
+
 // ===== 数据加载 =====
 async function loadCategories() {
   try {
@@ -687,7 +711,7 @@ async function loadCategories() {
 
 async function loadDocuments() {
   try {
-    const data = await settings.apiGet('/documents/page?page_size=50')
+    const data = await settings.apiGet(documentPagePath())
     documents.value = Array.isArray(data.items) ? data.items : []
     nextDocumentCursor.value = data.next_cursor || null
     totalDocuments.value = Number(data.total) || 0
@@ -698,11 +722,18 @@ async function loadDocuments() {
   }
 }
 
+function documentPagePath(cursor = null) {
+  const params = new URLSearchParams({ page_size: '50' })
+  if (currentCatId.value !== null) params.set('category_id', String(currentCatId.value))
+  if (cursor) params.set('cursor', cursor)
+  return `/documents/page?${params.toString()}`
+}
+
 async function loadMoreDocuments() {
   if (!nextDocumentCursor.value || isLoadingMore.value) return
   isLoadingMore.value = true
   try {
-    const data = await settings.apiGet(`/documents/page?page_size=50&cursor=${encodeURIComponent(nextDocumentCursor.value)}`)
+    const data = await settings.apiGet(documentPagePath(nextDocumentCursor.value))
     const known = new Set(documents.value.map(doc => doc.id))
     documents.value.push(...(data.items || []).filter(doc => !known.has(doc.id)))
     nextDocumentCursor.value = data.next_cursor || null
