@@ -44,3 +44,9 @@ Replace the home dashboard's static today-task panel with a three-card category 
 - Backend tests cover category CRUD, unique names, sorted reads, protected `未分类`, deletion reassignment, and task create/update/category filtering.
 - Frontend tests cover the DDL category manager, task form selection, URL-driven creation defaults, three-card rendering, click/drag/keyboard switching, and reduced-motion behavior.
 - Existing home and DDL tests remain green; a manual browser check validates drag threshold, click targets, and responsive layout.
+
+## Delivery status (2026-08-08)
+
+- Delivered in `backend/database.py`, `backend/endpoints/ddl.py`, `frontend/src/views/DDL.vue`, `frontend/src/views/Home.vue`, and `frontend/src/design-system/widgets/TodayFocusWidget.vue`.
+- The DDL category API and task persistence are covered by backend tests; DDL, home, and stack interactions are covered by focused frontend tests.
+- The taskboard item is `STUDYHUB-11`. It is ready for review after the scoped implementation commit.

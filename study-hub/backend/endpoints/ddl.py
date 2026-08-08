@@ -5,8 +5,86 @@ from database import get_db
 router = APIRouter()
 
 
+def _categories(conn):
+    return [dict(row) for row in conn.execute("SELECT id, name, sort_order, is_system FROM ddl_categories ORDER BY sort_order, id").fetchall()]
+
+
+@router.get("/ddl/categories")
+def list_categories():
+    conn = get_db()
+    try:
+        return _categories(conn)
+    finally:
+        conn.close()
+
+
+@router.post("/ddl/categories")
+def create_category(payload: dict):
+    name = (payload.get("name") or "").strip()
+    if not name:
+        return {"error": "分类名称不能为空"}
+    conn = get_db()
+    try:
+        order = conn.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 FROM ddl_categories").fetchone()[0]
+        cursor = conn.execute("INSERT INTO ddl_categories (name, sort_order) VALUES (?, ?)", (name, order))
+        conn.commit()
+        return dict(conn.execute("SELECT id, name, sort_order, is_system FROM ddl_categories WHERE id = ?", (cursor.lastrowid,)).fetchone())
+    except Exception:
+        return {"error": "分类名称已存在"}
+    finally:
+        conn.close()
+
+
+@router.put("/ddl/categories/reorder")
+def reorder_categories(payload: dict):
+    ids = payload.get("category_ids") or []
+    conn = get_db()
+    try:
+        if not ids or len(set(ids)) != len(ids) or len(ids) != conn.execute("SELECT COUNT(*) FROM ddl_categories WHERE id IN ({})".format(",".join("?" for _ in ids)), ids).fetchone()[0]:
+            return {"error": "分类列表无效"}
+        for order, category_id in enumerate(ids):
+            conn.execute("UPDATE ddl_categories SET sort_order = ? WHERE id = ?", (order, category_id))
+        conn.commit()
+        return {"status": "ok"}
+    finally:
+        conn.close()
+
+
+@router.put("/ddl/categories/{category_id}")
+def update_category(category_id: int, payload: dict):
+    name = (payload.get("name") or "").strip()
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT is_system FROM ddl_categories WHERE id = ?", (category_id,)).fetchone()
+        if not row or row["is_system"] or not name:
+            return {"error": "该分类不能重命名"}
+        conn.execute("UPDATE ddl_categories SET name = ? WHERE id = ?", (name, category_id))
+        conn.commit()
+        return {"status": "ok", "id": category_id}
+    except Exception:
+        return {"error": "分类名称已存在"}
+    finally:
+        conn.close()
+
+
+@router.delete("/ddl/categories/{category_id}")
+def delete_category(category_id: int):
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT is_system FROM ddl_categories WHERE id = ?", (category_id,)).fetchone()
+        fallback = conn.execute("SELECT id FROM ddl_categories WHERE is_system = 1 LIMIT 1").fetchone()
+        if not row or row["is_system"]:
+            return {"error": "该分类不能删除"}
+        conn.execute("UPDATE ddl_tasks SET category_id = ? WHERE category_id = ?", (fallback["id"], category_id))
+        conn.execute("DELETE FROM ddl_categories WHERE id = ?", (category_id,))
+        conn.commit()
+        return {"status": "ok"}
+    finally:
+        conn.close()
+
+
 @router.get("/ddl/tasks")
-def list_tasks(status: str = "", task_type: str = "", project_id: int = 0, plan_date: str = "", plan_type: str = ""):
+def list_tasks(status: str = "", task_type: str = "", project_id: int = 0, plan_date: str = "", plan_type: str = "", category_id: int = 0):
     """列出 DDL 任务，支持按状态、类型、项目、计划日期筛选"""
     conn = get_db()
     sql = "SELECT * FROM ddl_tasks WHERE 1=1"
@@ -27,6 +105,9 @@ def list_tasks(status: str = "", task_type: str = "", project_id: int = 0, plan_
     if plan_type:
         sql += " AND plan_type = ?"
         params.append(plan_type)
+    if category_id:
+        sql += " AND category_id = ?"
+        params.append(category_id)
 
     sql += " ORDER BY sort_order, plan_date, start_time, due_date, created_at DESC"
     rows = conn.execute(sql, params).fetchall()
@@ -60,6 +141,7 @@ def create_task(payload: dict):
     description = payload.get("description", "")
     due_date = payload.get("due_date") or None
     task_type = payload.get("task_type", "todo")
+    category_id = payload.get("category_id")
     project_id = payload.get("project_id") or None
     status = payload.get("status", "todo")
     plan_type = payload.get("plan_type", "todo")
@@ -69,13 +151,18 @@ def create_task(payload: dict):
 
     # 获取最大 sort_order
     conn = get_db()
+    if category_id is None:
+        category_id = conn.execute("SELECT id FROM ddl_categories WHERE name = ?", ({"todo": "待办", "learning": "学习任务", "milestone": "里程碑"}.get(task_type, "未分类"),)).fetchone()[0]
+    elif not conn.execute("SELECT 1 FROM ddl_categories WHERE id = ?", (category_id,)).fetchone():
+        conn.close()
+        return {"error": "任务分类不存在"}
     max_sort = conn.execute("SELECT COALESCE(MAX(sort_order), -1) FROM ddl_tasks").fetchone()[0]
 
     try:
         cur = conn.execute(
-            """INSERT INTO ddl_tasks (title, description, due_date, task_type, project_id, status, sort_order, plan_type, plan_date, start_time, end_time)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (title, description, due_date, task_type, project_id, status, max_sort + 1, plan_type, plan_date, start_time, end_time),
+            """INSERT INTO ddl_tasks (title, description, due_date, task_type, category_id, project_id, status, sort_order, plan_type, plan_date, start_time, end_time)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (title, description, due_date, task_type, category_id, project_id, status, max_sort + 1, plan_type, plan_date, start_time, end_time),
         )
         conn.commit()
         task_id = cur.lastrowid
@@ -108,11 +195,13 @@ def update_task(task_id: int, payload: dict):
     if not existing:
         conn.close()
         return {"error": "任务不存在"}
+    existing = dict(existing)
 
     title = payload.get("title", existing["title"])
     description = payload.get("description", existing["description"])
     due_date = payload.get("due_date", existing["due_date"])
     task_type = payload.get("task_type", existing["task_type"])
+    category_id = payload.get("category_id", existing.get("category_id"))
     project_id = payload.get("project_id", existing["project_id"])
     status = payload.get("status", existing["status"])
     sort_order = payload.get("sort_order", existing["sort_order"])
@@ -120,13 +209,16 @@ def update_task(task_id: int, payload: dict):
     plan_date = payload.get("plan_date", existing.get("plan_date"))
     start_time = payload.get("start_time", existing.get("start_time"))
     end_time = payload.get("end_time", existing.get("end_time"))
+    if category_id is not None and not conn.execute("SELECT 1 FROM ddl_categories WHERE id = ?", (category_id,)).fetchone():
+        conn.close()
+        return {"error": "任务分类不存在"}
 
     conn.execute(
         """UPDATE ddl_tasks
-           SET title = ?, description = ?, due_date = ?, task_type = ?,
+           SET title = ?, description = ?, due_date = ?, task_type = ?, category_id = ?,
                project_id = ?, status = ?, sort_order = ?, plan_type = ?, plan_date = ?, start_time = ?, end_time = ?, updated_at = CURRENT_TIMESTAMP
            WHERE id = ?""",
-        (title, description, due_date, task_type, project_id, status, sort_order, plan_type, plan_date, start_time, end_time, task_id),
+        (title, description, due_date, task_type, category_id, project_id, status, sort_order, plan_type, plan_date, start_time, end_time, task_id),
     )
     conn.commit()
     conn.close()

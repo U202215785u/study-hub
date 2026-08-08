@@ -320,6 +320,7 @@ const knowledgeItems = computed(() => mapper.mapDocuments(documents.value))
 const heatmapApi = useHeatmap({ apiGet: settings.apiGet, apiPut: settings.apiPut, fixedRangeDays: 196 })
 const homeHeatmapView = ref('heatmap')
 const ddlTasks = ref([])
+const ddlCategories = ref([])
 const ddlLoading = ref(true)
 const ddlError = ref('')
 const categories = ref([])
@@ -334,6 +335,15 @@ async function loadDdlTasks() {
     ddlError.value = '任务数据加载失败'
   } finally {
     ddlLoading.value = false
+  }
+}
+
+async function loadDdlCategories() {
+  try {
+    const data = await settings.apiGet('/ddl/categories')
+    ddlCategories.value = Array.isArray(data) ? data : []
+  } catch {
+    ddlCategories.value = []
   }
 }
 
@@ -372,6 +382,10 @@ const calendarDays = computed(() => Array.from({ length: 7 }, (_, index) => {
 }))
 const agendaItems = computed(() => mapper.mapAgenda(ddlTasks.value, selectedDate.value))
 const taskItems = computed(() => mapper.mapTodayTasks(ddlTasks.value, selectedDate.value))
+const todayTaskCategories = computed(() => ddlCategories.value.slice(0, 3).map((category) => ({
+  ...category,
+  tasks: taskItems.value.filter((task) => task.category_id === category.id),
+})))
 const taskSummary = computed(() => mapper.mapTaskSummary(ddlTasks.value, selectedDate.value))
 const heatmapCells = computed(() => heatmapApi.data.value?.cells?.map((cell) => ({ id: cell.date, ...cell })) || [])
 const heatmapLoading = computed(() => heatmapApi.loading.value)
@@ -498,7 +512,7 @@ function propsFor(id) {
   const props = {
     'work-heatmap': { cells: heatmapCells.value, caption: heatmapCaption.value, loading: heatmapLoading.value, error: heatmapError.value, viewMode: homeHeatmapView.value, settings: heatmapSettings.value },
     'calendar-agenda': { days: calendarDays.value, agenda: agendaItems.value, monthLabel: calendarMonth, loading: ddlLoading.value, error: ddlError.value },
-    'today-focus': { tasks: taskItems.value, dateLabel: `${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`, loading: ddlLoading.value, error: ddlError.value },
+    'today-focus': { tasks: taskItems.value, categories: todayTaskCategories.value, dateLabel: `${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`, loading: ddlLoading.value, error: ddlError.value },
     'automation-queue': { items: queueItems.value }, knowledge: { items: knowledgeItems.value },
     'daily-memory': { title: '今日手账' }, 'quick-command': { commands: commandItems.value },
     'creation-entry': { items: creationItems.value }, 'quick-workflow': { steps: workflowSteps },
@@ -511,7 +525,7 @@ function listenersFor(id) {
   const listeners = {
     'work-heatmap': { 'update:viewMode': (value) => { homeHeatmapView.value = value } },
     'calendar-agenda': { select: (date) => { selectedDate.value = date }, open: () => router.push('/ddl') },
-    'today-focus': { select: () => router.push('/ddl') },
+    'today-focus': { select: () => router.push('/ddl'), create: (categoryId) => router.push({ path: '/ddl', query: { create: '1', categoryId: String(categoryId), planDate: selectedDate.value } }) },
     'automation-queue': { open: () => { queuePanelOpen.value = true }, retry: retryTask, create: () => openAutomation() },
     knowledge: { open: viewDocument, 'open-all': () => { rememberFocus(); knowledgePanelOpen.value = true }, copy: copyKnowledgeDocument, remove: removeDocument }, 'daily-memory': { open: () => { reviewOpen.value = true } },
     'quick-command': { run: runCommand }, 'creation-entry': { open: launchCreation }, 'quick-workflow': { run: runWorkflow },
@@ -531,7 +545,7 @@ function listenersFor(id) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadDocuments(), loadReviewHistory(), loadDdlTasks(), heatmapApi.load()])
+  await Promise.all([loadDocuments(), loadReviewHistory(), loadDdlTasks(), loadDdlCategories(), heatmapApi.load()])
   try { categories.value = await settings.apiGet('/categories') } catch { categories.value = [] }
   startQueuePoll()
 })

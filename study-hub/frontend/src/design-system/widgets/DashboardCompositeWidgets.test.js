@@ -47,4 +47,20 @@ describe('dashboard composite widgets', () => {
     expect(wrapper.findAll('.today-focus__layer')).toHaveLength(2)
     expect(wrapper.get('.today-focus__task').text()).toContain('今天暂无任务')
   })
+
+  it('rotates category cards from click, drag, and keyboard', async () => {
+    const categories = [{ id: 'work', name: '工作', tasks: [] }, { id: 'study', name: '学习', tasks: [] }, { id: 'life', name: '生活', tasks: [] }]
+    const wrapper = mount(TodayFocusWidget, { props: { categories } })
+
+    await wrapper.get('[data-category-id="study"]').trigger('click')
+    expect(wrapper.get('[data-testid="today-card-title"]').text()).toBe('学习')
+
+    const stack = wrapper.get('[data-testid="today-card-stack"]')
+    await stack.trigger('pointerdown', { clientX: 200 })
+    await stack.trigger('pointerup', { clientX: 100 })
+    expect(wrapper.get('[data-testid="today-card-title"]').text()).toBe('生活')
+
+    await stack.trigger('keydown', { key: 'ArrowRight' })
+    expect(wrapper.get('[data-testid="today-card-title"]').text()).toBe('工作')
+  })
 })

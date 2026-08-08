@@ -11,9 +11,20 @@
             {{ v.label }}
           </button>
         </div>
-        <button @click="openAddModal()" class="px-3 py-1.5 rounded-[8px] text-xs text-white bg-accent hover:bg-[#6a75e0] transition-colors">+ 添加</button>
+        <button type="button" @click="showCategoryManager = !showCategoryManager" class="px-3 py-1.5 rounded-[8px] text-xs text-text-secondary bg-surface border border-border hover:text-text transition-colors">分类</button>
+        <button data-testid="create-task" @click="openAddModal()" class="px-3 py-1.5 rounded-[8px] text-xs text-white bg-accent hover:bg-[#6a75e0] transition-colors">+ 添加</button>
       </div>
     </div>
+
+    <section v-if="showCategoryManager" class="rounded-[12px] border border-border bg-surface p-4">
+      <div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-semibold">任务分类</h2><span class="text-[11px] text-text-secondary">调整顺序会同步首页叠卡</span></div>
+      <div class="mb-3 flex gap-2"><input v-model="newCategoryName" class="min-w-0 flex-1 rounded-[8px] border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-accent" placeholder="新分类名称" @keydown.enter="createTaskCategory"><button type="button" class="rounded-[8px] bg-accent px-3 py-2 text-xs text-white" @click="createTaskCategory">新增</button></div>
+      <div v-for="(category, index) in taskCategories" :key="category.id" class="flex items-center gap-2 border-t border-border/50 py-2">
+        <input v-model="category.name" :disabled="category.is_system" class="min-w-0 flex-1 rounded-[6px] border border-transparent bg-transparent px-2 py-1 text-sm enabled:focus:border-accent" @change="renameTaskCategory(category)">
+        <button type="button" :disabled="index === 0" class="px-1 text-text-secondary disabled:opacity-30" @click="moveTaskCategory(index, -1)">↑</button><button type="button" :disabled="index === taskCategories.length - 1" class="px-1 text-text-secondary disabled:opacity-30" @click="moveTaskCategory(index, 1)">↓</button>
+        <button v-if="!category.is_system" type="button" class="px-1 text-text-secondary hover:text-danger" @click="deleteTaskCategory(category)">×</button>
+      </div>
+    </section>
 
     <!-- 日期导航（日/周/月视图） -->
     <div v-if="currentView !== 'list'" class="flex items-center justify-between">
@@ -236,7 +247,7 @@
           <div v-if="form.plan_type === 'daily'" class="flex flex-col gap-3">
             <div>
               <label class="text-[11px] text-text-secondary block mb-1">计划日期</label>
-              <input v-model="form.plan_date" type="date" class="w-full px-3 py-2 bg-surface border border-border rounded-[8px] text-sm text-text outline-none focus:border-accent">
+              <input v-model="form.plan_date" data-testid="task-plan-date" type="date" class="w-full px-3 py-2 bg-surface border border-border rounded-[8px] text-sm text-text outline-none focus:border-accent">
             </div>
             <div class="flex gap-3">
               <div class="flex-1">
@@ -271,6 +282,13 @@
             </div>
           </div>
 
+          <div>
+            <label class="text-[11px] text-text-secondary block mb-1">任务分类</label>
+            <select v-model.number="form.category_id" data-testid="task-category" class="w-full px-3 py-2 bg-surface border border-border rounded-[8px] text-sm text-text outline-none focus:border-accent">
+              <option v-for="category in taskCategories" :key="category.id" :value="category.id">{{ category.name }}</option>
+            </select>
+          </div>
+
           <div v-if="editingTask">
             <label class="text-[11px] text-text-secondary block mb-1">状态</label>
             <select v-model="form.status" class="w-full px-3 py-2 bg-surface border border-border rounded-[8px] text-sm text-text outline-none focus:border-accent">
@@ -295,8 +313,11 @@ import draggable from 'vuedraggable'
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, isSameDay, isToday as dfIsToday, getDay } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useSettingsStore } from '../stores/settings.js'
+import { useRoute, useRouter } from 'vue-router'
 
 const settings = useSettingsStore()
+const route = useRoute()
+const router = useRouter()
 const apiBase = computed(() => settings.apiBase)
 
 const currentView = ref('day')
@@ -312,12 +333,15 @@ const currentDate = ref(new Date())
 const timeSlots = Array.from({ length: 18 }, (_, i) => i + 6) // 06:00 - 23:00
 
 const tasks = ref([])
+const taskCategories = ref([])
 const stats = ref({ total: 0, todo: 0, in_progress: 0, done: 0, urgent: 0, overdue: 0 })
 const filterType = ref('')
 const showOverdue = ref(false)
 const showModal = ref(false)
+const showCategoryManager = ref(false)
+const newCategoryName = ref('')
 const editingTask = ref(null)
-const form = ref({ title: '', description: '', due_date: '', task_type: 'todo', status: 'todo', plan_type: 'daily', plan_date: '', start_time: '', end_time: '' })
+const form = ref({ title: '', description: '', due_date: '', task_type: 'todo', category_id: null, status: 'todo', plan_type: 'daily', plan_date: '', start_time: '', end_time: '' })
 
 // ===== 导航 =====
 const navigationTitle = computed(() => {
@@ -522,6 +546,38 @@ async function fetchTasks() {
   } catch (e) { console.error('获取任务失败', e) }
 }
 
+async function fetchTaskCategories() {
+  try {
+    const response = await fetch(`${apiBase.value}/ddl/categories`)
+    if (response.ok) taskCategories.value = await response.json()
+  } catch (error) { console.error('获取任务分类失败', error) }
+}
+
+async function createTaskCategory() {
+  const name = newCategoryName.value.trim()
+  if (!name) return
+  const response = await fetch(`${apiBase.value}/ddl/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+  if (response.ok) { newCategoryName.value = ''; await fetchTaskCategories() }
+}
+async function renameTaskCategory(category) {
+  if (category.is_system || !category.name.trim()) return
+  await fetch(`${apiBase.value}/ddl/categories/${category.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: category.name.trim() }) })
+  await fetchTaskCategories()
+}
+async function moveTaskCategory(index, direction) {
+  const target = index + direction
+  if (target < 0 || target >= taskCategories.value.length) return
+  const reordered = [...taskCategories.value]
+  ;[reordered[index], reordered[target]] = [reordered[target], reordered[index]]
+  const response = await fetch(`${apiBase.value}/ddl/categories/reorder`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category_ids: reordered.map((item) => item.id) }) })
+  if (response.ok) taskCategories.value = reordered
+}
+async function deleteTaskCategory(category) {
+  if (!window.confirm(`删除“${category.name}”后，其中的任务将转入未分类。是否继续？`)) return
+  const response = await fetch(`${apiBase.value}/ddl/categories/${category.id}`, { method: 'DELETE' })
+  if (response.ok) await Promise.all([fetchTaskCategories(), fetchTasks()])
+}
+
 async function fetchStats() {
   try {
     const res = await fetch(`${apiBase.value}/ddl/stats`)
@@ -537,6 +593,7 @@ function openAddModal(type = 'todo', defaults = {}) {
     description: '',
     due_date: '',
     task_type: type,
+    category_id: defaults.category_id ?? taskCategories.value[0]?.id ?? null,
     status: 'todo',
     plan_type: defaults.plan_type || 'todo',
     plan_date: defaults.plan_date || '',
@@ -554,6 +611,7 @@ function editTask(task) {
     description: task.description || '',
     due_date: task.due_date || '',
     task_type: task.task_type,
+    category_id: task.category_id ?? null,
     status: task.status,
     plan_type: task.plan_type || 'todo',
     plan_date: task.plan_date || '',
@@ -628,10 +686,16 @@ async function onDragEnd() {
 }
 
 watch(filterType, () => fetchTasks())
-watch(() => settings.apiBase, () => { fetchTasks(); fetchStats() })
+watch(() => settings.apiBase, () => { fetchTasks(); fetchStats(); fetchTaskCategories() })
 
-onMounted(() => {
+onMounted(async () => {
   fetchTasks()
   fetchStats()
+  await fetchTaskCategories()
+  if (route.query.create === '1') {
+    const categoryId = Number(route.query.categoryId)
+    openAddModal('todo', { category_id: Number.isFinite(categoryId) ? categoryId : taskCategories.value[0]?.id ?? null, plan_type: 'daily', plan_date: typeof route.query.planDate === 'string' ? route.query.planDate : format(new Date(), 'yyyy-MM-dd') })
+    router.replace({ query: {} })
+  }
 })
 </script>
