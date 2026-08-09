@@ -35,7 +35,15 @@
     <div v-if="parser.tasks.value.length" class="border-t border-border pt-4 space-y-2">
       <h3 class="text-sm font-semibold">解析进度</h3>
       <div v-for="task in parser.tasks.value" :key="task.task_id" class="flex justify-between gap-3 text-xs">
-        <span class="truncate">{{ task.title || task.input }}</span><span class="text-text-secondary">{{ task.progress }}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate">{{ task.title || task.input }}</span>
+          <span v-if="task.status === 'error'" class="block text-danger mt-1 break-words">
+            <code v-if="task.error_code" class="font-mono">{{ task.error_code }}</code>
+            <span v-if="task.error_code && task.error">: </span>
+            <span>{{ task.error || '解析失败，暂未提供详细原因' }}</span>
+          </span>
+        </span>
+        <span class="text-text-secondary shrink-0">{{ task.progress_text || task.progress }}</span>
       </div>
     </div>
   </section>

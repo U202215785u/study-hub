@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Local Douyin parsing now loads the repository-backed 1.3.0 parser, reports incompatible runtime versions clearly, and keeps background restarts from being blocked by an existing service on port 8741.
 - Dashboard Flip animations now use the GSAP Flip `onEnter` and `onLeave` callbacks, avoiding invalid tween-property warnings after layout changes.
 - Pagination regression coverage is isolated from the session-shared test database and no longer depends on test execution order.
 - Electron production dependencies override `fast-uri` to 3.1.5, clearing the audited production dependency advisory.

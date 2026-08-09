@@ -367,6 +367,7 @@ def init_db():
             status TEXT DEFAULT 'pending' CHECK(status IN ('pending','extracting','summarizing','importing','done','error')),
             progress TEXT DEFAULT '',
             error TEXT DEFAULT '',
+            error_code TEXT DEFAULT '',
             result_doc_id INTEGER DEFAULT NULL,
             result_title TEXT DEFAULT '',
             steps_json TEXT DEFAULT '[]',
@@ -393,6 +394,7 @@ def init_db():
     _add_column_if_missing(conn, "task_queue", "reparse_mode", "TEXT DEFAULT ''")
     _add_column_if_missing(conn, "task_queue", "asr_status", "TEXT DEFAULT ''")
     _add_column_if_missing(conn, "task_queue", "asr_error", "TEXT DEFAULT ''")
+    _add_column_if_missing(conn, "task_queue", "error_code", "TEXT DEFAULT ''")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS document_source_claims (
             source TEXT NOT NULL,
