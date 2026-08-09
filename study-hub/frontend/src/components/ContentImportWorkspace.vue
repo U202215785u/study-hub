@@ -34,7 +34,7 @@
     </button>
     <div v-if="parser.tasks.value.length" class="border-t border-border pt-4 space-y-2">
       <h3 class="text-sm font-semibold">解析进度</h3>
-      <div v-for="task in parser.tasks.value" :key="task.task_id" class="flex justify-between gap-3 text-xs">
+      <div v-for="task in parser.tasks.value" :key="task.task_id" class="space-y-2 text-xs" :data-testid="`parser-task-${task.task_id}`">
         <span class="min-w-0 flex-1">
           <span class="block truncate">{{ task.title || task.input }}</span>
           <span v-if="task.status === 'error'" class="block text-danger mt-1 break-words">
@@ -43,7 +43,10 @@
             <span>{{ task.error || '解析失败，暂未提供详细原因' }}</span>
           </span>
         </span>
-        <span class="text-text-secondary shrink-0">{{ task.progress_text || task.progress }}</span>
+        <span class="block text-text-secondary">{{ task.progress_text || statusLabel(task.status) }} <span class="ml-1 text-text">{{ progressValue(task) }}%</span></span>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-white/10" role="progressbar" :aria-label="`${task.title || task.input} parser progress`" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="progressValue(task)">
+          <div class="h-full rounded-full bg-cyan-400 transition-[width] duration-300" :style="{ width: `${progressValue(task)}%` }" />
+        </div>
       </div>
     </div>
   </section>
@@ -64,6 +67,11 @@ const modes = [{ id: 'auto', label: '自动识别' }, { id: 'douyin', label: '�
 const items = computed(() => props.parser.batch.value?.items || [])
 const platformLabel = (platform) => ({ douyin: '抖音', bilibili: 'B站', xiaohongshu: '小红书' })[platform] || platform
 const statusLabel = (status) => ({ ready: '可处理', duplicate: '重复', needs_local_file: '需要本地视频', blocked: '暂时受限', failed: '不可用' })[status] || status
+function progressValue(task) {
+  if (task.status === 'done') return 100
+  const value = Number(task.progress)
+  return Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : 0
+}
 
 async function check() {
   loading.value = true; error.value = false; message.value = ''

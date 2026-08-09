@@ -20,6 +20,33 @@ vi.mock('../composables/useContentParser.js', () => ({
 }))
 
 describe('ContentParser', () => {
+  it('closes an open document when the backdrop is clicked without closing on content clicks', async () => {
+    apiGet.mockResolvedValue({ id: 7, title: 'Readable article', content: '# Article' })
+
+    const wrapper = mount(ContentParser, {
+      global: {
+        stubs: {
+          'router-link': true,
+          ContentImportWorkspace: true,
+          ContentLibrary: {
+            template: '<button data-testid="open-document" @click="$emit(\'open\', 7)">Open</button>',
+          },
+        },
+      },
+    })
+
+    await wrapper.findAll('aside button')[1].trigger('click')
+    await wrapper.get('[data-testid="open-document"]').trigger('click')
+    await Promise.resolve()
+
+    const backdrop = wrapper.get('[data-testid="document-backdrop"]')
+    await backdrop.find('section').trigger('click')
+    expect(wrapper.get('[data-testid="document-backdrop"]').exists()).toBe(true)
+
+    await backdrop.trigger('click')
+    expect(wrapper.find('[data-testid="document-backdrop"]').exists()).toBe(false)
+  })
+
   it('shows an ASR error code when opening a fallback document', async () => {
     apiGet
       .mockResolvedValueOnce({ items: [{ id: 7, title: 'Fallback video', source: 'douyin-summary' }], counts: {} })
