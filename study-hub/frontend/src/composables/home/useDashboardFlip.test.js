@@ -17,7 +17,12 @@ describe('createDashboardFlip', () => {
     await flip.run(mutate)
 
     expect(calls).toEqual(['getTargets', 'getState', 'mutate', 'nextTick', 'from'])
-    expect(Flip.from).toHaveBeenCalledWith(state, expect.objectContaining({ absolute: true, duration: 0.18 }))
+    expect(Flip.from).toHaveBeenCalledWith(state, expect.objectContaining({
+      absolute: true,
+      duration: 0.18,
+      onEnter: expect.any(Function),
+      onLeave: expect.any(Function),
+    }))
   })
 
   it('mutates and waits without calling Flip in reduced motion', async () => {

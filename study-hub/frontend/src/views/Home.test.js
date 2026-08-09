@@ -101,10 +101,12 @@ describe('Home dashboard composition', () => {
       expect.objectContaining({ id: 'd1', title: '真实日程', time: '09:00 - 10:00' }),
     ])
 
-    await wrapper.findComponent(CalendarAgendaWidget).vm.$emit('select', '2026-08-03')
+    const calendar = wrapper.findComponent(CalendarAgendaWidget)
+    const selectedCalendarDate = calendar.props('days')[0].date
+    await calendar.vm.$emit('select', selectedCalendarDate)
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent(CalendarAgendaWidget).props('days')).toEqual(expect.arrayContaining([
-      expect.objectContaining({ date: '2026-08-03', selected: true }),
+    expect(calendar.props('days')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ date: selectedCalendarDate, selected: true }),
     ]))
 
     await wrapper.get('[role="search"] input').setValue('原子设计')

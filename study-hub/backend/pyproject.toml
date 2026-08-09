@@ -1,6 +1,6 @@
 [project]
 name = "study-hub"
-version = "0.1.0"
+version = "0.6.0"
 description = "浏览器新标签页变身学习操作系统"
 requires-python = ">=3.10"
 dependencies = [

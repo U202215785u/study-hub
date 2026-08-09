@@ -22,8 +22,8 @@ export function createDashboardFlip({ Flip, gsap, getTargets, nextTick, reducedM
       absolute: true,
       duration,
       ease: 'power2.out',
-      enter: (elements) => gsap.fromTo(elements, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration, ease: 'power2.out' }),
-      leave: (elements) => gsap.to(elements, { opacity: 0, scale: 0.96, duration, ease: 'power2.out' }),
+      onEnter: (elements) => gsap.fromTo(elements, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration, ease: 'power2.out' }),
+      onLeave: (elements) => gsap.to(elements, { opacity: 0, scale: 0.96, duration, ease: 'power2.out' }),
     })
     return activeAnimation
   }
