@@ -2,6 +2,7 @@
 $projectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendDir = Join-Path $projectDir "backend"
 $venvSite   = Join-Path $projectDir "venv\Lib\site-packages"
+$douyinMcpDir = Join-Path (Split-Path $projectDir -Parent) "douyin-mcp-server"
 $pidFile    = Join-Path $backendDir "data\server.pid"
 
 # Find Python interpreter
@@ -29,10 +30,13 @@ Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='pythonw.exe'" 
 } | ForEach-Object {
     Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
 }
+Get-NetTCPConnection -LocalPort 8741 -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+}
 
 # Set PYTHONPATH and start hidden process via cmd /c start
 # Using cmd /c start ensures the process truly detaches from the parent session
-$env:PYTHONPATH = $venvSite
+$env:PYTHONPATH = "$douyinMcpDir;$venvSite"
 $mainPy = Join-Path $backendDir "main.py"
 
 Push-Location $backendDir

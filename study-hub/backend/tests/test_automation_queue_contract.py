@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -33,6 +34,21 @@ def test_queue_dto_has_machine_progress_and_stable_title_for_each_state():
     })['title'] == 'Finished title'
 
 
+def test_queue_dto_exposes_a_stable_code_and_safe_reason_for_failed_parser_tasks():
+    dto = _queue_task_dto({
+        'task_id': 'failed-parser-task',
+        'module_id': 'douyin-summary',
+        'module_name': 'Douyin summary',
+        'status': 'error',
+        'current_step': 'summarize',
+        'error': 'Claude request timed out after 480 seconds; token=secret-value',
+        'result': None,
+    })
+
+    assert dto['error_code'] == 'PARSER-2001'
+    assert dto['error'] == 'Claude request timed out after 480 seconds; token=[redacted]'
+
+
 def test_queue_step_transitions_update_public_status():
     task_id = 'state-transition-test'
     automation._tasks[task_id] = {
@@ -48,3 +64,39 @@ def test_queue_step_transitions_update_public_status():
         assert automation._tasks[task_id]['status'] == 'importing'
     finally:
         automation._tasks.pop(task_id, None)
+
+
+def test_worker_records_a_summary_failure_code_and_a_redacted_reason(monkeypatch):
+    task_id = f"error-code-contract-{uuid.uuid4().hex}"
+    source_key = f"douyin:worker-error-{task_id}"
+    monkeypatch.setattr(automation, "_extract_douyin_raw", lambda *_args, **_kwargs: {
+        "platform": "Douyin", "title": "Failure contract", "video_id": f"worker-error-{task_id}",
+    })
+    monkeypatch.setattr(automation, "_run_claude", lambda *_args, **_kwargs: {
+        "error": "Summary provider unavailable; token=secret-value",
+    })
+    monkeypatch.setattr(automation, "_cleanup_tutorial_workspace", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(automation, "_task_to_db", lambda *_args, **_kwargs: None)
+    automation._tasks[task_id] = {
+        "task_id": task_id,
+        "module_id": "douyin-summary",
+        "module_name": "Douyin summary",
+        "input": f"https://v.douyin.com/{task_id}/",
+        "status": "pending",
+        "progress": "queued",
+        "include_tutorial": False,
+    }
+
+    try:
+        automation._process_single_task(task_id)
+        task = automation._tasks[task_id]
+        assert task["status"] == "error"
+        assert task["error_code"] == "PARSER-2001"
+        assert task["error"] == "Summary provider unavailable; token=[redacted]"
+    finally:
+        automation._tasks.pop(task_id, None)
+        conn = automation.get_db()
+        conn.execute("DELETE FROM document_source_claims WHERE source = ? AND source_key = ?", ("douyin-summary", source_key))
+        conn.execute("DELETE FROM documents WHERE source_key = ?", (source_key,))
+        conn.commit()
+        conn.close()

@@ -1,6 +1,7 @@
 import asyncio, os, sys, json, subprocess, re, tempfile, time, requests, uuid, threading, hashlib, base64
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, Future
+from importlib.metadata import PackageNotFoundError, version as installed_package_version
 from fastapi import APIRouter
 from database import get_db
 from processing.chunker import chunk_text
@@ -105,6 +106,24 @@ def _find_ffmpeg() -> str:
     return found if found else "ffmpeg"
 
 FFMPEG_CMD = _find_ffmpeg()
+MIN_DOUYIN_MCP_VERSION = (1, 3, 0)
+
+
+def _douyin_mcp_version() -> str | None:
+    try:
+        return installed_package_version("douyin-mcp-server")
+    except PackageNotFoundError:
+        return None
+
+
+def _version_is_at_least(value: str | None, minimum: tuple[int, int, int]) -> bool:
+    if not value:
+        return False
+    try:
+        parts = tuple(int(part) for part in value.split(".")[:3])
+    except ValueError:
+        return False
+    return parts >= minimum
 
 
 def verify_external_deps() -> dict:
@@ -156,6 +175,30 @@ def verify_external_deps() -> dict:
             f"深度总结功能将不可用。"
             f"请安装 Claude Code 并确认路径。"
         ),
+    }
+
+    douyin_version = _douyin_mcp_version()
+    douyin_module = sys.modules.get(DouyinProcessor.__module__) if DouyinProcessor else None
+    douyin_path = getattr(douyin_module, "__file__", "not installed")
+    douyin_compatible = (
+        DouyinProcessor is not None
+        and _version_is_at_least(douyin_version, MIN_DOUYIN_MCP_VERSION)
+    )
+    required_version = ".".join(map(str, MIN_DOUYIN_MCP_VERSION))
+    if DouyinProcessor is None:
+        douyin_warning = "抖音解析组件未安装，抖音摘要功能不可用。"
+    elif not douyin_compatible:
+        douyin_warning = (
+            f"抖音解析组件版本不兼容（当前: {douyin_version or '未知'}，"
+            f"需要: >= {required_version}）。请安装仓库内的 douyin-mcp-server 后重启后端。"
+        )
+    else:
+        douyin_warning = None
+    report["douyin_mcp"] = {
+        "path": douyin_path,
+        "version": douyin_version,
+        "compatible": douyin_compatible,
+        "warning": douyin_warning,
     }
 
     return report
@@ -479,6 +522,9 @@ def _extract_douyin_raw(user_input: str, task_id: str | None = None, include_tut
     processor = DouyinProcessor("")
     cleaned_input = _preprocess_douyin_input(user_input)
     info = processor.parse_share_url(cleaned_input)
+
+    if "content_type" not in info:
+        raise RuntimeError("抖音解析组件版本过旧，请安装 >= 1.3.0 的 douyin-mcp-server 后重试")
 
     if info.get("content_type") == "image_note":
         raw = {
@@ -922,14 +968,14 @@ def _task_to_db(task: dict):
         conn = get_db()
         conn.execute("""
             INSERT INTO task_queue (task_id, module_id, module_name, input_text, input_hash,
-                status, progress, error, result_doc_id, result_title,
+                status, progress, error, error_code, result_doc_id, result_title,
                 steps_json, current_step, api_key_error, api_key_error_msg,
                 replace_doc_id, include_tutorial, document_id, reparse_mode,
                 asr_status, asr_error, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(task_id) DO UPDATE SET
                 status=excluded.status, progress=excluded.progress,
-                error=excluded.error, result_doc_id=excluded.result_doc_id,
+                error=excluded.error, error_code=excluded.error_code, result_doc_id=excluded.result_doc_id,
                 result_title=excluded.result_title, steps_json=excluded.steps_json,
                 current_step=excluded.current_step, api_key_error=excluded.api_key_error,
                 api_key_error_msg=excluded.api_key_error_msg,
@@ -947,6 +993,7 @@ def _task_to_db(task: dict):
             task.get("status", "pending"),
             task.get("progress", ""),
             task.get("error", ""),
+            task.get("error_code", ""),
             (task.get("result") or {}).get("doc_id"),
             (task.get("result") or {}).get("title", ""),
             json.dumps(task.get("steps", []), ensure_ascii=False),
@@ -985,6 +1032,7 @@ def _load_pending_tasks_from_db() -> list[dict]:
                 "status": "pending",  # 重启后全部重置为 pending 重新执行
                 "progress": "排队中…",
                 "error": "",
+                "error_code": r["error_code"],
                 "result": {"doc_id": r["result_doc_id"], "title": r["result_title"]} if r["result_doc_id"] else None,
                 "created_at": r["created_at"],
                 "steps": json.loads(r["steps_json"]) if r["steps_json"] else [],
@@ -1051,6 +1099,17 @@ def _update_step(task_id: str, step_key: str, step_status: str, progress_msg: st
                     s["status"] = step_status
         if progress_msg:
             task["progress"] = progress_msg
+
+
+PARSER_ERROR_CODES = {
+    "extract_meta": "PARSER-1001",
+    "summarize": "PARSER-2001",
+    "import": "PARSER-3001",
+}
+
+
+def _parser_error_code(current_step: str | None) -> str:
+    return PARSER_ERROR_CODES.get(current_step or "", "PARSER-9000")
 
 
 def _process_single_task(task_id: str):
@@ -1290,12 +1349,13 @@ def _process_single_task(task_id: str):
         _task_to_db(_tasks[task_id])
 
     except Exception as e:
-        error_msg = str(e)
+        error_msg = _sanitize_asr_error(e)
         _cleanup_tutorial_workspace(output_dir, include_tutorial)
         with _lock:
             _tasks[task_id]["status"] = "error"
             _tasks[task_id]["progress"] = "失败"
             _tasks[task_id]["error"] = error_msg
+            _tasks[task_id]["error_code"] = _parser_error_code(_tasks[task_id].get("current_step"))
         # 标记占位文档为错误状态（保留以便排查）
         if placeholder_doc_id and not in_place_reparse:
             try:
@@ -1682,7 +1742,8 @@ def _queue_task_dto(task: dict) -> dict:
         "input": (task.get("input") or "")[:100],
         "progress": progress,
         "progress_text": str(raw_progress or status),
-        "error": task.get("error", ""),
+        "error": _sanitize_asr_error(task.get("error", "")),
+        "error_code": task.get("error_code", "") or (_parser_error_code(task.get("current_step")) if status == "error" else ""),
         "doc_id": result.get("doc_id") if result else None,
         "created_at": task.get("created_at", ""),
         "steps": task.get("steps"),
@@ -1732,6 +1793,7 @@ def task_status(task_id: str):
         "input": task.get("input", "")[:200],
         "progress": task.get("progress", ""),
         "error": task.get("error", ""),
+        "error_code": task.get("error_code", "") or (_parser_error_code(task.get("current_step")) if task["status"] == "error" else ""),
         "result": task.get("result"),
         "created_at": task.get("created_at", ""),
         "steps": task.get("steps"),
