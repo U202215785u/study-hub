@@ -680,6 +680,28 @@ def _extract_douyin_raw(user_input: str, task_id: str | None = None, include_tut
     return raw
 
 
+def _is_retryable_volcengine_asr_200(raw: dict) -> bool:
+    error = str(raw.get("asr_error", ""))
+    return bool(re.search(r"火山引擎\s*ASR\s*失败\s*[:：]\s*200(?:\s|$)", error, re.IGNORECASE))
+
+
+def _extract_douyin_with_asr_200_retry(
+    user_input: str,
+    task_id: str | None = None,
+    include_tutorial: bool = False,
+    on_retry=None,
+) -> dict:
+    raw = _extract_douyin_raw(user_input, task_id, include_tutorial)
+    if not _is_retryable_volcengine_asr_200(raw):
+        return raw
+
+    if on_retry:
+        on_retry()
+    retry_raw = _extract_douyin_raw(user_input, task_id, include_tutorial)
+    retry_raw["asr_auto_retry_attempted"] = True
+    return retry_raw
+
+
 # ====== Deep Summary Prompt ======
 
 def _build_deep_prompt(
@@ -1112,6 +1134,24 @@ def _parser_error_code(current_step: str | None) -> str:
     return PARSER_ERROR_CODES.get(current_step or "", "PARSER-9000")
 
 
+def _asr_error_code(error: object) -> str:
+    """Map ASR fallback reasons to a stable, user-visible parser code."""
+    text = str(error or "").lower()
+    if not text:
+        return ""
+    if "未配置" in text or "not configured" in text:
+        return "PARSER-ASR-1001"
+    if "火山引擎 asr 失败" in text or "volc" in text:
+        return "PARSER-ASR-2001"
+    if "视频下载失败" in text or "链接已过期" in text:
+        return "PARSER-ASR-2002"
+    if "ffmpeg" in text or "语音提取失败" in text:
+        return "PARSER-ASR-2003"
+    if "无语音" in text or "语音过短" in text:
+        return "PARSER-ASR-2004"
+    return "PARSER-ASR-9000"
+
+
 def _process_single_task(task_id: str):
     """Worker: process one task and store result.
 
@@ -1153,7 +1193,17 @@ def _process_single_task(task_id: str):
             elif module_id == "xiaohongshu-summary":
                 raw = _extract_xiaohongshu_raw(user_input)
             elif module_id == "douyin-summary":
-                raw = _extract_douyin_raw(user_input, task_id, include_tutorial)
+                raw = _extract_douyin_with_asr_200_retry(
+                    user_input,
+                    task_id,
+                    include_tutorial,
+                    on_retry=lambda: _update_step(
+                        task_id,
+                        "extract_meta",
+                        "running",
+                        "ASR 响应异常，正在自动重新解析（第 2 次）…",
+                    ),
+                )
             else:
                 raise ValueError(f"未知 deep 模块: {module_id}")
         else:
@@ -1270,6 +1320,7 @@ def _process_single_task(task_id: str):
         content_hash = hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()
         processing_status = "fallback" if is_fallback else "succeeded"
         asr_error = _sanitize_asr_error(raw.get("asr_error", "")) if is_fallback else ""
+        asr_error_code = _asr_error_code(asr_error) if is_fallback else ""
 
         conn = get_db()
         # 入库前查重：同一来源 + 相同内容视为重复
@@ -1300,19 +1351,19 @@ def _process_single_task(task_id: str):
         if placeholder_doc_id:
             # 更新占位文档为完整内容
             conn.execute(
-                "UPDATE documents SET title = ?, content = ?, tutorial_markdown = ?, tutorial_status = ?, tutorial_reason = ?, parse_options = ?, char_count = ?, content_hash = ?, source_url = ?, source_key = ?, asr_status = ?, asr_error = ?, updated_at = datetime('now') WHERE id = ?",
+                "UPDATE documents SET title = ?, content = ?, tutorial_markdown = ?, tutorial_status = ?, tutorial_reason = ?, parse_options = ?, char_count = ?, content_hash = ?, source_url = ?, source_key = ?, asr_status = ?, asr_error = ?, asr_error_code = ?, updated_at = datetime('now') WHERE id = ?",
                 (title[:200], content, tutorial_markdown, tutorial_status, tutorial_reason,
                  json.dumps({"include_tutorial": include_tutorial}), len(content), content_hash,
-                 source_url, source_key, processing_status, asr_error, placeholder_doc_id),
+                 source_url, source_key, processing_status, asr_error, asr_error_code, placeholder_doc_id),
             )
             conn.commit()
             doc_id = placeholder_doc_id
         else:
             cur = conn.execute(
-                "INSERT INTO documents (title, content, tutorial_markdown, tutorial_status, tutorial_reason, parse_options, content_type, source, char_count, content_hash, source_url, source_key, asr_status, asr_error) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO documents (title, content, tutorial_markdown, tutorial_status, tutorial_reason, parse_options, content_type, source, char_count, content_hash, source_url, source_key, asr_status, asr_error, asr_error_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (title, content, tutorial_markdown, tutorial_status, tutorial_reason,
                  json.dumps({"include_tutorial": include_tutorial}), "text", module["source_tag"], len(content), content_hash,
-                 source_url, source_key, processing_status, asr_error),
+                 source_url, source_key, processing_status, asr_error, asr_error_code),
             )
             doc_id = cur.lastrowid
             conn.commit()
@@ -1372,8 +1423,8 @@ def _process_single_task(task_id: str):
             try:
                 conn = get_db()
                 conn.execute(
-                    "UPDATE documents SET asr_status = 'failed', asr_error = ?, updated_at = datetime('now') WHERE id = ?",
-                    (_sanitize_asr_error(error_msg), target_doc_id),
+                    "UPDATE documents SET asr_status = 'failed', asr_error = ?, asr_error_code = ?, updated_at = datetime('now') WHERE id = ?",
+                    (_sanitize_asr_error(error_msg), _asr_error_code(error_msg), target_doc_id),
                 )
                 conn.commit()
                 conn.close()
@@ -2000,7 +2051,7 @@ def reparse_document(doc_id: int):
         task_id = str(uuid.uuid4())[:8]
         conn = get_db()
         conn.execute(
-            "UPDATE documents SET asr_status = 'pending', asr_error = '', updated_at = datetime('now') WHERE id = ?",
+            "UPDATE documents SET asr_status = 'pending', asr_error = '', asr_error_code = '', updated_at = datetime('now') WHERE id = ?",
             (doc_id,),
         )
         conn.commit()

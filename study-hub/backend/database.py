@@ -93,6 +93,7 @@ def init_db():
                 duplicate_of_document_id INTEGER DEFAULT NULL,
                 asr_status TEXT NOT NULL DEFAULT 'not_applicable',
                 asr_error TEXT DEFAULT '',
+                asr_error_code TEXT DEFAULT '',
                 char_count INTEGER DEFAULT 0,
                 chunk_count INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -204,6 +205,7 @@ def init_db():
         ("duplicate_of_document_id", "ALTER TABLE documents ADD COLUMN duplicate_of_document_id INTEGER DEFAULT NULL"),
         ("asr_status", "ALTER TABLE documents ADD COLUMN asr_status TEXT NOT NULL DEFAULT 'not_applicable'"),
         ("asr_error", "ALTER TABLE documents ADD COLUMN asr_error TEXT DEFAULT ''"),
+        ("asr_error_code", "ALTER TABLE documents ADD COLUMN asr_error_code TEXT DEFAULT ''"),
         # SQLite ALTER TABLE only permits constant defaults. Backfill below retains stable pagination ordering.
         ("updated_at", "ALTER TABLE documents ADD COLUMN updated_at TEXT DEFAULT ''"),
     ]:
